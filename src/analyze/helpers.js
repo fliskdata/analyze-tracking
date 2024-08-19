@@ -53,13 +53,37 @@ function findWrappingFunctionTs(node) {
   return 'global';
 }
 
-function findWrappingFunctionJs(node) {
-  let current = node;
-  while (current) {
-    if (current.type === 'FunctionDeclaration' || current.type === 'FunctionExpression' || current.type === 'ArrowFunctionExpression') {
+function findWrappingFunctionJs(node, ancestors) {
+  for (let i = ancestors.length - 1; i >= 0; i--) {
+    const current = ancestors[i];
+
+    // Handle direct variable assignments (e.g., const myFunc = () => {})
+    if (current.type === 'VariableDeclarator' && current.init === node) {
+      return current.id.name;
+    }
+
+    // Handle arrow functions or function expressions assigned to variables
+    if (current.type === 'VariableDeclarator' && (current.init.type === 'ArrowFunctionExpression' || current.init.type === 'FunctionExpression')) {
+      return current.id.name;
+    }
+
+    // Handle named function declarations
+    if (current.type === 'FunctionDeclaration') {
       return current.id ? current.id.name : 'anonymous';
     }
-    current = current.parent;
+
+    // Handle exported variable/function (e.g., export const myFunc = () => {})
+    if (current.type === 'ExportNamedDeclaration' && current.declaration) {
+      const declaration = current.declaration.declarations ? current.declaration.declarations[0] : null;
+      if (declaration && (declaration.init.type === 'ArrowFunctionExpression' || declaration.init.type === 'FunctionExpression')) {
+        return declaration.id.name;
+      }
+    }
+
+    // Handle methods within object literals
+    if (current.type === 'Property' && current.value === node) {
+      return current.key.name || current.key.value;
+    }
   }
   return 'global';
 }

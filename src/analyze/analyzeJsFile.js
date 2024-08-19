@@ -29,7 +29,7 @@ function analyzeJsFile(filePath) {
       }
 
       const line = node.loc.start.line;
-      const functionName = findWrappingFunctionJs(ancestors[ancestors.length - 2]);
+      const functionName = findWrappingFunctionJs(node, ancestors);
 
       if (eventName && propertiesNode && propertiesNode.type === 'ObjectExpression') {
         const properties = extractJsProperties(propertiesNode);
