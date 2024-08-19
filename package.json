@@ -1,0 +1,30 @@
+{
+  "name": "@flisk/analyze-tracking",
+  "version": "0.1.0",
+  "description": "Analyzes tracking code in a project and generates data schemas",
+  "main": "src/index.js",
+  "bin": {
+    "analyze-tracking": "./bin/analyze-tracking.js"
+  },
+  "scripts": {
+    "start": "node bin/analyze-tracking.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fliskdata/analyze-tracking.git"
+  },
+  "author": "Sameen Karim",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fliskdata/analyze-tracking/issues"
+  },
+  "homepage": "https://github.com/fliskdata/analyze-tracking#readme",
+  "dependencies": {
+    "@typescript-eslint/parser": "^8.1.0",
+    "acorn": "^8.12.1",
+    "acorn-walk": "^8.3.3",
+    "js-yaml": "^4.1.0",
+    "typescript": "^5.5.4"
+  }
+}
