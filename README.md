@@ -2,7 +2,6 @@
 
 Analyzes tracking code in a project and generates data schemas
 
-[![Build Status](https://github.com/fliskdata/analyze-tracking/workflows/npm-publish/badge.svg)](https://github.com/fliskdata/analyze-tracking/actions)
 [![NPM version](https://img.shields.io/npm/v/@flisk/analyze-tracking.svg)](https://www.npmjs.com/package/@flisk/analyze-tracking)
 
 
