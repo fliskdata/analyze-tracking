@@ -4,7 +4,7 @@
   "description": "Analyzes tracking code in a project and generates data schemas",
   "main": "src/index.js",
   "bin": {
-    "analyze-tracking": "./bin/analyze-tracking.js"
+    "analyze-tracking": "bin/analyze-tracking.js"
   },
   "scripts": {
     "start": "node bin/analyze-tracking.js",
