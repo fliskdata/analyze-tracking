@@ -2,21 +2,37 @@
 
 const path = require('path');
 const { execSync } = require('child_process');
+const commandLineArgs = require('command-line-args')
 const { run } = require('../src/index');
 
 // Parse command-line arguments
-const targetDir = process.argv[2];
-const repositoryArgIndex = process.argv.indexOf('--repository');
-const repositoryUrl = repositoryArgIndex !== -1 ? process.argv[repositoryArgIndex + 1] : null;
-const outputArgIndex = process.argv.indexOf('--output');
-const outputPath = outputArgIndex !== -1 ? process.argv[outputArgIndex + 1] : 'tracking-schema.yaml';
+const optionDefinitions = [
+  {
+    name: 'targetDir',
+    type: String,
+    defaultOption: true,
+  },
+  {
+    name: 'repository',
+    alias: 'r',
+    type: String,
+  },
+  {
+    name: 'output',
+    alias: 'o',
+    type: String,
+    defaultValue: 'tracking-schema.yaml',
+  },
+]
+const options = commandLineArgs(optionDefinitions);
+const { targetDir, output, repository } = options;
 
 if (!targetDir) {
   console.error('Please provide the path to the repository.');
   process.exit(1);
 }
 
-// Function to get the repository URL using Git
+// Get the repository URL using Git
 function getRepositoryUrl() {
   try {
     const repoUrl = execSync('git config --get remote.origin.url', { cwd: targetDir, encoding: 'utf8' });
@@ -27,7 +43,6 @@ function getRepositoryUrl() {
   }
 }
 
-// Determine the repository URL
-const repository = repositoryUrl || getRepositoryUrl();
+const repositoryUrl = repository || getRepositoryUrl();
 
-run(path.resolve(targetDir), repository, outputPath);
+run(path.resolve(targetDir), repositoryUrl, output);

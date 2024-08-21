@@ -7,7 +7,7 @@ Analyzes tracking code in a project and generates data schemas
 
 ## Usage
 ```sh
-npx @flisk/analyze-tracking /path/to/project
+npx @flisk/analyze-tracking /path/to/project [options]
 ```
 
 Optional arguments:

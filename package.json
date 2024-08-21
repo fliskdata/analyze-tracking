@@ -1,13 +1,12 @@
 {
   "name": "@flisk/analyze-tracking",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Analyzes tracking code in a project and generates data schemas",
   "main": "src/index.js",
   "bin": {
-    "analyze-tracking": "bin/analyze-tracking.js"
+    "analyze-tracking": "bin/cli.js"
   },
   "scripts": {
-    "start": "node bin/analyze-tracking.js",
     "test": "jest"
   },
   "repository": {
@@ -24,6 +23,7 @@
     "@typescript-eslint/parser": "^8.1.0",
     "acorn": "^8.12.1",
     "acorn-walk": "^8.3.3",
+    "command-line-args": "^6.0.0",
     "js-yaml": "^4.1.0",
     "typescript": "^5.5.4"
   },
