@@ -89,6 +89,14 @@ mParticle.logEvent('<event_name>', {
 ```
 
 
+#### PostHog
+```js
+posthog.capture('<event_name>', {
+  <event_parameters>
+});
+```
+
+
 #### Snowplow
 ```js
 snowplow('trackStructEvent', {
