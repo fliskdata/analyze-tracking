@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 const path = require('path');
-const { execSync } = require('child_process');
 const commandLineArgs = require('command-line-args')
 const { run } = require('../src/index');
 
@@ -13,11 +12,6 @@ const optionDefinitions = [
     defaultOption: true,
   },
   {
-    name: 'repository',
-    alias: 'r',
-    type: String,
-  },
-  {
     name: 'output',
     alias: 'o',
     type: String,
@@ -25,24 +19,11 @@ const optionDefinitions = [
   },
 ]
 const options = commandLineArgs(optionDefinitions);
-const { targetDir, output, repository } = options;
+const { targetDir, output } = options;
 
 if (!targetDir) {
   console.error('Please provide the path to the repository.');
   process.exit(1);
 }
 
-// Get the repository URL using Git
-function getRepositoryUrl() {
-  try {
-    const repoUrl = execSync('git config --get remote.origin.url', { cwd: targetDir, encoding: 'utf8' });
-    return repoUrl.trim();
-  } catch (error) {
-    console.warn('Could not retrieve repository URL. Using default value "unknown".');
-    return 'unknown';
-  }
-}
-
-const repositoryUrl = repository || getRepositoryUrl();
-
-run(path.resolve(targetDir), repositoryUrl, output);
+run(path.resolve(targetDir), output);

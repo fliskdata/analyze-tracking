@@ -11,7 +11,6 @@ npx @flisk/analyze-tracking /path/to/project [options]
 ```
 
 Optional arguments:
-- `--repository <repository_url>`: URL of the repository where the code is hosted (defaults to git remote origin in project directory)
 - `--output <output_file>`: Name of the output file (default: `tracking-schema.yaml`)
 
 
@@ -19,16 +18,18 @@ Optional arguments:
 A YAML file with the following structure is generated:
 
 ```yaml
-version: 1.0
+version: 1
+source:
+  repository: <repository_url>
+  commit: <commit_sha>
+  timestamp: <commit_timestamp>
 events:
   <event_name>:
-    sources:
-      - repository: <repository_name>
-        path: <path_to_file>
+    implementations:
+      - path: <path_to_file>
         line: <line_number>
         function: <function_name>
-    destinations:
-      - <destination_name>
+        destination: <platform_name>
     properties:
       <property_name>:
         type: <property_type>

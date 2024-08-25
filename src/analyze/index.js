@@ -4,7 +4,7 @@ const { getAllFiles } = require('../fileProcessor');
 const ts = require('typescript');
 const path = require('path');
 
-function analyzeDirectory(dirPath, repository) {
+function analyzeDirectory(dirPath) {
   const files = getAllFiles(dirPath);
   const allEvents = {};
 
@@ -23,26 +23,21 @@ function analyzeDirectory(dirPath, repository) {
 
       if (!allEvents[event.eventName]) {
         allEvents[event.eventName] = {
-          sources: [{
-            repository: repository,
+          implementations: [{
             path: relativeFilePath,
             line: event.line,
-            function: event.functionName
+            function: event.functionName,
+            destination: event.source
           }],
-          destinations: [event.source],
           properties: event.properties,
         };
       } else {
-        allEvents[event.eventName].sources.push({
-          repository: repository,
+        allEvents[event.eventName].implementations.push({
           path: relativeFilePath,
           line: event.line,
-          function: event.functionName
+          function: event.functionName,
+          destination: event.source
         });
-
-        if (!allEvents[event.eventName].destinations.includes(event.source)) {
-          allEvents[event.eventName].destinations.push(event.source);
-        }
 
         allEvents[event.eventName].properties = {
           ...allEvents[event.eventName].properties,

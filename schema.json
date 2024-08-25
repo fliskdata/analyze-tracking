@@ -1,14 +1,35 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "http://json-schema.org/draft-07/schema",
   "title": "@flisk/analyze-tracking output schema",
   "type": "object",
   "properties": {
     "version": {
       "type": "number",
       "enum": [
-        1.0
+        1
       ],
       "description": "Version of the schema"
+    },
+    "source": {
+      "type": "object",
+      "properties": {
+        "repository": {
+          "type": "string",
+          "description": "URL of git repository that was used to generate the schema"
+        },
+        "commit": {
+          "type": "string",
+          "description": "Git commit hash when this schema was generated"
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Git commit timestamp when this schema was generated"
+        }
+      },
+      "required": [
+        "timestamp"
+      ],
+      "additionalProperties": false
     },
     "events": {
       "type": "object",
@@ -16,15 +37,11 @@
         "^[a-zA-Z0-9_-]+$": {
           "type": "object",
           "properties": {
-            "sources": {
+            "implementations": {
               "type": "array",
               "items": {
                 "type": "object",
                 "properties": {
-                  "repository": {
-                    "type": "string",
-                    "description": "Repository URL or name"
-                  },
                   "path": {
                     "type": "string",
                     "description": "Relative path to the file where the event is tracked"
@@ -36,31 +53,30 @@
                   "function": {
                     "type": "string",
                     "description": "Name of the function where the event is tracked"
+                  },
+                  "destination": {
+                    "type": "string",
+                    "enum": [
+                      "googleanalytics",
+                      "segment",
+                      "mixpanel",
+                      "amplitude",
+                      "rudderstack",
+                      "mparticle",
+                      "posthog",
+                      "snowplow",
+                      "unknown"
+                    ],
+                    "description": "Name of the platform where the event is sent"
                   }
                 },
                 "required": [
-                  "repository",
                   "path",
                   "line",
-                  "function"
-                ]
-              }
-            },
-            "destinations": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "enum": [
-                  "googleanalytics",
-                  "segment",
-                  "mixpanel",
-                  "amplitude",
-                  "rudderstack",
-                  "mparticle",
-                  "snowplow",
-                  "unknown"
+                  "function",
+                  "destination"
                 ],
-                "description": "Destination analytics platform"
+                "additionalProperties": false
               }
             },
             "properties": {
@@ -71,7 +87,7 @@
                   "properties": {
                     "type": {
                       "type": "string",
-                      "description": "Data type of the property (e.g., string, number)"
+                      "description": "Data type of the property (e.g., string, number, any)"
                     },
                     "required": {
                       "type": "boolean",
@@ -84,23 +100,24 @@
                   },
                   "required": [
                     "type"
-                  ]
+                  ],
+                  "additionalProperties": false
                 }
               }
             }
           },
           "required": [
-            "sources",
-            "destinations",
+            "implementations",
             "properties"
-          ]
+          ],
+          "additionalProperties": false
         }
-      },
-      "additionalProperties": false
+      }
     }
   },
   "required": [
     "version",
+    "source",
     "events"
   ]
 }

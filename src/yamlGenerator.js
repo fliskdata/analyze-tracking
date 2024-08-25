@@ -1,9 +1,12 @@
 const fs = require('fs');
 const yaml = require('js-yaml');
 
-function generateYamlSchema(events, outputPath) {
+const version = 1
+
+function generateYamlSchema(events, repository, outputPath) {
   const schema = {
-    version: 1.0,
+    version,
+    source: repository,
     events,
   };
 
