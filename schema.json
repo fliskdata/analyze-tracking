@@ -83,25 +83,7 @@
               "type": "object",
               "patternProperties": {
                 "^[a-zA-Z0-9_-]+$": {
-                  "type": "object",
-                  "properties": {
-                    "type": {
-                      "type": "string",
-                      "description": "Data type of the property (e.g., string, number, any)"
-                    },
-                    "required": {
-                      "type": "boolean",
-                      "description": "Whether this property is required"
-                    },
-                    "description": {
-                      "type": "string",
-                      "description": "Description of the property"
-                    }
-                  },
-                  "required": [
-                    "type"
-                  ],
-                  "additionalProperties": false
+                  "$ref": "#/definitions/property"
                 }
               }
             }
@@ -119,5 +101,36 @@
     "version",
     "source",
     "events"
-  ]
+  ],
+  "definitions": {
+    "property": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "Data type of the property (e.g., string, number, any)"
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Whether this property is required"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the property"
+        },
+        "properties": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z0-9_-]+$": {
+              "$ref": "#/definitions/property"
+            }
+          }
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    }
+  }
 }
