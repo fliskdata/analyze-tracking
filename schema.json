@@ -64,6 +64,8 @@
                       "rudderstack",
                       "mparticle",
                       "posthog",
+                      "pendo",
+                      "heap",
                       "snowplow",
                       "unknown"
                     ],

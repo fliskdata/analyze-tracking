@@ -98,6 +98,22 @@ posthog.capture('<event_name>', {
 ```
 
 
+#### Pendo
+```js
+pendo.track('<event_name>', {
+  <event_parameters>
+});
+```
+
+
+#### Heap
+```js
+heap.track('<event_name>', {
+  <event_parameters>
+});
+```
+
+
 #### Snowplow
 ```js
 snowplow('trackStructEvent', {

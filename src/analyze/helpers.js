@@ -15,6 +15,8 @@ function detectSourceJs(node) {
     if (objectName === 'rudderanalytics' && methodName === 'track') return 'rudderstack';
     if (objectName === 'mParticle' && methodName === 'logEvent') return 'mparticle';
     if (objectName === 'posthog' && methodName === 'capture') return 'posthog';
+    if (objectName === 'pendo' && methodName === 'track') return 'pendo';
+    if (objectName === 'heap' && methodName === 'track') return 'heap';
   } else if (node.callee.type === 'Identifier' && node.callee.name === 'snowplow') {
     return 'snowplow';
   }
@@ -37,6 +39,8 @@ function detectSourceTs(node) {
     if (objectName === 'rudderanalytics' && methodName === 'track') return 'rudderstack';
     if (objectName === 'mParticle' && methodName === 'logEvent') return 'mparticle';
     if (objectName === 'posthog' && methodName === 'capture') return 'posthog';
+    if (objectName === 'pendo' && methodName === 'track') return 'pendo';
+    if (objectName === 'heap' && methodName === 'track') return 'heap';
   } else if (ts.isIdentifier(node.expression) && node.expression.escapedText === 'snowplow') {
     return 'snowplow';
   }
