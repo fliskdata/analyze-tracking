@@ -19,6 +19,9 @@ function getAllFiles(dirPath, arrayOfFiles = []) {
     }
 
     if (stats.isDirectory()) {
+      if (file === 'node_modules') {
+        return; // Ignore the node_modules directory
+      }
       arrayOfFiles = getAllFiles(fullPath, arrayOfFiles);
     } else if (/\.((j|t)sx?)$/.test(file)) {
       arrayOfFiles.push(fullPath);
