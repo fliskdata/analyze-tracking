@@ -1,11 +1,17 @@
 const fs = require('fs');
 const acorn = require('acorn');
+const jsx = require('acorn-jsx');
 const walk = require('acorn-walk');
+const { extend } = require('acorn-jsx-walk');
 const { detectSourceJs, findWrappingFunctionJs, extractJsProperties } = require('./helpers');
+
+const parser = acorn.Parser.extend(jsx());
+const parserOptions = { ecmaVersion: 'latest', sourceType: 'module', locations: true };
+extend(walk.base);
 
 function analyzeJsFile(filePath) {
   const code = fs.readFileSync(filePath, 'utf8');
-  const ast = acorn.parse(code, { ecmaVersion: 'latest', sourceType: 'module', locations: true });
+  const ast = parser.parse(code, parserOptions);
   const events = [];
 
   walk.ancestor(ast, {
