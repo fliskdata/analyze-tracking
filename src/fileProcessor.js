@@ -20,7 +20,7 @@ function getAllFiles(dirPath, arrayOfFiles = []) {
 
     if (stats.isDirectory()) {
       arrayOfFiles = getAllFiles(fullPath, arrayOfFiles);
-    } else if (file.endsWith('.js') || file.endsWith('.ts')) {
+    } else if (/\.((j|t)sx?)$/.test(file)) {
       arrayOfFiles.push(fullPath);
     }
   });

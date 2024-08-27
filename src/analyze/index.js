@@ -8,14 +8,14 @@ function analyzeDirectory(dirPath) {
   const files = getAllFiles(dirPath);
   const allEvents = {};
 
-  const tsFiles = files.filter(file => file.endsWith('.ts'));
+  const tsFiles = files.filter(file => /\.(tsx?)$/.test(file));
   const program = ts.createProgram(tsFiles, {
     target: ts.ScriptTarget.ESNext,
     module: ts.ModuleKind.CommonJS,
   });
 
   files.forEach((file) => {
-    const isTsFile = file.endsWith('.ts');
+    const isTsFile = /\.(tsx?)$/.test(file);
     const events = isTsFile ? analyzeTsFile(file, program) : analyzeJsFile(file);
 
     events.forEach((event) => {
