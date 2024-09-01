@@ -143,7 +143,13 @@ function extractTsProperties(checker, node) {
     const key = prop.name ? prop.name.text : prop.key.text || prop.key.value;
     let valueType = 'any';
 
-    if (prop.initializer) {
+    if (ts.isShorthandPropertyAssignment(prop)) {
+      const symbol = checker.getSymbolAtLocation(prop.name);
+      if (symbol) {
+        valueType = getTypeOfNode(checker, symbol.valueDeclaration);
+        properties[key] = { type: valueType };
+      }
+    } else if (prop.initializer) {
       if (ts.isObjectLiteralExpression(prop.initializer)) {
         properties[key] = {
           type: 'object',
