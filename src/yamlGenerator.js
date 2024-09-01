@@ -12,6 +12,7 @@ function generateYamlSchema(events, repository, outputPath) {
   };
   const options = {
     noRefs: true,
+    lineWidth: -1,
   };
   const yamlOutput = yaml.dump(schema, options);
   const yamlFile = `# yaml-language-server: $schema=${SCHEMA_URL}\n${yamlOutput}`;
