@@ -157,7 +157,32 @@ function extractTsProperties(checker, node) {
           },
         };
       } else {
-        valueType = getTypeOfNode(checker, prop.initializer) || 'any';
+        // Handle hard-coded values
+        switch (prop.initializer.kind) {
+          case ts.SyntaxKind.StringLiteral:
+            valueType = 'string';
+            break;
+          case ts.SyntaxKind.NumericLiteral:
+            valueType = 'number';
+            break;
+          case ts.SyntaxKind.TrueKeyword:
+          case ts.SyntaxKind.FalseKeyword:
+            valueType = 'boolean';
+            break;
+          case ts.SyntaxKind.ArrayLiteralExpression:
+            valueType = 'array';
+            break;
+          case ts.SyntaxKind.ObjectLiteralExpression:
+            valueType = 'object';
+            break;
+          default:
+            valueType = 'any';
+        }
+
+        if (valueType === 'any') {
+          valueType = getTypeOfNode(checker, prop.initializer) || 'any';
+        }
+
         properties[key] = { type: valueType };
       }
     } else if (prop.type) {
