@@ -1,7 +1,7 @@
 const ts = require('typescript');
 const {
   extractJsProperties,
-  extractProperties,
+  extractTsProperties,
 } = require('../src/analyze/helpers');
 
 describe('extractJsProperties', () => {
@@ -69,7 +69,7 @@ describe('extractTsProperties', () => {
       getTypeAtLocation: jest.fn().mockReturnValue({}),
       typeToString: jest.fn().mockReturnValue('string'),
     };
-    const properties = extractProperties(checker, node);
+    const properties = extractTsProperties(checker, node);
     expect(properties).toEqual({
       userId: { type: 'string' },
       plan: { type: 'string' },
@@ -95,7 +95,7 @@ describe('extractTsProperties', () => {
       getTypeAtLocation: jest.fn().mockReturnValue({}),
       typeToString: jest.fn().mockReturnValue('string'),
     };
-    const properties = extractProperties(checker, node);
+    const properties = extractTsProperties(checker, node);
     expect(properties).toEqual({
       address: {
         type: 'object',
