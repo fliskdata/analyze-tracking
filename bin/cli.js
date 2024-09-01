@@ -17,13 +17,18 @@ const optionDefinitions = [
     type: String,
     defaultValue: 'tracking-schema.yaml',
   },
+  {
+    name: 'customFunction',
+    alias: 'c',
+    type: String,
+  },
 ]
 const options = commandLineArgs(optionDefinitions);
-const { targetDir, output } = options;
+const { targetDir, output, customFunction } = options;
 
 if (!targetDir) {
   console.error('Please provide the path to the repository.');
   process.exit(1);
 }
 
-run(path.resolve(targetDir), output);
+run(path.resolve(targetDir), output, customFunction);

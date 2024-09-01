@@ -1,14 +1,14 @@
 const ts = require('typescript');
-const { detectSourceTs, findWrappingFunctionTs, extractProperties } = require('./helpers');
+const { detectSourceTs, findWrappingFunctionTs, extractTsProperties } = require('./helpers');
 
-function analyzeTsFile(filePath, program) {
+function analyzeTsFile(filePath, program, customFunction) {
   const sourceFile = program.getSourceFile(filePath);
   const checker = program.getTypeChecker();
   const events = [];
 
   function visit(node) {
     if (ts.isCallExpression(node)) {
-      const source = detectSourceTs(node);
+      const source = detectSourceTs(node, customFunction);
       if (source === 'unknown') return;
 
       let eventName = null;
@@ -30,7 +30,7 @@ function analyzeTsFile(filePath, program) {
       const functionName = findWrappingFunctionTs(node);
 
       if (eventName && propertiesNode && ts.isObjectLiteralExpression(propertiesNode)) {
-        const properties = extractProperties(checker, propertiesNode);
+        const properties = extractTsProperties(checker, propertiesNode);
         events.push({
           eventName,
           source,

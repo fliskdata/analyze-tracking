@@ -4,7 +4,7 @@ const { getAllFiles } = require('../fileProcessor');
 const ts = require('typescript');
 const path = require('path');
 
-function analyzeDirectory(dirPath) {
+function analyzeDirectory(dirPath, customFunction) {
   const files = getAllFiles(dirPath);
   const allEvents = {};
 
@@ -16,7 +16,7 @@ function analyzeDirectory(dirPath) {
 
   files.forEach((file) => {
     const isTsFile = /\.(tsx?)$/.test(file);
-    const events = isTsFile ? analyzeTsFile(file, program) : analyzeJsFile(file);
+    const events = isTsFile ? analyzeTsFile(file, program, customFunction) : analyzeJsFile(file, customFunction);
 
     events.forEach((event) => {
       const relativeFilePath = path.relative(dirPath, event.filePath); // Calculate relative path

@@ -67,6 +67,7 @@
                       "pendo",
                       "heap",
                       "snowplow",
+                      "custom",
                       "unknown"
                     ],
                     "description": "Name of the platform where the event is sent"

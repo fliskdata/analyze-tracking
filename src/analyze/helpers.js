@@ -1,11 +1,13 @@
 const ts = require('typescript');
 
-function detectSourceJs(node) {
+function detectSourceJs(node, customFunction) {
   if (!node.callee) return 'unknown';
 
   if (node.callee.type === 'Identifier' && node.callee.name === 'gtag') {
     return 'googleanalytics';
-  } else if (node.callee.type === 'MemberExpression') {
+  }
+
+  if (node.callee.type === 'MemberExpression') {
     const objectName = node.callee.object.name;
     const methodName = node.callee.property.name;
 
@@ -17,19 +19,27 @@ function detectSourceJs(node) {
     if (objectName === 'posthog' && methodName === 'capture') return 'posthog';
     if (objectName === 'pendo' && methodName === 'track') return 'pendo';
     if (objectName === 'heap' && methodName === 'track') return 'heap';
-  } else if (node.callee.type === 'Identifier' && node.callee.name === 'snowplow') {
+  }
+
+  if (node.callee.type === 'Identifier' && node.callee.name === 'snowplow') {
     return 'snowplow';
+  }
+
+  if (node.callee.type === 'Identifier' && node.callee.name === customFunction) {
+    return 'custom';
   }
 
   return 'unknown';
 }
 
-function detectSourceTs(node) {
+function detectSourceTs(node, customFunction) {
   if (!node.expression) return 'unknown';
 
   if (ts.isIdentifier(node.expression) && node.expression.escapedText === 'gtag') {
     return 'googleanalytics';
-  } else if (ts.isPropertyAccessExpression(node.expression)) {
+  }
+  
+  if (ts.isPropertyAccessExpression(node.expression)) {
     const objectName = node.expression.expression.escapedText;
     const methodName = node.expression.name.escapedText;
 
@@ -41,8 +51,14 @@ function detectSourceTs(node) {
     if (objectName === 'posthog' && methodName === 'capture') return 'posthog';
     if (objectName === 'pendo' && methodName === 'track') return 'pendo';
     if (objectName === 'heap' && methodName === 'track') return 'heap';
-  } else if (ts.isIdentifier(node.expression) && node.expression.escapedText === 'snowplow') {
+  }
+  
+  if (ts.isIdentifier(node.expression) && node.expression.escapedText === 'snowplow') {
     return 'snowplow';
+  }
+
+  if (ts.isIdentifier(node.expression) && node.expression.escapedText === customFunction) {
+    return 'custom';
   }
 
   return 'unknown';
@@ -120,7 +136,7 @@ function extractJsProperties(node) {
   return properties;
 }
 
-function extractProperties(checker, node) {
+function extractTsProperties(checker, node) {
   const properties = {};
 
   node.properties.forEach((prop) => {
@@ -131,7 +147,7 @@ function extractProperties(checker, node) {
       if (ts.isObjectLiteralExpression(prop.initializer)) {
         properties[key] = {
           type: 'object',
-          properties: extractProperties(checker, prop.initializer),
+          properties: extractTsProperties(checker, prop.initializer),
         };
       } else if (ts.isArrayLiteralExpression(prop.initializer)) {
         properties[key] = {
@@ -164,6 +180,6 @@ module.exports = {
   findWrappingFunctionTs,
   findWrappingFunctionJs,
   extractJsProperties,
-  extractProperties,
+  extractTsProperties,
   getTypeOfNode,
 };

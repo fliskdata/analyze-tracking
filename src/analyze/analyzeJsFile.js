@@ -9,14 +9,14 @@ const parser = acorn.Parser.extend(jsx());
 const parserOptions = { ecmaVersion: 'latest', sourceType: 'module', locations: true };
 extend(walk.base);
 
-function analyzeJsFile(filePath) {
+function analyzeJsFile(filePath, customFunction) {
   const code = fs.readFileSync(filePath, 'utf8');
   const ast = parser.parse(code, parserOptions);
   const events = [];
 
   walk.ancestor(ast, {
     CallExpression(node, ancestors) {
-      const source = detectSourceJs(node);
+      const source = detectSourceJs(node, customFunction);
       if (source === 'unknown') return;
 
       let eventName = null;
