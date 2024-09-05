@@ -1,6 +1,6 @@
 {
   "name": "@flisk/analyze-tracking",
-  "version": "0.2.6",
+  "version": "0.2.7",
   "description": "Analyzes tracking code in a project and generates data schemas",
   "main": "src/index.js",
   "bin": {

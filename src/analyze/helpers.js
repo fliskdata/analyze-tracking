@@ -139,8 +139,9 @@ function extractJsProperties(node) {
 function extractTsProperties(checker, node) {
   const properties = {};
 
-  node.properties.forEach((prop) => {
-    const key = prop.name ? prop.name.text : prop.key.text || prop.key.value;
+  for (const prop of node.properties) {
+    const key = !!prop.name ? prop.name.text : (!!prop.key ? (prop.key.text || prop.key.value) : undefined);
+    if (!key) continue;
     let valueType = 'any';
 
     if (ts.isShorthandPropertyAssignment(prop)) {
@@ -195,7 +196,7 @@ function extractTsProperties(checker, node) {
       valueType = checker.typeToString(checker.getTypeFromTypeNode(prop.type)) || 'any';
       properties[key] = { type: valueType };
     }
-  });
+  }
 
   return properties;
 }
