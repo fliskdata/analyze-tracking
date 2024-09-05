@@ -12,7 +12,10 @@ npx @flisk/analyze-tracking /path/to/project [options]
 
 Optional arguments:
 - `-o, --output <output_file>`: Name of the output file (default: `tracking-schema.yaml`)
-- `-c, --customFunction <output_file>`: Name of your custom tracking function
+- `-c, --customFunction <function_name>`: Name of your custom tracking function
+- `-u, --repositoryUrl <git_url>`: URL to your repository
+- `-h, --commitHash <commit_sha>`: Latest commit hash
+- `-t, --commitTimestamp <iso_timestamp>`: Timestamp of latest commit
 
 Note: Custom Functions only support the following format:
 ```js

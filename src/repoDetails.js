@@ -57,7 +57,7 @@ function toISODateString(date) {
     + pad(date.getUTCSeconds())+'Z';
 }
 
-async function getRepoDetails(targetDir) {
+async function getRepoDetails(targetDir, customSourceDetails) {
   const repoUrl = await getRepositoryUrl(targetDir);
   const commitHash = await getCommitHash(targetDir);
   const commitEpochTime = await getCommitTimestamp(targetDir, commitHash);
@@ -67,6 +67,11 @@ async function getRepoDetails(targetDir) {
   if (!!repoUrl) repoDetails.repository = repoUrl;
   if (!!commitHash) repoDetails.commit = commitHash;
   repoDetails.timestamp = commitTimestamp;
+
+  if (!!customSourceDetails?.repositoryUrl) repoDetails.repository = customSourceDetails.repositoryUrl;
+  if (!!customSourceDetails?.commitHash) repoDetails.commit = customSourceDetails.commitHash;
+  if (!!customSourceDetails?.commitTimestamp) repoDetails.timestamp = customSourceDetails.commitTimestamp;
+
   return repoDetails;
 }
 
