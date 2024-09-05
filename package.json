@@ -1,6 +1,6 @@
 {
   "name": "@flisk/analyze-tracking",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Analyzes tracking code in a project and generates data schemas",
   "main": "src/index.js",
   "bin": {
@@ -26,6 +26,7 @@
     "acorn-jsx-walk": "^2.0.0",
     "acorn-walk": "^8.3.3",
     "command-line-args": "^6.0.0",
+    "isomorphic-git": "^1.27.1",
     "js-yaml": "^4.1.0",
     "typescript": "^5.5.4"
   },

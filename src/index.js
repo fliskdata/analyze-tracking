@@ -2,9 +2,9 @@ const { analyzeDirectory } = require('./analyze');
 const { getRepoDetails } = require('./repoDetails');
 const { generateYamlSchema } = require('./yamlGenerator');
 
-function run(targetDir, outputPath, customFunction) {
+async function run(targetDir, outputPath, customFunction) {
   const events = analyzeDirectory(targetDir, customFunction);
-  const repoDetails = getRepoDetails(targetDir);
+  const repoDetails = await getRepoDetails(targetDir);
   generateYamlSchema(events, repoDetails, outputPath);
 }
 
