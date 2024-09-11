@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 
 const path = require('path');
-const commandLineArgs = require('command-line-args')
+const commandLineArgs = require('command-line-args');
+const commandLineUsage = require('command-line-usage');
 const { run } = require('../src/index');
+const { helpContent } = require('./help');
 
 // Parse command-line arguments
 const optionDefinitions = [
@@ -29,13 +31,18 @@ const optionDefinitions = [
   },
   {
     name: 'commitHash',
-    alias: 'h',
+    alias: 's',
     type: String,
   },
   {
     name: 'commitTimestamp',
     alias: 't',
     type: String,
+  },
+  {
+    name: 'help',
+    alias: 'h',
+    type: Boolean,
   },
 ]
 const options = commandLineArgs(optionDefinitions);
@@ -46,7 +53,13 @@ const {
   repositoryUrl,
   commitHash,
   commitTimestamp,
+  help,
 } = options;
+
+if (help) {
+  console.log(commandLineUsage(helpContent));
+  process.exit(0);
+}
 
 const customSourceDetails = {
   repositoryUrl,
@@ -56,6 +69,7 @@ const customSourceDetails = {
 
 if (!targetDir) {
   console.error('Please provide the path to the repository.');
+  console.log(commandLineUsage(helpContent));
   process.exit(1);
 }
 
