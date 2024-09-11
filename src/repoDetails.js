@@ -1,5 +1,6 @@
 const fs = require('fs');
 const git = require('isomorphic-git');
+const { execSync } = require('child_process');
 
 async function getRepositoryUrl(targetDir) {
   try {
@@ -10,8 +11,13 @@ async function getRepositoryUrl(targetDir) {
     });
     return repoUrl.trim();
   } catch (error) {
-    console.warn('Could not determine repository URL. Will exclude.');
-    return null;
+    try {
+      const repoUrl = execSync('git config --get remote.origin.url', { cwd: targetDir, encoding: 'utf8' });
+      return repoUrl.trim();
+    } catch (error) {
+      console.warn('Could not determine repository URL. Will exclude.');
+      return null;
+    }
   }
 }
 
@@ -24,8 +30,13 @@ async function getCommitHash(targetDir) {
     });
     return commitHash.trim();
   } catch (error) {
-    console.warn('Could not determine latest commit hash. Will exclude.');
-    return null;
+    try {
+      const commitHash = execSync('git rev-parse HEAD', { cwd: targetDir, encoding: 'utf8' });
+      return commitHash.trim();
+    } catch (error) {
+      console.warn('Could not determine latest commit hash. Will exclude.');
+      return null;
+    }
   }
 }
 
@@ -39,8 +50,14 @@ async function getCommitTimestamp(targetDir, commitHash) {
     const unixTimeSeconds = commit.committer.timestamp;
     return new Date(unixTimeSeconds * 1000);
   } catch (error) {
-    console.warn('Could not retrieve commit timestamp. Using current timestamp as default.');
-    return new Date();
+    try {
+      const commitTimestamp = execSync(`git --no-pager show -s --format=%ct ${commitHash}`, { cwd: targetDir, encoding: 'utf8' });
+      const unixTimeSeconds = commitTimestamp.trim();
+      return new Date(unixTimeSeconds * 1000);
+    } catch (error) {
+      console.warn('Could not retrieve commit timestamp. Using current timestamp as default.');
+      return new Date();
+    }
   }
 }
 
