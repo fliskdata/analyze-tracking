@@ -1,0 +1,6 @@
+send_to:
+  type: string
+value:
+  type: number
+currency:
+  type: string
