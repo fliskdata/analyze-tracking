@@ -39,6 +39,14 @@ const helpContent = [
         type: Boolean
       },
       {
+        name: 'generateDescription',
+        alias: 'g',
+        description: 'Generate descriptions of fields.',
+        type: Boolean,
+        defaultValue: false,
+        typeLabel: '{underline false}'
+      },
+      {
         name: 'output',
         alias: 'o',
         description: 'Name of the output file.',
@@ -51,7 +59,7 @@ const helpContent = [
         alias: 'c',
         description: 'Specify a custom tracking function.',
         type: String,
-        typeLabel: '{underline yourCustomFunctionName}'
+        typeLabel: '{italic yourCustomFunctionName}'
       }
     ]
   },

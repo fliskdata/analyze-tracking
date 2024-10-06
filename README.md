@@ -24,8 +24,11 @@ npx @flisk/analyze-tracking /path/to/project [options]
 ```
 
 ### Key Options:
+- `-g, --generateDescription`: Generate descriptions of fields (default: `false`)
 - `-o, --output <output_file>`: Name of the output file (default: `tracking-schema.yaml`)
 - `-c, --customFunction <function_name>`: Specify a custom tracking function
+
+🔑&nbsp; **Important:** you must set the `OPENAI_API_KEY` environment variable to use `generateDescription`
 
 <details>
   <summary>Note on Custom Functions 💡</summary>
@@ -53,17 +56,22 @@ source:
   timestamp: <commit_timestamp>
 events:
   <event_name>:
+    description: <ai_generated_description>
     implementations:
-      - path: <path_to_file>
+      - description: <ai_generated_description>
+        path: <path_to_file>
         line: <line_number>
         function: <function_name>
         destination: <platform_name>
     properties:
       <property_name>:
+        description: <ai_generated_description>
         type: <property_type>
 ```
 
 Use this to understand where your events live in the code and how they’re being tracked.
+
+[GPT-4o mini](https://platform.openai.com/docs/models/gpt-4o-mini) is used for generating descriptions of events, properties, and implementations.
 
 See [schema.json](schema.json) for a JSON Schema of the output.
 

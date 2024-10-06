@@ -14,6 +14,12 @@ const optionDefinitions = [
     defaultOption: true,
   },
   {
+    name: 'generateDescription',
+    alias: 'g',
+    type: Boolean,
+    defaultValue: false,
+  },
+  {
     name: 'output',
     alias: 'o',
     type: String,
@@ -48,6 +54,7 @@ const optionDefinitions = [
 const options = commandLineArgs(optionDefinitions);
 const {
   targetDir,
+  generateDescription,
   output,
   customFunction,
   repositoryUrl,
@@ -73,4 +80,11 @@ if (!targetDir) {
   process.exit(1);
 }
 
-run(path.resolve(targetDir), output, customFunction, customSourceDetails);
+if (generateDescription) {
+  if (!process.env.OPENAI_API_KEY) {
+    console.error('Please set the `OPENAI_API_KEY` environment variable to use `generateDescription`.');
+    process.exit(1);
+  }
+}
+
+run(path.resolve(targetDir), output, customFunction, customSourceDetails, generateDescription);
