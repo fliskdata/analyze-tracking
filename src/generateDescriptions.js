@@ -7,20 +7,24 @@ const { zodResponseFormat } = require('openai/helpers/zod');
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
+const model = 'gpt-4o-mini';
 
 function createPrompt(eventName, properties, implementations, codebaseDir) {
-  // Initialize the prompt
-  let prompt = `You are an expert at structured data extraction. Generate detailed descriptions for the following analytics event, its properties, and implementations.\n\n`;
-
-  // Add event name
-  prompt += `Event Name: "${eventName}"\n\n`;
-
-  // Add properties
+  let prompt = `Event Name: "${eventName}"\n\n`;
   prompt += `Properties:\n`;
-  for (const propName in properties) {
-    const prop = properties[propName];
-    prompt += `- "${propName}" (type: ${prop.type})\n`;
+
+  function appendPropertiesToPrompt(properties, indent = '') {
+    for (const propName in properties) {
+      const prop = properties[propName];
+      prompt += `${indent}- "${propName}" (type: ${prop.type})\n`;
+      if (prop.properties) {
+        prompt += `${indent}  Sub-properties:\n`;
+        appendPropertiesToPrompt(prop.properties, indent + '    ');
+      }
+    }
   }
+
+  appendPropertiesToPrompt(properties);
 
   // Add implementations with code snippets
   prompt += `\nImplementations:\n`;
@@ -53,18 +57,39 @@ function getCodeSnippet(filePath, lineNumber, contextLines = 5) {
 }
 
 function createEventDescriptionSchema(properties) {
+  function buildPropertySchema(prop) {
+    if (prop.properties) {
+      const subPropertiesSchema = {};
+      for (const subPropName in prop.properties) {
+        subPropertiesSchema[subPropName] = buildPropertySchema(prop.properties[subPropName]);
+      }
+      return z.object({
+        description: z
+          .string()
+          .describe('A maximum of 10 words describing the property and what it means'),
+        properties: z.object(subPropertiesSchema),
+      });
+    } else {
+      return z.object({
+        description: z
+          .string()
+          .describe('A maximum of 10 words describing the property and what it means'),
+      });
+    }
+  }
+
   // Define the schema for properties
   const propertiesSchema = {};
   for (const propName in properties) {
-    propertiesSchema[propName] = z.object({
-      description: z.string().describe('A maximum of 10 words describing the property and what it means'),
-    });
+    propertiesSchema[propName] = buildPropertySchema(properties[propName]);
   }
 
   // Define the schema for implementations
   const implementationsSchema = z.array(
     z.object({
-      description: z.string().describe('A maximum of 10 words describing when this event is triggered'),
+      description: z
+        .string()
+        .describe('A maximum of 10 words describing how this event is triggered without using the word "triggered"'),
       path: z.string(),
       line: z.number(),
     })
@@ -72,7 +97,9 @@ function createEventDescriptionSchema(properties) {
 
   // Construct the full schema
   const eventDescriptionSchema = z.object({
-    eventDescription: z.string().describe('A maximum of 10 words describing the event and what it describes'),
+    eventDescription: z
+      .string()
+      .describe('A maximum of 10 words describing the event and what it tracks without using the word "tracks"'),
     properties: z.object(propertiesSchema),
     implementations: implementationsSchema,
   });
@@ -83,11 +110,11 @@ function createEventDescriptionSchema(properties) {
 async function sendPromptToLLM(prompt, schema) {
   try {
     const completion = await openai.beta.chat.completions.parse({
-      model: 'gpt-4o-mini',
+      model,
       messages: [
         {
           role: 'system',
-          content: 'You are an expert at structured data extraction. Generate detailed descriptions for the following analytics event, its properties, and implementations',
+          content: 'You are an expert at structured data extraction. Generate detailed descriptions for the following analytics event, its properties, and implementations.',
         },
         {
           role: 'user',
@@ -97,7 +124,10 @@ async function sendPromptToLLM(prompt, schema) {
       response_format: zodResponseFormat(schema, 'event_description'),
     });
 
-    return completion.choices[0].message.parsed;
+    return {
+      descriptions: completion.choices[0].message.parsed,
+      usage: completion.usage,
+    };
   } catch (error) {
     console.error('Error during LLM response parsing:', error);
     return null;
@@ -115,36 +145,58 @@ async function generateEventDescription(eventName, event, codebaseDir) {
   const eventDescriptionSchema = createEventDescriptionSchema(properties);
 
   // Send prompt to the LLM and get the structured response
-  const descriptions = await sendPromptToLLM(prompt, eventDescriptionSchema);
+  const { descriptions, usage } = await sendPromptToLLM(prompt, eventDescriptionSchema);
 
-  return { eventName, descriptions };
+  return { eventName, descriptions, usage };
 }
 
 async function generateDescriptions(events, codebaseDir) {
+  console.log(`Generating descriptions using ${model}`);
+
   const eventPromises = Object.entries(events).map(([eventName, event]) =>
     generateEventDescription(eventName, event, codebaseDir)
   );
 
+  console.log(`Running ${eventPromises.length} prompts in parallel...`);
+
   const results = await Promise.all(eventPromises);
 
+  let promptTokens = 0;
+  let completionTokens = 0;
+
   // Process results and update the events object
-  results.forEach(({ eventName, descriptions }) => {
+  results.forEach(({ eventName, descriptions, usage }) => {
     if (descriptions) {
+      promptTokens += usage.prompt_tokens;
+      completionTokens += usage.completion_tokens;
+
       const event = events[eventName];
       event.description = descriptions.eventDescription;
 
-      // Update property descriptions
-      for (const propName in descriptions.properties) {
-        if (event.properties[propName]) {
-          event.properties[propName].description = descriptions.properties[propName].description;
+      // Update property descriptions recursively
+      function updatePropertyDescriptions(eventProperties, descriptionProperties) {
+        for (const propName in descriptionProperties) {
+          if (eventProperties[propName]) {
+            eventProperties[propName].description = descriptionProperties[propName].description;
+            if (eventProperties[propName].properties && descriptionProperties[propName].properties) {
+              updatePropertyDescriptions(
+                eventProperties[propName].properties,
+                descriptionProperties[propName].properties
+              );
+            }
+          }
         }
       }
+
+      updatePropertyDescriptions(event.properties, descriptions.properties);
 
       // Update implementations with descriptions
       for (let i = 0; i < descriptions.implementations.length; i++) {
         if (event.implementations[i]) {
-          if (event.implementations[i].path === descriptions.implementations[i].path && 
-              event.implementations[i].line === descriptions.implementations[i].line) {
+          if (
+            event.implementations[i].path === descriptions.implementations[i].path &&
+            event.implementations[i].line === descriptions.implementations[i].line
+          ) {
             event.implementations[i].description = descriptions.implementations[i].description;
           } else {
             console.error(`Returned implementation description does not match path or line for event: ${eventName}`);
@@ -155,6 +207,10 @@ async function generateDescriptions(events, codebaseDir) {
       console.error(`Failed to get description for event: ${eventName}`);
     }
   });
+
+  console.log(`Prompt tokens used: ${promptTokens}`);
+  console.log(`Completion tokens used: ${completionTokens}`);
+  console.log(`Total tokens used: ${promptTokens + completionTokens}`);
 
   return events;
 }

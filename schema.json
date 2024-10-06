@@ -71,6 +71,10 @@
                       "unknown"
                     ],
                     "description": "Name of the platform where the event is sent"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Description of how the event is triggered"
                   }
                 },
                 "required": [
@@ -89,6 +93,10 @@
                   "$ref": "#/definitions/property"
                 }
               }
+            },
+            "description": {
+              "type": "string",
+              "description": "Description of the event"
             }
           },
           "required": [
