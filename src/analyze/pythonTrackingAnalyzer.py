@@ -401,3 +401,23 @@ def analyze_python_code(code, filepath):
     
     # Return events as JSON
     return json.dumps(visitor.events) 
+
+if __name__ == "__main__":
+    import sys
+    
+    if len(sys.argv) != 2:
+        print("Usage: python pythonTrackingAnalyzer.py <python_file>")
+        sys.exit(1)
+        
+    filepath = sys.argv[1]
+    try:
+        with open(filepath, 'r') as f:
+            code = f.read()
+        result = analyze_python_code(code, filepath)
+        print(result)
+    except FileNotFoundError:
+        print(f"Error: File '{filepath}' not found")
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error analyzing file: {str(e)}")
+        sys.exit(1)
