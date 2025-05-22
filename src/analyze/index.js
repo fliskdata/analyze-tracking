@@ -31,7 +31,7 @@ async function analyzeDirectory(dirPath, customFunction) {
     } else if (isPythonFile) {
       events = await analyzePythonFile(file, customFunction);
     } else if (isRubyFile) {
-      events = await analyzeRubyFile(file);
+      events = await analyzeRubyFile(file, customFunction);
     } else {
       console.info(`Skipping file ${file} because it is not a supported file type`);
       continue;

@@ -4,12 +4,13 @@ let parse = null;
 
 // Create a visitor to traverse the AST
 class TrackingVisitor {
-  constructor(code, filePath) {
+  constructor(code, filePath, customFunction=null) {
     this.code = code;
     this.lines = code.split('\n');
     this.ancestors = [];
     this.events = [];
     this.filePath = filePath;
+    this.customFunction = customFunction;
   }
 
   getLineNumber(location) {
@@ -58,6 +59,9 @@ class TrackingVisitor {
     
     // Snowplow (typically tracker.track_struct_event)
     if (node.name === 'track_struct_event') return 'snowplow';
+    
+    // Custom tracking function
+    if (this.customFunction && node.name === this.customFunction) return 'custom';
   
     return null;
   }
@@ -91,6 +95,14 @@ class TrackingVisitor {
       const params = node.arguments_.arguments_[0].elements;
       const actionProperty = params.find(param => param?.key?.unescaped?.value === 'action');
       return actionProperty?.value?.unescaped?.value || null;
+    }
+    
+    if (source === 'custom') {
+      // Custom function format: customFunction('event_name', {...})
+      const args = node.arguments_.arguments_;
+      if (args && args.length > 0 && args[0]?.unescaped?.value) {
+        return args[0].unescaped.value;
+      }
     }
 
     return null;
@@ -203,6 +215,14 @@ class TrackingVisitor {
       }
       
       return properties;
+    }
+    
+    if (source === 'custom') {
+      // Custom function format: customFunction('event_name', {properties})
+      const args = node.arguments_.arguments_;
+      if (args && args.length > 1 && args[1] instanceof HashNode) {
+        return await this.extractHashProperties(args[1]);
+      }
     }
 
     return null;
@@ -356,7 +376,7 @@ class TrackingVisitor {
   }
 }
 
-async function analyzeRubyFile(filePath) {
+async function analyzeRubyFile(filePath, customFunction) {
   // Lazy load the ruby prism parser
   if (!parse) {
     const { loadPrism } = await import('@ruby/prism');
@@ -374,7 +394,7 @@ async function analyzeRubyFile(filePath) {
     }
 
     // Traverse the AST starting from the program node
-    const visitor = new TrackingVisitor(code, filePath);
+    const visitor = new TrackingVisitor(code, filePath, customFunction);
     await visitor.visit(ast.value);
 
     return visitor.events;
