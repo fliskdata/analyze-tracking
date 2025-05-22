@@ -130,3 +130,11 @@ dist
 .pnp.*
 
 .DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyw
+*.pyz
