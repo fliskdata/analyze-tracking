@@ -40,13 +40,24 @@ class TrackingVisitor {
   detectSource(node) {
     if (!node) return null;
   
-    // Check for other analytics libraries
+    // Check for analytics libraries
     if (node.receiver) {
       const objectName = node.receiver.name;
       const methodName = node.name;
 
+      // Segment
       if (objectName === 'Analytics' && methodName === 'track') return 'segment';
+      
+      // Mixpanel (Ruby SDK uses Mixpanel::Tracker instance)
+      if (methodName === 'track' && node.receiver.type === 'CallNode' && 
+          node.receiver.name === 'tracker') return 'mixpanel';
+      
+      // PostHog
+      if (objectName === 'posthog' && methodName === 'capture') return 'posthog';
     }
+    
+    // Snowplow (typically tracker.track_struct_event)
+    if (node.name === 'track_struct_event') return 'snowplow';
   
     return null;
   }
@@ -56,6 +67,30 @@ class TrackingVisitor {
       const params = node.arguments_.arguments_[0].elements;
       const eventProperty = params.find(param => param?.key?.unescaped?.value === 'event');
       return eventProperty?.value?.unescaped?.value || null;
+    }
+
+    if (source === 'mixpanel') {
+      // Mixpanel Ruby SDK format: tracker.track('distinct_id', 'event_name', {...})
+      const args = node.arguments_.arguments_;
+      if (args && args.length > 1 && args[1]?.unescaped?.value) {
+        return args[1].unescaped.value;
+      }
+    }
+
+    if (source === 'posthog') {
+      // PostHog Ruby SDK format: posthog.capture({distinct_id: '...', event: '...', properties: {...}})
+      const hashArg = node.arguments_.arguments_[0];
+      if (hashArg && hashArg.elements) {
+        const eventProperty = hashArg.elements.find(elem => elem?.key?.unescaped?.value === 'event');
+        return eventProperty?.value?.unescaped?.value || null;
+      }
+    }
+
+    if (source === 'snowplow') {
+      // Snowplow Ruby SDK: tracker.track_struct_event(category: '...', action: '...', ...)
+      const params = node.arguments_.arguments_[0].elements;
+      const actionProperty = params.find(param => param?.key?.unescaped?.value === 'action');
+      return actionProperty?.value?.unescaped?.value || null;
     }
 
     return null;
@@ -103,6 +138,70 @@ class TrackingVisitor {
         }
       }
 
+      return properties;
+    }
+
+    if (source === 'mixpanel') {
+      // Mixpanel Ruby SDK: tracker.track('distinct_id', 'event_name', {properties})
+      const args = node.arguments_.arguments_;
+      const properties = {};
+      
+      // Add distinct_id as property
+      if (args && args.length > 0 && args[0]?.unescaped?.value) {
+        properties.distinct_id = {
+          type: 'string'
+        };
+      }
+      
+      // Extract properties from third argument if it exists
+      if (args && args.length > 2 && args[2] instanceof HashNode) {
+        const propsHash = await this.extractHashProperties(args[2]);
+        Object.assign(properties, propsHash);
+      }
+      
+      return properties;
+    }
+
+    if (source === 'posthog') {
+      // PostHog Ruby SDK: posthog.capture({distinct_id: '...', event: '...', properties: {...}})
+      const hashArg = node.arguments_.arguments_[0];
+      const properties = {};
+      
+      if (hashArg && hashArg.elements) {
+        // Extract distinct_id if present
+        const distinctIdProperty = hashArg.elements.find(elem => elem?.key?.unescaped?.value === 'distinct_id');
+        if (distinctIdProperty?.value) {
+          properties.distinct_id = {
+            type: await this.getValueType(distinctIdProperty.value)
+          };
+        }
+        
+        // Extract properties
+        const propsProperty = hashArg.elements.find(elem => elem?.key?.unescaped?.value === 'properties');
+        if (propsProperty?.value instanceof HashNode) {
+          const props = await this.extractHashProperties(propsProperty.value);
+          Object.assign(properties, props);
+        }
+      }
+      
+      return properties;
+    }
+
+    if (source === 'snowplow') {
+      // Snowplow Ruby SDK: tracker.track_struct_event(category: '...', action: '...', ...)
+      const params = node.arguments_.arguments_[0].elements;
+      const properties = {};
+      
+      // Extract all struct event parameters except 'action' (which is used as the event name)
+      for (const param of params) {
+        const key = param?.key?.unescaped?.value;
+        if (key && key !== 'action') {
+          properties[key] = {
+            type: await this.getValueType(param.value)
+          };
+        }
+      }
+      
       return properties;
     }
 
