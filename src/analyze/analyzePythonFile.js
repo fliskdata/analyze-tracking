@@ -12,7 +12,7 @@ async function initPyodide() {
   return pyodide;
 }
 
-async function analyzePythonFile(filePath) {
+async function analyzePythonFile(filePath, customFunction) {
   try {
     const code = fs.readFileSync(filePath, 'utf8');
     const py = await initPyodide();
@@ -24,10 +24,11 @@ async function analyzePythonFile(filePath) {
     // Add file content and analyzer code to Python environment
     py.globals.set('code', code);
     py.globals.set('filepath', filePath);
+    py.globals.set('custom_function', customFunction || null);
     
     // Run the Python analyzer
     py.runPython(analyzerCode);
-    const result = py.runPython('analyze_python_code(code, filepath)');
+    const result = py.runPython('analyze_python_code(code, filepath, custom_function)');
     const events = JSON.parse(result);
     
     return events;

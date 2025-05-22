@@ -2,7 +2,7 @@ import ast
 import json
 
 class TrackingVisitor(ast.NodeVisitor):
-    def __init__(self, filepath):
+    def __init__(self, filepath, custom_function=None):
         self.events = []
         self.filepath = filepath
         self.current_function = 'global'
@@ -11,6 +11,8 @@ class TrackingVisitor(ast.NodeVisitor):
         self.var_types = {}
         # Stack of variable type scopes
         self.var_types_stack = []
+        # Custom tracking function name
+        self.custom_function = custom_function
         
     def visit_FunctionDef(self, node):
         # Save previous function context and variable types
@@ -159,12 +161,17 @@ class TrackingVisitor(ast.NodeVisitor):
                 if node.args[0].value == 'trackStructEvent':
                     return 'snowplow'
         
+        # Check for custom tracking function
+        if self.custom_function and isinstance(node.func, ast.Name) and node.func.id == self.custom_function:
+            return 'custom'
+        
         return None
     
     def extract_event_name(self, node, source):
         try:
-            if source in ['segment', 'mixpanel', 'amplitude', 'rudderstack', 'pendo', 'heap']:
+            if source in ['segment', 'mixpanel', 'amplitude', 'rudderstack', 'pendo', 'heap', 'custom']:
                 # Standard format: library.track('event_name', {...})
+                # Custom function follows same format: customFunction('event_name', {...})
                 if len(node.args) >= 1 and isinstance(node.args[0], ast.Constant):
                     return node.args[0].value
             
@@ -220,8 +227,9 @@ class TrackingVisitor(ast.NodeVisitor):
             props_node = None
             
             # Get the properties object based on source
-            if source in ['segment', 'mixpanel', 'amplitude', 'rudderstack', 'mparticle', 'pendo', 'heap']:
+            if source in ['segment', 'mixpanel', 'amplitude', 'rudderstack', 'mparticle', 'pendo', 'heap', 'custom']:
                 # Standard format: library.track('event_name', {properties})
+                # Custom function follows same format: customFunction('event_name', {...})
                 if len(node.args) > 1:
                     props_node = node.args[1]
             
@@ -292,7 +300,14 @@ class TrackingVisitor(ast.NodeVisitor):
                             # Check if we know the type of this variable
                             var_name = value_node.id
                             if var_name in self.var_types:
-                                properties[key] = {"type": self.var_types[var_name]}
+                                # Get the type for this variable
+                                var_type = self.var_types[var_name]
+                                
+                                # Handle structured types (arrays or objects)
+                                if isinstance(var_type, dict):
+                                    properties[key] = var_type
+                                else:
+                                    properties[key] = {"type": var_type}
                             else:
                                 properties[key] = {"type": "any"}
                         elif isinstance(value_node, ast.Dict):
@@ -393,30 +408,31 @@ class TrackingVisitor(ast.NodeVisitor):
             return "null"
         return "any"
 
-def analyze_python_code(code, filepath):
+def analyze_python_code(code, filepath, custom_function=None):
     # Parse the Python code
     tree = ast.parse(code)
-    visitor = TrackingVisitor(filepath)
+    visitor = TrackingVisitor(filepath, custom_function)
     visitor.visit(tree)
     
     # Return events as JSON
-    return json.dumps(visitor.events) 
+    return json.dumps(visitor.events)
 
 if __name__ == "__main__":
     import sys
+    import argparse
     
-    if len(sys.argv) != 2:
-        print("Usage: python pythonTrackingAnalyzer.py <python_file>")
-        sys.exit(1)
-        
-    filepath = sys.argv[1]
+    parser = argparse.ArgumentParser(description='Analyze Python code for tracking calls')
+    parser.add_argument('file', help='Python file to analyze')
+    parser.add_argument('-c', '--custom-function', help='Name of custom tracking function')
+    args = parser.parse_args()
+    
     try:
-        with open(filepath, 'r') as f:
+        with open(args.file, 'r') as f:
             code = f.read()
-        result = analyze_python_code(code, filepath)
+        result = analyze_python_code(code, args.file, args.custom_function)
         print(result)
     except FileNotFoundError:
-        print(f"Error: File '{filepath}' not found")
+        print(f"Error: File '{args.file}' not found")
         sys.exit(1)
     except Exception as e:
         print(f"Error analyzing file: {str(e)}")

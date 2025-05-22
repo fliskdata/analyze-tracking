@@ -3,8 +3,8 @@ const ts = require('typescript');
 const { getAllFiles } = require('../fileProcessor');
 const { analyzeJsFile } = require('./analyzeJsFile');
 const { analyzeTsFile } = require('./analyzeTsFile');
-const { analyzeRubyFile } = require('./analyzeRubyFile');
 const { analyzePythonFile } = require('./analyzePythonFile');
+const { analyzeRubyFile } = require('./analyzeRubyFile');
 
 async function analyzeDirectory(dirPath, customFunction) {
   const allEvents = {};
@@ -21,17 +21,17 @@ async function analyzeDirectory(dirPath, customFunction) {
 
     const isJsFile = /\.(jsx?)$/.test(file);
     const isTsFile = /\.(tsx?)$/.test(file);
-    const isRubyFile = /\.(rb)$/.test(file);
     const isPythonFile = /\.(py)$/.test(file);
+    const isRubyFile = /\.(rb)$/.test(file);
 
     if (isJsFile) {
       events = analyzeJsFile(file, customFunction);
     } else if (isTsFile) {
       events = analyzeTsFile(file, tsProgram, customFunction);
+    } else if (isPythonFile) {
+      events = await analyzePythonFile(file, customFunction);
     } else if (isRubyFile) {
       events = await analyzeRubyFile(file);
-    } else if (isPythonFile) {
-      events = await analyzePythonFile(file);
     } else {
       console.info(`Skipping file ${file} because it is not a supported file type`);
       continue;
