@@ -25,7 +25,35 @@ async function analyzeGoFile(filePath, customFunction) {
       }
     }
     
-    return events;
+    // Deduplicate events based on eventName, source, and function
+    const uniqueEvents = [];
+    const seen = new Set();
+    
+    for (const event of events) {
+      // For Amplitude, we want to keep the line number from the struct literal
+      // For other sources, we can use any line number since they don't have this issue
+      const key = `${event.eventName}:${event.source}:${event.functionName}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        uniqueEvents.push(event);
+      } else {
+        // If we've seen this event before and it's Amplitude, check if this is the struct literal version
+        const existingEvent = uniqueEvents.find(e => 
+          e.eventName === event.eventName && 
+          e.source === event.source && 
+          e.functionName === event.functionName
+        );
+        
+        // If this is Amplitude and the existing event is from the function call (higher line number),
+        // replace it with this one (from the struct literal)
+        if (event.source === 'amplitude' && existingEvent && existingEvent.line > event.line) {
+          const index = uniqueEvents.indexOf(existingEvent);
+          uniqueEvents[index] = event;
+        }
+      }
+    }
+    
+    return uniqueEvents;
   } catch (error) {
     console.error(`Error analyzing Go file ${filePath}:`, error.message);
     return [];
