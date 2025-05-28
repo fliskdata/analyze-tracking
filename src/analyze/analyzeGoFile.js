@@ -130,8 +130,17 @@ function extractTrackingCall(callNode, filePath, functionName, customFunction) {
   
   const properties = extractProperties(callNode, source);
   
-  // Use line number from AST node if available
-  const line = callNode.line || 0;
+  // Get line number based on source type
+  let line = 0;
+  if (source === 'segment' || source === 'posthog') {
+    // For Segment and PostHog, we need to get the line number from the struct.struct object
+    if (callNode.tag === 'structlit' && callNode.struct && callNode.struct.struct) {
+      line = callNode.struct.struct.line || 0;
+    }
+  } else {
+    // For other sources, use the line number from the AST node
+    line = callNode.line || 0;
+  }
   
   return {
     eventName,
