@@ -540,13 +540,72 @@ function extractSegmentProperties(expr, properties) {
   
   // Look for method calls in the expression
   if (expr.tag === 'expr' && expr.body) {
-    for (const item of expr.body) {
-      if (item.tag === 'call' && item.func && item.func.tag === 'access') {
-        if (item.func.member === 'Set' && item.args && item.args.length >= 2) {
-          // Set("key", value)
-          const key = extractStringValue(item.args[0]);
-          if (key) {
-            properties[key] = getPropertyInfo(item.args[1]);
+    // Find the NewProperties() call in the chain
+    const newPropsCall = expr.body.find(item => 
+      item.tag === 'access' && 
+      item.struct && 
+      item.struct.tag === 'call' && 
+      item.struct.func && 
+      item.struct.func.tag === 'access' && 
+      item.struct.func.member === 'NewProperties'
+    );
+    
+    if (newPropsCall) {
+      // Process all items in the body to find Set() calls
+      for (const item of expr.body) {
+        // Handle both direct Set() calls and Set() calls in access nodes
+        if (item.tag === 'call' && item.func) {
+          const funcName = item.func.tag === 'ident' ? item.func.value : 
+                          (item.func.tag === 'access' ? item.func.member : null);
+          
+          if (funcName === 'Set' && item.args && item.args.length >= 2) {
+            const key = extractStringValue(item.args[0]);
+            if (key) {
+              const value = item.args[1];
+              // Handle different value types
+              if (value.tag === 'expr' && value.body) {
+                const firstItem = value.body[0];
+                if (firstItem.tag === 'string') {
+                  properties[key] = { type: 'string' };
+                } else if (firstItem.tag === 'ident') {
+                  if (firstItem.value === 'true' || firstItem.value === 'false') {
+                    properties[key] = { type: 'boolean' };
+                  } else if (firstItem.value === 'nil') {
+                    properties[key] = { type: 'null' };
+                  } else {
+                    properties[key] = { type: 'any' };
+                  }
+                } else if (firstItem.tag === 'number') {
+                  properties[key] = { type: 'number' };
+                }
+              }
+            }
+          }
+        } else if (item.tag === 'access' && item.struct && item.struct.tag === 'call') {
+          // Handle chained Set() calls
+          const call = item.struct;
+          if (call.func && call.func.tag === 'ident' && call.func.value === 'Set' && call.args && call.args.length >= 2) {
+            const key = extractStringValue(call.args[0]);
+            if (key) {
+              const value = call.args[1];
+              // Handle different value types
+              if (value.tag === 'expr' && value.body) {
+                const firstItem = value.body[0];
+                if (firstItem.tag === 'string') {
+                  properties[key] = { type: 'string' };
+                } else if (firstItem.tag === 'ident') {
+                  if (firstItem.value === 'true' || firstItem.value === 'false') {
+                    properties[key] = { type: 'boolean' };
+                  } else if (firstItem.value === 'nil') {
+                    properties[key] = { type: 'null' };
+                  } else {
+                    properties[key] = { type: 'any' };
+                  }
+                } else if (firstItem.tag === 'number') {
+                  properties[key] = { type: 'number' };
+                }
+              }
+            }
           }
         }
       }
