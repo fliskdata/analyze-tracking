@@ -5,6 +5,7 @@ const { analyzeJsFile } = require('./analyzeJsFile');
 const { analyzeTsFile } = require('./analyzeTsFile');
 const { analyzePythonFile } = require('./analyzePythonFile');
 const { analyzeRubyFile } = require('./analyzeRubyFile');
+const { analyzeGoFile } = require('./analyzeGoFile');
 
 async function analyzeDirectory(dirPath, customFunction) {
   const allEvents = {};
@@ -23,6 +24,7 @@ async function analyzeDirectory(dirPath, customFunction) {
     const isTsFile = /\.(tsx?)$/.test(file);
     const isPythonFile = /\.(py)$/.test(file);
     const isRubyFile = /\.(rb)$/.test(file);
+    const isGoFile = /\.(go)$/.test(file);
 
     if (isJsFile) {
       events = analyzeJsFile(file, customFunction);
@@ -32,6 +34,8 @@ async function analyzeDirectory(dirPath, customFunction) {
       events = await analyzePythonFile(file, customFunction);
     } else if (isRubyFile) {
       events = await analyzeRubyFile(file, customFunction);
+    } else if (isGoFile) {
+      events = await analyzeGoFile(file, customFunction);
     } else {
       console.info(`Skipping file ${file} because it is not a supported file type`);
       continue;

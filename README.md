@@ -38,10 +38,19 @@ npx @flisk/analyze-tracking /path/to/project [options]
   Use this if you have your own in-house tracker or a wrapper function that calls other tracking libraries.
 
   We currently only support functions that follow the following format:
+  
+  **JavaScript/TypeScript/Python/Ruby:**
   ```js
   yourCustomTrackFunctionName('<event_name>', {
     <event_parameters>
   });
+  ```
+  
+  **Go:**
+  ```go
+  yourCustomTrackFunctionName("<event_name>", map[string]any{}{
+    "<property_name>": "<property_value>",
+  })
   ```
 </details>
 
@@ -76,23 +85,25 @@ Use this to understand where your events live in the code and how they're being 
 Your LLM of choice is used for generating descriptions of events, properties, and implementations.
 
 See [schema.json](schema.json) for a JSON Schema of the output.
-
+ 
 
 ## Supported tracking libraries & languages
 
-| Library | JavaScript/TypeScript | Python | Ruby |
-|---------|:---------------------:|:------:|:----:|
-| Google Analytics | ✅ | ❌ | ❌ |
-| Segment | ✅ | ✅ | ✅ |
-| Mixpanel | ✅ | ✅ | ✅ |
-| Amplitude | ✅ | ✅ | ❌ |
-| Rudderstack | ✅ | ✅ | ❌ |
-| mParticle | ✅ | ✅ | ❌ |
-| PostHog | ✅ | ✅ | ✅ |
-| Pendo | ✅ | ✅ | ❌ |
-| Heap | ✅ | ✅ | ❌ |
-| Snowplow | ✅ | ✅ | ✅ |
-| Custom Function | ✅ | ✅ | ✅ |
+| Library | JavaScript/TypeScript | Python | Ruby | Go |
+|---------|:---------------------:|:------:|:----:|:--:|
+| Google Analytics  | ✅ | ❌ | ❌ | ❌ |
+| Segment           | ✅ | ✅ | ✅ | ✅ |
+| Mixpanel          | ✅ | ✅ | ✅ | ✅ |
+| Amplitude         | ✅ | ✅ | ❌ | ✅ |
+| Rudderstack       | ✅ | ✅ | ✳️ | ✳️ |
+| mParticle         | ✅ | ✅ | ❌ | ❌ |
+| PostHog           | ✅ | ✅ | ✅ | ✅ |
+| Pendo             | ✅ | ✅ | ❌ | ❌ |
+| Heap              | ✅ | ✅ | ❌ | ❌ |
+| Snowplow          | ✅ | ✅ | ✅ | ✅ |
+| Custom Function   | ✅ | ✅ | ✅ | ✅ |
+
+✳️ Rudderstack's SDKs often use the same format as Segment, so Rudderstack events may be detected as Segment events.
 
 
 ## SDKs for supported libraries
@@ -103,7 +114,7 @@ See [schema.json](schema.json) for a JSON Schema of the output.
   **JavaScript/TypeScript**
   ```js
   gtag('event', '<event_name>', {
-    <event_parameters>
+    '<property_name>': '<property_value>'
   });
   ```
 </details>
@@ -114,7 +125,7 @@ See [schema.json](schema.json) for a JSON Schema of the output.
   **JavaScript/TypeScript**
   ```js
   analytics.track('<event_name>', {
-    <event_parameters>
+    '<property_name>': '<property_value>'
   });
   ```
 
@@ -130,9 +141,19 @@ See [schema.json](schema.json) for a JSON Schema of the output.
   Analytics.track(
     event: '<event_name>',
     properties: {
-      <event_parameters>
+      '<property_name>': '<property_value>'
     }
   )
+  ```
+
+  **Go**
+  ```go
+  client.Enqueue(analytics.Track{
+    UserId: "user-id",
+    Event:  "<event_name>",
+    Properties: analytics.NewProperties().
+      Set("<property_name>", "<property_value>"),
+  })
   ```
 </details>
 
@@ -142,7 +163,7 @@ See [schema.json](schema.json) for a JSON Schema of the output.
   **JavaScript/TypeScript**
   ```js
   mixpanel.track('<event_name>', {
-    <event_parameters>
+    '<property_name>': '<property_value>'
   });
   ```
 
@@ -155,8 +176,19 @@ See [schema.json](schema.json) for a JSON Schema of the output.
 
   **Ruby**
   ```ruby
-  tracker.track('distinct_id', '<event_name>', {
+  tracker.track('<distinct_id>', '<event_name>', {
     '<property_name>': '<property_value>'
+  })
+  ```
+
+  **Go**
+  ```go
+  ctx := context.Background()
+  mp := mixpanel.NewApiClient("YOUR_PROJECT_TOKEN")
+  mp.Track(ctx, []*mixpanel.Event{
+    mp.NewEvent("<event_name>", "", map[string]any{}{
+      "<property_name>": "<property_value>",
+    }),
   })
   ```
 </details>
@@ -177,6 +209,17 @@ See [schema.json](schema.json) for a JSON Schema of the output.
     '<property_name>': '<property_value>'
   })
   ```
+
+  **Go**
+  ```go
+  client.Track(amplitude.Event{
+    UserID:    "<user_id>",
+    EventType: "<event_name>",
+    EventProperties: map[string]any{}{
+      "<property_name>": "<property_value>",
+    },
+  })
+  ```
 </details>
 
 <details>
@@ -191,8 +234,29 @@ See [schema.json](schema.json) for a JSON Schema of the output.
 
   **Python**
   ```python
-  rudderanalytics.track('<event_name>', {
+  rudder_analytics.track('<event_name>', {
     '<property_name>': '<property_value>'
+  })
+  ```
+
+  **Ruby**
+  ```ruby
+  analytics.track(
+    user_id: '<user_id>',
+    event: '<event_name>',
+    properties: {
+      '<property_name>': '<property_value>'
+    }
+  )
+  ```
+
+  **Go**
+  ```go
+  client.Enqueue(analytics.Track{
+    UserId: "<user_id>",
+    Event:  "<event_name>",
+    Properties: analytics.NewProperties().
+      Set("<property_name>", "<property_value>"),
   })
   ```
 </details>
@@ -203,7 +267,7 @@ See [schema.json](schema.json) for a JSON Schema of the output.
   **JavaScript/TypeScript**
   ```js
   mParticle.logEvent('<event_name>', {
-    <event_parameters>
+    '<property_name>': '<property_value>'
   });
   ```
 
@@ -213,6 +277,8 @@ See [schema.json](schema.json) for a JSON Schema of the output.
     '<property_name>': '<property_value>'
   })
   ```
+
+
 </details>
 
 <details>
@@ -221,7 +287,7 @@ See [schema.json](schema.json) for a JSON Schema of the output.
   **JavaScript/TypeScript**
   ```js
   posthog.capture('<event_name>', {
-    <event_parameters>
+    '<property_name>': '<property_value>'
   });
   ```
 
@@ -254,6 +320,16 @@ See [schema.json](schema.json) for a JSON Schema of the output.
     }
   })
   ```
+
+  **Go**
+  ```go
+  client.Enqueue(posthog.Capture{
+    DistinctId: "<distinct_id>",
+    Event:      "<event_name>",
+    Properties: posthog.NewProperties().
+      Set("<property_name>", "<property_value>"),
+  })
+  ```
 </details>
 
 <details>
@@ -272,6 +348,8 @@ See [schema.json](schema.json) for a JSON Schema of the output.
     '<property_name>': '<property_value>'
   })
   ```
+
+
 </details>
 
 <details>
@@ -290,10 +368,12 @@ See [schema.json](schema.json) for a JSON Schema of the output.
     '<property_name>': '<property_value>'
   })
   ```
+
+
 </details>
 
 <details>
-  <summary>Snowplow (struct events)</summary>
+  <summary>Snowplow (Structured Events)</summary>
 
   **JavaScript/TypeScript**
   ```js
@@ -347,7 +427,16 @@ See [schema.json](schema.json) for a JSON Schema of the output.
   )
   ```
 
-  _Note: Snowplow Self Describing Events are coming soon!_
+  **Go**
+  ```go
+  tracker.TrackStructEvent(sp.StructuredEvent{
+		Category: sp.NewString("<category>"),
+		Action:   sp.NewString("<action>"),
+		Label:    sp.NewString("<label>"),
+		Property: sp.NewString("<property>"),
+		Value:    sp.NewFloat64(<value>),
+	})
+  ```
 </details>
 
 

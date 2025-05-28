@@ -136,7 +136,7 @@ class TrackingVisitor(ast.NodeVisitor):
                 if obj_id == 'amplitude' and method_name == 'track':
                     return 'amplitude'
                 # Rudderstack
-                if obj_id == 'rudderanalytics' and method_name == 'track':
+                if obj_id == 'rudder_analytics' and method_name == 'track':
                     return 'rudderstack'
                 # mParticle
                 if obj_id == 'mParticle' and method_name == 'logEvent':
