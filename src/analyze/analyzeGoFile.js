@@ -434,8 +434,38 @@ function extractProperties(callNode, source) {
         if (eventPropsField) {
           extractPropertiesFromExpr(eventPropsField.value, properties, source);
         }
+
+        // Extract EventOptions
+        const eventOptionsField = findStructField(callNode, 'EventOptions');
+        if (eventOptionsField && eventOptionsField.value) {
+          // Navigate through the expression body to find the structlit
+          const exprBody = eventOptionsField.value.body;
+          if (exprBody && exprBody.length >= 3) {
+            const structlit = exprBody[2];
+            if (structlit && structlit.tag === 'structlit' && structlit.fields) {
+              // Process each field in EventOptions
+              for (const field of structlit.fields) {
+                if (field.value && field.value.tag === 'expr' && field.value.body) {
+                  const body = field.value.body;
+                  if (body.length >= 3 && 
+                      body[0].tag === 'ident' && 
+                      body[1].tag === 'op' && 
+                      body[1].value === ':') {
+                    const fieldName = body[0].value;
+                    const value = body[2];
+                    if (value.tag === 'number') {
+                      properties[fieldName] = { type: 'number' };
+                    } else {
+                      properties[fieldName] = getPropertyInfo(value);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
-      // For function calls: client.Track(amplitude.Event{UserID: "...", EventProperties: map[string]interface{}{...}})
+      // For function calls: client.Track(amplitude.Event{...})
       else if (callNode.args && callNode.args.length > 0) {
         const eventStruct = findStructLiteral(callNode.args[0]);
         if (eventStruct && eventStruct.fields) {
@@ -449,6 +479,36 @@ function extractProperties(callNode, source) {
           const eventPropsField = findStructField(eventStruct, 'EventProperties');
           if (eventPropsField) {
             extractPropertiesFromExpr(eventPropsField.value, properties, source);
+          }
+
+          // Extract EventOptions
+          const eventOptionsField = findStructField(eventStruct, 'EventOptions');
+          if (eventOptionsField && eventOptionsField.value) {
+            // Navigate through the expression body to find the structlit
+            const exprBody = eventOptionsField.value.body;
+            if (exprBody && exprBody.length >= 3) {
+              const structlit = exprBody[2];
+              if (structlit && structlit.tag === 'structlit' && structlit.fields) {
+                // Process each field in EventOptions
+                for (const field of structlit.fields) {
+                  if (field.value && field.value.tag === 'expr' && field.value.body) {
+                    const body = field.value.body;
+                    if (body.length >= 3 && 
+                        body[0].tag === 'ident' && 
+                        body[1].tag === 'op' && 
+                        body[1].value === ':') {
+                      const fieldName = body[0].value;
+                      const value = body[2];
+                      if (value.tag === 'number') {
+                        properties[fieldName] = { type: 'number' };
+                      } else {
+                        properties[fieldName] = getPropertyInfo(value);
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -523,11 +583,14 @@ function extractFieldName(field) {
     return field.name;
   }
   
-  if (field.value && field.value.tag === 'expr' && field.value.body && field.value.body.length >= 3) {
-    const firstNode = field.value.body[0];
-    const colonNode = field.value.body[1];
-    if (firstNode && firstNode.tag === 'ident' && colonNode && colonNode.value === ':') {
-      return firstNode.value;
+  if (field.value && field.value.tag === 'expr' && field.value.body) {
+    // Look for pattern: fieldName: value
+    const body = field.value.body;
+    if (body.length >= 3 && 
+        body[0].tag === 'ident' && 
+        body[1].tag === 'op' && 
+        body[1].value === ':') {
+      return body[0].value;
     }
   }
   
