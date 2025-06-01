@@ -275,4 +275,85 @@ test.describe('CLI End-to-End Tests', () => {
     // Ensure the output does not contain the file generated message
     assert.ok(!stdout.includes('Tracking schema YAML file generated'), 'Should not print output file message when using --stdout');
   });
+  
+  test('should print JSON to stdout when --format json is used', async () => {
+    const targetDir = path.join(fixturesDir, 'javascript');
+    const expectedFile = path.join(fixturesDir, 'javascript', 'tracking-schema-javascript.yaml');
+    const command = `node --no-warnings=ExperimentalWarning "${CLI_PATH}" "${targetDir}" --customFunction "customTrackFunction" --stdout --format json`;
+    let stdout;
+    try {
+      stdout = execSync(command, { encoding: 'utf8' });
+    } catch (error) {
+      assert.fail(`CLI command failed: ${error.message}`);
+    }
+    // Should not contain YAML language server comment
+    assert.ok(!stdout.includes('# yaml-language-server'), 'Should not contain YAML language server comment in JSON output');
+    // Should not contain file output message
+    assert.ok(!stdout.includes('Tracking schema YAML file generated'), 'Should not print output file message when using --stdout and --format json');
+    // Should be valid JSON
+    let actual;
+    try {
+      actual = JSON.parse(stdout);
+    } catch (e) {
+      assert.fail('Output is not valid JSON');
+    }
+    // Compare to expected YAML fixture loaded as JS object
+    const expectedYAML = fs.readFileSync(expectedFile, 'utf8').replace(/^# yaml-language-server:.*\n/, '');
+    const expected = yaml.load(expectedYAML);
+    // Compare version
+    assert.strictEqual(actual.version, expected.version);
+    // Compare source (ignoring dynamic fields like commit and timestamp)
+    assert.ok(actual.source);
+    assert.ok(actual.source.repository);
+    // Compare events using deep equality (order-insensitive)
+    assert.deepStrictEqual(actual.events, expected.events);
+  });
+  
+  test('should write JSON file when --format json is used without --stdout', async () => {
+    const targetDir = path.join(fixturesDir, 'javascript');
+    const outputFile = path.join(tempDir, 'tracking-schema-javascript-test.json');
+    const expectedFile = path.join(fixturesDir, 'javascript', 'tracking-schema-javascript.yaml');
+    const command = `node --no-warnings=ExperimentalWarning "${CLI_PATH}" "${targetDir}" --customFunction "customTrackFunction" --output "${outputFile}" --format json`;
+    let stdout;
+    try {
+      stdout = execSync(command, { encoding: 'utf8' });
+    } catch (error) {
+      assert.fail(`CLI command failed: ${error.message}`);
+    }
+    // Should print output file message
+    assert.ok(stdout.includes('Tracking schema YAML file generated') || stdout.includes('Tracking schema JSON file generated'), 'Should print output file message');
+    // Check output file exists
+    assert.ok(fs.existsSync(outputFile), 'Output file should be created');
+    // Should be valid JSON
+    let actual;
+    try {
+      actual = JSON.parse(fs.readFileSync(outputFile, 'utf8'));
+    } catch (e) {
+      assert.fail('Output file is not valid JSON');
+    }
+    // Compare to expected YAML fixture loaded as JS object
+    const expectedYAML = fs.readFileSync(expectedFile, 'utf8').replace(/^# yaml-language-server:.*\n/, '');
+    const expected = yaml.load(expectedYAML);
+    // Compare version
+    assert.strictEqual(actual.version, expected.version);
+    // Compare source (ignoring dynamic fields like commit and timestamp)
+    assert.ok(actual.source);
+    assert.ok(actual.source.repository);
+    // Compare events using deep equality (order-insensitive)
+    assert.deepStrictEqual(actual.events, expected.events);
+  });
+  
+  test('should fail with a clear error if --format is not yaml or json', async () => {
+    const targetDir = path.join(fixturesDir, 'javascript');
+    const command = `node --no-warnings=ExperimentalWarning "${CLI_PATH}" "${targetDir}" --customFunction "customTrackFunction" --stdout --format xml`;
+    let errorCaught = false;
+    try {
+      execSync(command, { encoding: 'utf8', stdio: 'pipe' });
+    } catch (error) {
+      errorCaught = true;
+      assert.ok(error.stderr.includes('Invalid format'), 'Should mention invalid format');
+      assert.ok(error.stderr.match(/yaml|json/), 'Should mention yaml or json as valid options');
+    }
+    assert.ok(errorCaught, 'CLI should fail for invalid format');
+  });
 });

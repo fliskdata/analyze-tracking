@@ -29,4 +29,19 @@ function generateYamlSchema(events, repository, outputPath, stdout = false) {
   }
 }
 
-module.exports = { generateYamlSchema };
+function generateJsonSchema(events, repository, outputPath, stdout = false) {
+  const schema = {
+    version: VERSION,
+    source: repository,
+    events,
+  };
+  const jsonFile = JSON.stringify(schema, null, 2);
+  if (stdout) {
+    process.stdout.write(jsonFile);
+  } else {
+    fs.writeFileSync(outputPath, jsonFile, 'utf8');
+    console.log(`Tracking schema JSON file generated: ${outputPath}`);
+  }
+}
+
+module.exports = { generateYamlSchema, generateJsonSchema };

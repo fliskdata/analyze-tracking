@@ -69,6 +69,12 @@ const optionDefinitions = [
     type: Boolean,
     defaultValue: false,
   },
+  {
+    name: 'format',
+    alias: 'f',
+    type: String,
+    defaultValue: 'yaml',
+  },
 ]
 const options = commandLineArgs(optionDefinitions);
 const {
@@ -83,6 +89,7 @@ const {
   commitTimestamp,
   help,
   stdout,
+  format,
 } = options;
 
 if (help) {
@@ -119,6 +126,11 @@ if (generateDescription) {
   }
 }
 
+if (format !== 'yaml' && format !== 'json') {
+  console.error(`Invalid format: ${format}. Please use --format yaml or --format json.`);
+  process.exit(1);
+}
+
 run(
   path.resolve(targetDir),
   output,
@@ -127,5 +139,6 @@ run(
   generateDescription,
   provider,
   model,
-  stdout
+  stdout,
+  format
 );
