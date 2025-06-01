@@ -11,7 +11,7 @@ const { generateDescriptions } = require('./generateDescriptions');
 const { ChatOpenAI } = require('@langchain/openai');
 const { ChatVertexAI } = require('@langchain/google-vertexai');
 
-async function run(targetDir, outputPath, customFunction, customSourceDetails, generateDescription, provider, model) {
+async function run(targetDir, outputPath, customFunction, customSourceDetails, generateDescription, provider, model, stdout) {
   let events = await analyzeDirectory(targetDir, customFunction);
   if (generateDescription) {
     let llm;
@@ -35,7 +35,7 @@ async function run(targetDir, outputPath, customFunction, customSourceDetails, g
     events = await generateDescriptions(events, targetDir, llm);
   }
   const repoDetails = await getRepoDetails(targetDir, customSourceDetails);
-  generateYamlSchema(events, repoDetails, outputPath);
+  generateYamlSchema(events, repoDetails, outputPath, stdout);
 }
 
 module.exports = { run };

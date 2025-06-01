@@ -64,6 +64,11 @@ const optionDefinitions = [
     alias: 'h',
     type: Boolean,
   },
+  {
+    name: 'stdout',
+    type: Boolean,
+    defaultValue: false,
+  },
 ]
 const options = commandLineArgs(optionDefinitions);
 const {
@@ -77,6 +82,7 @@ const {
   commitHash,
   commitTimestamp,
   help,
+  stdout,
 } = options;
 
 if (help) {
@@ -113,4 +119,13 @@ if (generateDescription) {
   }
 }
 
-run(path.resolve(targetDir), output, customFunction, customSourceDetails, generateDescription, provider, model);
+run(
+  path.resolve(targetDir),
+  output,
+  customFunction,
+  customSourceDetails,
+  generateDescription,
+  provider,
+  model,
+  stdout
+);

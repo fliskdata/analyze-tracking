@@ -237,4 +237,42 @@ test.describe('CLI End-to-End Tests', () => {
     // Compare YAML files
     compareYAMLFiles(outputFile, expectedFile);
   });
+  
+  test('should print YAML to stdout when --stdout is used', async () => {
+    const targetDir = path.join(fixturesDir, 'javascript');
+    const expectedFile = path.join(fixturesDir, 'javascript', 'tracking-schema-javascript.yaml');
+    const command = `node --no-warnings=ExperimentalWarning "${CLI_PATH}" "${targetDir}" --customFunction "customTrackFunction" --stdout`;
+    let stdout;
+    try {
+      stdout = execSync(command, { encoding: 'utf8' });
+    } catch (error) {
+      assert.fail(`CLI command failed: ${error.message}`);
+    }
+    // Remove the YAML language server comment from both outputs
+    const actualYAML = stdout.replace(/^# yaml-language-server:.*\n/, '');
+    const expectedYAML = fs.readFileSync(expectedFile, 'utf8').replace(/^# yaml-language-server:.*\n/, '');
+    // Parse YAML
+    const actual = yaml.load(actualYAML);
+    const expected = yaml.load(expectedYAML);
+    // Compare version
+    assert.strictEqual(actual.version, expected.version);
+    // Compare source (ignoring dynamic fields like commit and timestamp)
+    assert.ok(actual.source);
+    assert.ok(actual.source.repository);
+    // Compare events using deep equality (order-insensitive)
+    assert.deepStrictEqual(actual.events, expected.events);
+  });
+  
+  test('should not print output file message when --stdout is used', async () => {
+    const targetDir = path.join(fixturesDir, 'javascript');
+    const command = `node --no-warnings=ExperimentalWarning "${CLI_PATH}" "${targetDir}" --customFunction "customTrackFunction" --stdout`;
+    let stdout;
+    try {
+      stdout = execSync(command, { encoding: 'utf8' });
+    } catch (error) {
+      assert.fail(`CLI command failed: ${error.message}`);
+    }
+    // Ensure the output does not contain the file generated message
+    assert.ok(!stdout.includes('Tracking schema YAML file generated'), 'Should not print output file message when using --stdout');
+  });
 });
