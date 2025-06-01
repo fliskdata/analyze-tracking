@@ -29,6 +29,8 @@ npx @flisk/analyze-tracking /path/to/project [options]
 - `-m, --model <model>`: Specify a model (ex: `gpt-4.1-nano`, `gpt-4o-mini`, `gemini-2.0-flash-lite-001`)
 - `-o, --output <output_file>`: Name of the output file (default: `tracking-schema.yaml`)
 - `-c, --customFunction <function_name>`: Specify a custom tracking function
+- `--format <format>`: Output format, either `yaml` (default) or `json`. If an invalid value is provided, the CLI will exit with an error.
+- `--stdout`: Print the output to the terminal instead of writing to a file (works with both YAML and JSON)
 
 🔑&nbsp; **Important:** If you are using `generateDescription`, you must set the appropriate credentials for the LLM provider you are using as an environment variable. OpenAI uses `OPENAI_API_KEY` and Google Vertex AI uses `GOOGLE_APPLICATION_CREDENTIALS`.
 
@@ -416,3 +418,30 @@ See [schema.json](schema.json) for a JSON Schema of the output.
 
 ## Contribute
 We're actively improving this package. Found a bug? Have a feature request? Open an issue or submit a pull request!
+
+#### Examples
+
+Output YAML to a file (default):
+```sh
+npx @flisk/analyze-tracking /path/to/project
+```
+
+Output JSON to a file:
+```sh
+npx @flisk/analyze-tracking /path/to/project --format json --output tracking-schema.json
+```
+
+Print YAML to the terminal:
+```sh
+npx @flisk/analyze-tracking /path/to/project --stdout
+```
+
+Print JSON to the terminal:
+```sh
+npx @flisk/analyze-tracking /path/to/project --format json --stdout
+```
+
+If you provide an invalid format (e.g., `--format xml`), the CLI will print an error and exit:
+```
+Invalid format: xml. Please use --format yaml or --format json.
+```
