@@ -419,29 +419,4 @@ See [schema.json](schema.json) for a JSON Schema of the output.
 ## Contribute
 We're actively improving this package. Found a bug? Have a feature request? Open an issue or submit a pull request!
 
-#### Examples
-
-Output YAML to a file (default):
-```sh
-npx @flisk/analyze-tracking /path/to/project
-```
-
-Output JSON to a file:
-```sh
-npx @flisk/analyze-tracking /path/to/project --format json --output tracking-schema.json
-```
-
-Print YAML to the terminal:
-```sh
-npx @flisk/analyze-tracking /path/to/project --stdout
-```
-
-Print JSON to the terminal:
-```sh
-npx @flisk/analyze-tracking /path/to/project --format json --stdout
-```
-
-If you provide an invalid format (e.g., `--format xml`), the CLI will print an error and exit:
-```
-Invalid format: xml. Please use --format yaml or --format json.
-```
+[![Slack](https://img.shields.io/badge/Join%20Us%20on%20Slack-Flisk%20Community-611f69.svg?logo=slack)](https://join.slack.com/t/fliskcommunity/shared_invite/zt-354hesfnm-BbNzveERo9C4JwVQEWvXoA)
