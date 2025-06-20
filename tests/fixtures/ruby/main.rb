@@ -87,6 +87,19 @@ class TracksController
   def customTrackFunction(event_name, params = {})
     puts "Custom track: #{event_name} - #{params}"
   end
+
+  module CustomModule
+    def track(event_name, params = {})
+      # Mock implementation
+    end
+  end
+
+  def custom_track_module
+    CustomModule.track('custom_event', {
+      key: 'value',
+      nested: { a: [1, 2, 3] }
+    })
+  end
 end
 
 # Snowplow tracking example

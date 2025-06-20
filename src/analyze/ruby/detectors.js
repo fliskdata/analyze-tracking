@@ -36,7 +36,18 @@ function detectSource(node, customFunction = null) {
   if (node.name === 'track_struct_event') return 'snowplow';
   
   // Custom tracking function
-  if (customFunction && node.name === customFunction) return 'custom';
+  if (customFunction) {
+    // Handle simple function names (e.g., 'customTrackFunction')
+    if (node.name === customFunction) return 'custom';
+    
+    // Handle module-scoped function names (e.g., 'CustomModule.track')
+    if (customFunction.includes('.')) {
+      const [moduleName, methodName] = customFunction.split('.');
+      if (node.receiver && node.receiver.name === moduleName && node.name === methodName) {
+        return 'custom';
+      }
+    }
+  }
 
   return null;
 }

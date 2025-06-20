@@ -71,7 +71,7 @@ test.describe('analyzeRubyFile', () => {
     assert.ok(snowplowEvent);
     assert.strictEqual(snowplowEvent.source, 'snowplow');
     assert.strictEqual(snowplowEvent.functionName, 'snowplow_track');
-    assert.strictEqual(snowplowEvent.line, 96);
+    assert.strictEqual(snowplowEvent.line, 109);
     assert.deepStrictEqual(snowplowEvent.properties, {
       category: { type: 'string' },
       label: { type: 'string' },
@@ -103,7 +103,7 @@ test.describe('analyzeRubyFile', () => {
     assert.ok(moduleEvent);
     assert.strictEqual(moduleEvent.source, 'segment');
     assert.strictEqual(moduleEvent.functionName, 'track_something');
-    assert.strictEqual(moduleEvent.line, 108);
+    assert.strictEqual(moduleEvent.line, 121);
     assert.deepStrictEqual(moduleEvent.properties, {
       anonymous_id: { type: 'string' },
       from_module: { type: 'boolean' }
@@ -193,6 +193,29 @@ test.describe('analyzeRubyFile', () => {
       'snowplow_track',
       'track_something'
     ]);
+  });
+  
+  test('should detect custom functions that are methods of a module', async () => {
+    const customFunction = 'CustomModule.track';
+    const events = await analyzeRubyFile(testFilePath, customFunction);
+    
+    // Should find the CustomModule.track call
+    const customModuleEvent = events.find(e => e.source === 'custom' && e.functionName === 'CustomModule.track');
+    assert.ok(customModuleEvent);
+    assert.strictEqual(customModuleEvent.eventName, 'custom_event');
+    assert.strictEqual(customModuleEvent.line, 98);
+    assert.deepStrictEqual(customModuleEvent.properties, {
+      key: { type: 'string' },
+      nested: { 
+        type: 'object', 
+        properties: { 
+          a: { 
+            type: 'array', 
+            items: { type: 'number' } 
+          } 
+        } 
+      }
+    });
   });
   
   test('should correctly differentiate between Segment and Rudderstack', async () => {
