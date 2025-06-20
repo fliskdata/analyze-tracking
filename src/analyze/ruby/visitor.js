@@ -29,7 +29,16 @@ class TrackingVisitor {
       if (!eventName) return;
 
       const line = getLineNumber(this.code, node.location);
-      const functionName = await findWrappingFunction(node, ancestors);
+      
+      // For module-scoped custom functions, use the custom function name as the functionName
+      // For simple custom functions, use the wrapping function name
+      let functionName;
+      if (source === 'custom' && this.customFunction && this.customFunction.includes('.')) {
+        functionName = this.customFunction;
+      } else {
+        functionName = await findWrappingFunction(node, ancestors);
+      }
+      
       const properties = await extractProperties(node, source);
 
       this.events.push({
