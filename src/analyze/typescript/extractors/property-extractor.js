@@ -350,6 +350,7 @@ function resolveTypeSchema(checker, typeString) {
  * @returns {string|null} Literal type or null
  */
 function getLiteralType(node) {
+  if (!node) return null;
   if (ts.isStringLiteral(node)) return 'string';
   if (ts.isNumericLiteral(node)) return 'number';
   if (node.kind === ts.SyntaxKind.TrueKeyword || node.kind === ts.SyntaxKind.FalseKeyword) return 'boolean';
