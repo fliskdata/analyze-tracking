@@ -141,3 +141,6 @@ __pycache__/
 
 # Tracking schema output
 tracking-schema.yaml
+
+# Test output
+tests/temp*
