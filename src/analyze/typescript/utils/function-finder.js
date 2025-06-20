@@ -93,7 +93,7 @@ function findParentFunctionName(node) {
       parent.initializer &&
       ts.isCallExpression(parent.initializer) &&
       ts.isIdentifier(parent.initializer.expression) &&
-      REACT_HOOKS.has(parent.initializer.expression.escapedText)
+      isReactHookCall(parent.initializer)
     ) {
       return `${parent.initializer.expression.escapedText}(${parent.name.escapedText})`;
     }

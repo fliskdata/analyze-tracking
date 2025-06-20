@@ -84,8 +84,8 @@ function detectMemberBasedProvider(node) {
     return 'unknown';
   }
 
-  const objectName = node.expression.expression.escapedText;
-  const methodName = node.expression.name.escapedText;
+  const objectName = node.expression.expression?.escapedText;
+  const methodName = node.expression.name?.escapedText;
 
   if (!objectName || !methodName) {
     return 'unknown';

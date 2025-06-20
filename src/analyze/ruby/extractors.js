@@ -14,14 +14,17 @@ const { getValueType } = require('./types');
 function extractEventName(node, source) {
   if (source === 'segment' || source === 'rudderstack') {
     // Both Segment and Rudderstack use the same format
-    const params = node.arguments_.arguments_[0].elements;
+    const params = node.arguments_?.arguments_?.[0]?.elements;
+    if (!params || !Array.isArray(params)) {
+      return null;
+    }
     const eventProperty = params.find(param => param?.key?.unescaped?.value === 'event');
     return eventProperty?.value?.unescaped?.value || null;
   }
 
   if (source === 'mixpanel') {
     // Mixpanel Ruby SDK format: tracker.track('distinct_id', 'event_name', {...})
-    const args = node.arguments_.arguments_;
+    const args = node.arguments_?.arguments_;
     if (args && args.length > 1 && args[1]?.unescaped?.value) {
       return args[1].unescaped.value;
     }
@@ -29,8 +32,8 @@ function extractEventName(node, source) {
 
   if (source === 'posthog') {
     // PostHog Ruby SDK format: posthog.capture({distinct_id: '...', event: '...', properties: {...}})
-    const hashArg = node.arguments_.arguments_[0];
-    if (hashArg && hashArg.elements) {
+    const hashArg = node.arguments_?.arguments_?.[0];
+    if (hashArg && hashArg.elements && Array.isArray(hashArg.elements)) {
       const eventProperty = hashArg.elements.find(elem => elem?.key?.unescaped?.value === 'event');
       return eventProperty?.value?.unescaped?.value || null;
     }
@@ -38,14 +41,17 @@ function extractEventName(node, source) {
 
   if (source === 'snowplow') {
     // Snowplow Ruby SDK: tracker.track_struct_event(category: '...', action: '...', ...)
-    const params = node.arguments_.arguments_[0].elements;
+    const params = node.arguments_?.arguments_?.[0]?.elements;
+    if (!params || !Array.isArray(params)) {
+      return null;
+    }
     const actionProperty = params.find(param => param?.key?.unescaped?.value === 'action');
     return actionProperty?.value?.unescaped?.value || null;
   }
   
   if (source === 'custom') {
     // Custom function format: customFunction('event_name', {...})
-    const args = node.arguments_.arguments_;
+    const args = node.arguments_?.arguments_;
     if (args && args.length > 0 && args[0]?.unescaped?.value) {
       return args[0].unescaped.value;
     }
@@ -65,7 +71,10 @@ async function extractProperties(node, source) {
 
   if (source === 'segment' || source === 'rudderstack') {
     // Both Segment and Rudderstack use the same format
-    const params = node.arguments_.arguments_[0].elements;
+    const params = node.arguments_?.arguments_?.[0]?.elements;
+    if (!params || !Array.isArray(params)) {
+      return null;
+    }
     const properties = {};
 
     // Process all top-level fields except 'event'
@@ -108,7 +117,7 @@ async function extractProperties(node, source) {
 
   if (source === 'mixpanel') {
     // Mixpanel Ruby SDK: tracker.track('distinct_id', 'event_name', {properties})
-    const args = node.arguments_.arguments_;
+    const args = node.arguments_?.arguments_;
     const properties = {};
     
     // Add distinct_id as property (even if it's a variable)
@@ -129,10 +138,10 @@ async function extractProperties(node, source) {
 
   if (source === 'posthog') {
     // PostHog Ruby SDK: posthog.capture({distinct_id: '...', event: '...', properties: {...}})
-    const hashArg = node.arguments_.arguments_[0];
+    const hashArg = node.arguments_?.arguments_?.[0];
     const properties = {};
     
-    if (hashArg && hashArg.elements) {
+    if (hashArg && hashArg.elements && Array.isArray(hashArg.elements)) {
       // Extract distinct_id if present
       const distinctIdProperty = hashArg.elements.find(elem => elem?.key?.unescaped?.value === 'distinct_id');
       if (distinctIdProperty?.value) {
@@ -154,7 +163,10 @@ async function extractProperties(node, source) {
 
   if (source === 'snowplow') {
     // Snowplow Ruby SDK: tracker.track_struct_event(category: '...', action: '...', ...)
-    const params = node.arguments_.arguments_[0].elements;
+    const params = node.arguments_?.arguments_?.[0]?.elements;
+    if (!params || !Array.isArray(params)) {
+      return null;
+    }
     const properties = {};
     
     // Extract all struct event parameters except 'action' (which is used as the event name)
@@ -172,7 +184,7 @@ async function extractProperties(node, source) {
   
   if (source === 'custom') {
     // Custom function format: customFunction('event_name', {properties})
-    const args = node.arguments_.arguments_;
+    const args = node.arguments_?.arguments_;
     if (args && args.length > 1 && args[1] instanceof HashNode) {
       return await extractHashProperties(args[1]);
     }
