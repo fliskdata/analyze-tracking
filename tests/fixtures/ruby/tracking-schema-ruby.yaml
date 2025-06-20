@@ -80,7 +80,7 @@ events:
   add-to-basket:
     implementations:
       - path: main.rb
-        line: 96
+        line: 109
         function: snowplow_track
         destination: snowplow
     properties:
@@ -95,7 +95,7 @@ events:
   Module Event:
     implementations:
       - path: main.rb
-        line: 108
+        line: 121
         function: track_something
         destination: segment
     properties:
