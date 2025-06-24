@@ -315,3 +315,18 @@ events:
             type: string
           retry:
             type: boolean
+  ecommerce_purchase:
+    implementations:
+      - path: main.ts
+        line: 290
+        function: global
+        destination: custom
+    properties:
+      orderId:
+        type: string
+      total:
+        type: number
+      items:
+        type: array
+        items:
+          type: string

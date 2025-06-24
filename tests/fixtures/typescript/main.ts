@@ -277,3 +277,14 @@ const customParams: CustomParams = {
   metadata: { source: 'unit_test', retry: false },
 };
 customTrackFunction('custom_event_v2', customParams);
+
+// -----------------------------------------------------------------------------
+// Event name is a const/pointer, not a string literal
+// -----------------------------------------------------------------------------
+import { TRACKING_EVENTS } from "./constants";
+const purchaseEvent = {
+  orderId: 'order_123',
+  total: 99.99,
+  items: ['sku_1', 'sku_2']
+};
+customTrackFunction(TRACKING_EVENTS.ECOMMERCE_PURCHASE, purchaseEvent);

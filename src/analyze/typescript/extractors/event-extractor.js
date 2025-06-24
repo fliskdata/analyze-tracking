@@ -50,7 +50,7 @@ function extractGoogleAnalyticsEvent(node, checker, sourceFile) {
   }
 
   // gtag('event', 'event_name', { properties })
-  const eventName = getStringValue(node.arguments[1]);
+  const eventName = getStringValue(node.arguments[1], checker, sourceFile);
   const propertiesNode = node.arguments[2];
 
   return { eventName, propertiesNode };
@@ -79,7 +79,7 @@ function extractSnowplowEvent(node, checker, sourceFile) {
     const structEventArg = firstArg.arguments[0];
     if (ts.isObjectLiteralExpression(structEventArg)) {
       const actionProperty = findPropertyByKey(structEventArg, 'action');
-      const eventName = actionProperty ? getStringValue(actionProperty.initializer) : null;
+      const eventName = actionProperty ? getStringValue(actionProperty.initializer, checker, sourceFile) : null;
       return { eventName, propertiesNode: structEventArg };
     }
   }
@@ -93,7 +93,7 @@ function extractSnowplowEvent(node, checker, sourceFile) {
       const structEventArg = resolvedNode.arguments[0];
       if (ts.isObjectLiteralExpression(structEventArg)) {
         const actionProperty = findPropertyByKey(structEventArg, 'action');
-        const eventName = actionProperty ? getStringValue(actionProperty.initializer) : null;
+        const eventName = actionProperty ? getStringValue(actionProperty.initializer, checker, sourceFile) : null;
         return { eventName, propertiesNode: structEventArg };
       }
     }
@@ -115,7 +115,7 @@ function extractMparticleEvent(node, checker, sourceFile) {
   }
 
   // mParticle.logEvent('event_name', mParticle.EventType.Navigation, { properties })
-  const eventName = getStringValue(node.arguments[0]);
+  const eventName = getStringValue(node.arguments[0], checker, sourceFile);
   const propertiesNode = node.arguments[2];
 
   return { eventName, propertiesNode };
@@ -134,7 +134,7 @@ function extractDefaultEvent(node, checker, sourceFile) {
   }
 
   // provider.track('event_name', { properties })
-  const eventName = getStringValue(node.arguments[0]);
+  const eventName = getStringValue(node.arguments[0], checker, sourceFile);
   const propertiesNode = node.arguments[1];
 
   return { eventName, propertiesNode };
@@ -197,14 +197,119 @@ function processEventData(eventData, source, filePath, line, functionName, check
 /**
  * Gets string value from a TypeScript AST node
  * @param {Object} node - TypeScript AST node
+ * @param {Object} checker - TypeScript type checker
+ * @param {Object} sourceFile - TypeScript source file
  * @returns {string|null} String value or null
  */
-function getStringValue(node) {
+function getStringValue(node, checker, sourceFile) {
   if (!node) return null;
+  
+  // Handle string literals (existing behavior)
   if (ts.isStringLiteral(node)) {
     return node.text;
   }
+  
+  // Handle property access expressions like TRACKING_EVENTS.ECOMMERCE_PURCHASE
+  if (ts.isPropertyAccessExpression(node)) {
+    return resolvePropertyAccessToString(node, checker, sourceFile);
+  }
+  
+  // Handle identifiers that might reference constants
+  if (ts.isIdentifier(node)) {
+    return resolveIdentifierToString(node, checker, sourceFile);
+  }
+  
   return null;
+}
+
+/**
+ * Resolves a property access expression to its string value
+ * @param {Object} node - PropertyAccessExpression node
+ * @param {Object} checker - TypeScript type checker
+ * @param {Object} sourceFile - TypeScript source file
+ * @returns {string|null} String value or null
+ */
+function resolvePropertyAccessToString(node, checker, sourceFile) {
+  try {
+    // Get the symbol for the property access
+    const symbol = checker.getSymbolAtLocation(node);
+    if (!symbol || !symbol.valueDeclaration) {
+      return null;
+    }
+    
+    // Check if it's a property assignment with a string initializer
+    if (ts.isPropertyAssignment(symbol.valueDeclaration) && 
+        symbol.valueDeclaration.initializer &&
+        ts.isStringLiteral(symbol.valueDeclaration.initializer)) {
+      return symbol.valueDeclaration.initializer.text;
+    }
+    
+    // Check if it's a variable declaration property
+    if (ts.isPropertySignature(symbol.valueDeclaration) ||
+        ts.isMethodSignature(symbol.valueDeclaration)) {
+      // Try to get the type and see if it's a string literal type
+      const type = checker.getTypeAtLocation(node);
+      if (type.isStringLiteral && type.isStringLiteral()) {
+        return type.value;
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
+ * Resolves an identifier to its string value
+ * @param {Object} node - Identifier node
+ * @param {Object} checker - TypeScript type checker
+ * @param {Object} sourceFile - TypeScript source file
+ * @returns {string|null} String value or null
+ */
+function resolveIdentifierToString(node, checker, sourceFile) {
+  try {
+    const symbol = checker.getSymbolAtLocation(node);
+    if (!symbol) {
+      return null;
+    }
+    
+    // First try to resolve through value declaration
+    if (symbol.valueDeclaration) {
+      const declaration = symbol.valueDeclaration;
+      
+      // Handle variable declarations with string literal initializers
+      if (ts.isVariableDeclaration(declaration) && 
+          declaration.initializer &&
+          ts.isStringLiteral(declaration.initializer)) {
+        return declaration.initializer.text;
+      }
+      
+      // Handle const declarations with object literals containing string properties
+      if (ts.isVariableDeclaration(declaration) && 
+          declaration.initializer &&
+          ts.isObjectLiteralExpression(declaration.initializer)) {
+        // This case is handled by property access resolution
+        return null;
+      }
+    }
+    
+    // If value declaration doesn't exist or doesn't help, try type resolution
+    // This handles imported constants that are resolved through TypeScript's type system
+    const type = checker.getTypeOfSymbolAtLocation(symbol, node);
+    if (type && type.isStringLiteral && typeof type.isStringLiteral === 'function' && type.isStringLiteral()) {
+      return type.value;
+    }
+    
+    // Alternative approach for string literal types (different TypeScript versions)
+    if (type && type.flags && (type.flags & ts.TypeFlags.StringLiteral)) {
+      return type.value;
+    }
+    
+    return null;
+  } catch (error) {
+    return null;
+  }
 }
 
 /**
