@@ -330,3 +330,18 @@ events:
         type: array
         items:
           type: string
+  ecommerce_purchase_v2:
+    implementations:
+      - path: main.ts
+        line: 292
+        function: global
+        destination: segment
+    properties:
+      orderId:
+        type: string
+      total:
+        type: number
+      items:
+        type: array
+        items:
+          type: string
