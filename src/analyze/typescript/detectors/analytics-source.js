@@ -48,7 +48,10 @@ function isCustomFunction(node, customFunction) {
     ts.isPropertyAccessExpression(node.expression) ||
     ts.isCallExpression(node.expression) || // For chained calls like getTracker().track()
     ts.isElementAccessExpression(node.expression) || // For array/object access like trackers['analytics'].track()
-    (ts.isPropertyAccessExpression(node.expression?.expression) && ts.isThisExpression(node.expression.expression.expression)); // For class methods like this.analytics.track()
+    (node.expression?.expression && 
+     ts.isPropertyAccessExpression(node.expression.expression) && 
+     node.expression.expression.expression && 
+     ts.isThisExpression(node.expression.expression.expression)); // For class methods like this.analytics.track()
 
   return canBeCustomFunction && node.expression.getText() === customFunction;
 }

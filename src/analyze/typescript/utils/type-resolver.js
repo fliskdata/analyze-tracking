@@ -144,7 +144,7 @@ function isCustomType(typeString) {
  * @returns {string} Basic type string
  */
 function getBasicTypeOfArrayElement(checker, element) {
-  if (!element) return 'any';
+  if (!element || typeof element.kind === 'undefined') return 'any';
   
   // Check for literal values first
   if (ts.isStringLiteral(element)) {
