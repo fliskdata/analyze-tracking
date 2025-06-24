@@ -117,6 +117,7 @@ function findParentFunctionName(node) {
 
   // Binary expression assignment: obj.myFunc = () => {}
   if (ts.isBinaryExpression(parent) &&
+    parent.operatorToken &&
     parent.operatorToken.kind === ts.SyntaxKind.EqualsToken) {
     if (ts.isPropertyAccessExpression(parent.left)) {
       return parent.left.name.escapedText;
