@@ -34,6 +34,13 @@ function extractProperties(checker, node) {
   const properties = {};
 
   for (const prop of node.properties) {
+    // Handle spread assignments like {...object}
+    if (ts.isSpreadAssignment(prop)) {
+      const spreadProperties = extractSpreadProperties(checker, prop);
+      Object.assign(properties, spreadProperties);
+      continue;
+    }
+    
     const key = getPropertyKey(prop);
     if (!key) continue;
 
@@ -369,6 +376,51 @@ function isArrayType(typeString) {
          typeString.startsWith('Array<') || 
          typeString.startsWith('ReadonlyArray<') ||
          typeString.startsWith('readonly ');
+}
+
+/**
+ * Extracts properties from a spread assignment
+ * @param {Object} checker - TypeScript type checker
+ * @param {Object} spreadNode - SpreadAssignment node
+ * @returns {Object.<string, PropertySchema>}
+ */
+function extractSpreadProperties(checker, spreadNode) {
+  if (!spreadNode.expression) {
+    return {};
+  }
+  
+  // If the spread is an identifier, resolve it to its declaration
+  if (ts.isIdentifier(spreadNode.expression)) {
+    const symbol = checker.getSymbolAtLocation(spreadNode.expression);
+    if (symbol && symbol.declarations && symbol.declarations.length > 0) {
+      const declaration = symbol.declarations[0];
+      
+      // If it's a variable declaration with an object literal initializer
+      if (ts.isVariableDeclaration(declaration) && declaration.initializer) {
+        if (ts.isObjectLiteralExpression(declaration.initializer)) {
+          // Extract properties directly from the object literal
+          return extractProperties(checker, declaration.initializer);
+        }
+      }
+    }
+    
+    // Fallback to the original identifier schema extraction
+    const identifierSchema = extractIdentifierSchema(checker, spreadNode.expression);
+    return identifierSchema.properties || {};
+  }
+  
+  // If the spread is an object literal, extract its properties
+  if (ts.isObjectLiteralExpression(spreadNode.expression)) {
+    return extractProperties(checker, spreadNode.expression);
+  }
+  
+  // For other expressions, try to get the type and extract properties from it
+  try {
+    const spreadType = checker.getTypeAtLocation(spreadNode.expression);
+    return extractInterfaceProperties(checker, spreadType);
+  } catch (error) {
+    return {};
+  }
 }
 
 /**
