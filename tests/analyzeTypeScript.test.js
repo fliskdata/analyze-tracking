@@ -29,7 +29,7 @@ test.describe('analyzeTsFile', () => {
     // Sort events by line number for consistent ordering
     events.sort((a, b) => a.line - b.line);
 
-    assert.strictEqual(events.length, 12);
+    assert.strictEqual(events.length, 13);
 
     // Test Google Analytics event
     const gaEvent = events.find(e => e.eventName === 'order_completed' && e.source === 'googleanalytics');
@@ -311,6 +311,21 @@ test.describe('analyzeTsFile', () => {
         }
       }
     });
+
+    // Test custom function event with constant reference
+    const constantEvent = events.find(e => e.eventName === 'ecommerce_purchase');
+    assert.ok(constantEvent);
+    assert.strictEqual(constantEvent.source, 'custom');
+    assert.strictEqual(constantEvent.functionName, 'global');
+    assert.strictEqual(constantEvent.line, 290);
+    assert.deepStrictEqual(constantEvent.properties, {
+      orderId: { type: 'string' },
+      total: { type: 'number' },
+      items: {
+        type: 'array',
+        items: { type: 'string' }
+      }
+    });
   });
 
   test('should handle files without tracking events', () => {
@@ -330,7 +345,7 @@ test.describe('analyzeTsFile', () => {
     const program = createProgram(testFilePath);
     const events = analyzeTsFile(testFilePath, program, null);
 
-    // Should find all events except the custom one
+    // Should find all events except the custom ones
     assert.strictEqual(events.length, 11);
     assert.strictEqual(events.find(e => e.source === 'custom'), undefined);
   });
