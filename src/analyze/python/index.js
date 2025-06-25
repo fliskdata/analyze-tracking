@@ -5,7 +5,6 @@
 
 const fs = require('fs');
 const path = require('path');
-const { parseCustomFunctionSignature } = require('../utils/customFunctionParser');
 
 // Singleton instance of Pyodide
 let pyodide = null;
@@ -53,8 +52,9 @@ async function initPyodide() {
  * // With custom tracking function
  * const events = await analyzePythonFile('./app.py', 'track_event');
  */
-async function analyzePythonFile(filePath, customFunctionSignature = null) {
-  const customConfig = customFunctionSignature ? parseCustomFunctionSignature(customFunctionSignature) : null;
+async function analyzePythonFile(filePath, customFunctionSignatures = null) {
+  // temporary: only support one custom function signature for now, will add support for multiple in the future
+  const customConfig = !!customFunctionSignatures?.length ? customFunctionSignatures[0] : null;
 
   // Validate inputs
   if (!filePath || typeof filePath !== 'string') {

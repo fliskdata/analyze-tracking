@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const path = require('path');
 const { analyzeGoFile } = require('../src/analyze/go');
+const { parseCustomFunctionSignature } = require('../src/analyze/utils/customFunctionParser');
 
 test.describe('analyzeGoFile', () => {
   const fixturesDir = path.join(__dirname, 'fixtures');
@@ -9,7 +10,8 @@ test.describe('analyzeGoFile', () => {
   
   test('should correctly analyze Go file with multiple tracking providers', async () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
-    const events = await analyzeGoFile(testFilePath, customFunction);
+    const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
+    const events = await analyzeGoFile(testFilePath, customFunctionSignatures);
     
     // Sort events by eventName for consistent ordering
     events.sort((a, b) => a.eventName.localeCompare(b.eventName));
@@ -103,7 +105,8 @@ test.describe('analyzeGoFile', () => {
   
   test('should handle files without tracking events', async () => {
     const emptyTestFile = path.join(fixturesDir, 'go', 'empty.go');
-    const events = await analyzeGoFile(emptyTestFile, 'customTrack');
+    const customFunctionSignatures = [parseCustomFunctionSignature('customTrack')];
+    const events = await analyzeGoFile(emptyTestFile, customFunctionSignatures);
     assert.deepStrictEqual(events, []);
   });
   
@@ -117,7 +120,8 @@ test.describe('analyzeGoFile', () => {
   
   test('should handle nested property types correctly', async () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
-    const events = await analyzeGoFile(testFilePath, customFunction);
+    const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
+    const events = await analyzeGoFile(testFilePath, customFunctionSignatures);
     
     const customEvent = events.find(e => e.eventName === 'custom_event');
     assert.ok(customEvent);
@@ -141,7 +145,8 @@ test.describe('analyzeGoFile', () => {
   
   test('should match expected tracking-schema.yaml output', async () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
-    const events = await analyzeGoFile(testFilePath, customFunction);
+    const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
+    const events = await analyzeGoFile(testFilePath, customFunctionSignatures);
     
     // Create a map of events by name for easier verification
     const eventMap = {};
@@ -252,7 +257,8 @@ test.describe('analyzeGoFile', () => {
     ];
 
     for (const { sig, event } of variants) {
-      const events = await analyzeGoFile(testFilePath, sig);
+      const customFunctionSignatures = [parseCustomFunctionSignature(sig)];
+      const events = await analyzeGoFile(testFilePath, customFunctionSignatures);
       const found = events.find(e => e.eventName === event && e.source === 'custom');
       assert.ok(found, `Should detect ${event} for signature ${sig}`);
     }

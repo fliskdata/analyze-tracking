@@ -4,7 +4,6 @@
  */
 
 const { getProgram, findTrackingEvents, ProgramError, SourceFileError } = require('./parser');
-const { parseCustomFunctionSignature } = require('../utils/customFunctionParser');
 
 /**
  * Analyzes a TypeScript file for analytics tracking calls
@@ -13,9 +12,11 @@ const { parseCustomFunctionSignature } = require('../utils/customFunctionParser'
  * @param {string} [customFunctionSignature] - Optional custom function signature to detect
  * @returns {Array<Object>} Array of tracking events found in the file
  */
-function analyzeTsFile(filePath, program = null, customFunctionSignature = null) {
+function analyzeTsFile(filePath, program = null, customFunctionSignatures = null) {
   const events = [];
-  const customConfig = customFunctionSignature ? parseCustomFunctionSignature(customFunctionSignature) : null;
+
+  // temporary: only support one custom function signature for now, will add support for multiple in the future
+  const customConfig = !!customFunctionSignatures?.length ? customFunctionSignatures[0] : null;
 
   try {
     // Get or create TypeScript program

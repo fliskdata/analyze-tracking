@@ -5,6 +5,7 @@
 
 const path = require('path');
 const ts = require('typescript');
+const { parseCustomFunctionSignature } = require('./utils/customFunctionParser');
 const { getAllFiles } = require('../utils/fileProcessor');
 const { analyzeJsFile } = require('./javascript');
 const { analyzeTsFile } = require('./typescript');
@@ -12,8 +13,10 @@ const { analyzePythonFile } = require('./python');
 const { analyzeRubyFile } = require('./ruby');
 const { analyzeGoFile } = require('./go');
 
-async function analyzeDirectory(dirPath, customFunction) {
+async function analyzeDirectory(dirPath, customFunctions) {
   const allEvents = {};
+
+  const customFunctionSignatures = (customFunctions && customFunctions?.length > 0) ? customFunctions.map(parseCustomFunctionSignature) : null;
 
   const files = getAllFiles(dirPath);
   const tsFiles = files.filter(file => /\.(tsx?)$/.test(file));
@@ -32,15 +35,15 @@ async function analyzeDirectory(dirPath, customFunction) {
     const isGoFile = /\.(go)$/.test(file);
 
     if (isJsFile) {
-      events = analyzeJsFile(file, customFunction);
+      events = analyzeJsFile(file, customFunctionSignatures);
     } else if (isTsFile) {
-      events = analyzeTsFile(file, tsProgram, customFunction);
+      events = analyzeTsFile(file, tsProgram, customFunctionSignatures);
     } else if (isPythonFile) {
-      events = await analyzePythonFile(file, customFunction);
+      events = await analyzePythonFile(file, customFunctionSignatures);
     } else if (isRubyFile) {
-      events = await analyzeRubyFile(file, customFunction);
+      events = await analyzeRubyFile(file, customFunctionSignatures);
     } else if (isGoFile) {
-      events = await analyzeGoFile(file, customFunction);
+      events = await analyzeGoFile(file, customFunctionSignatures);
     } else {
       continue;
     }

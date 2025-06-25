@@ -43,6 +43,7 @@ const optionDefinitions = [
     name: 'customFunction',
     alias: 'c',
     type: String,
+    multiple: true,
   },
   {
     name: 'repositoryUrl',

@@ -3,6 +3,7 @@ const assert = require('node:assert');
 const path = require('path');
 const ts = require('typescript');
 const { analyzeTsFile } = require('../src/analyze/typescript');
+const { parseCustomFunctionSignature } = require('../src/analyze/utils/customFunctionParser');
 
 test.describe('analyzeTsFile', () => {
   const fixturesDir = path.join(__dirname, 'fixtures');
@@ -23,8 +24,9 @@ test.describe('analyzeTsFile', () => {
 
   test('should correctly analyze TypeScript file with multiple tracking providers', () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
+    const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
     const program = createProgram(testFilePath);
-    const events = analyzeTsFile(testFilePath, program, customFunction);
+    const events = analyzeTsFile(testFilePath, program, customFunctionSignatures);
 
     // Sort events by line number for consistent ordering
     events.sort((a, b) => a.line - b.line);
@@ -354,7 +356,8 @@ test.describe('analyzeTsFile', () => {
     }
 
     const program = createProgram(emptyTestFile);
-    const events = analyzeTsFile(emptyTestFile, program, 'customTrack');
+    const customFunctionSignatures = [parseCustomFunctionSignature('customTrack')];
+    const events = analyzeTsFile(emptyTestFile, program, customFunctionSignatures);
     assert.deepStrictEqual(events, []);
   });
 
@@ -369,8 +372,9 @@ test.describe('analyzeTsFile', () => {
 
   test('should handle nested property types correctly', () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
+    const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
     const program = createProgram(testFilePath);
-    const events = analyzeTsFile(testFilePath, program, customFunction);
+    const events = analyzeTsFile(testFilePath, program, customFunctionSignatures);
 
     // Test nested object properties with interfaces expanded
     const eventWithNestedObj = events.find(e => e.properties.location);
@@ -403,8 +407,9 @@ test.describe('analyzeTsFile', () => {
 
   test('should detect and expand interface types correctly', () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
+    const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
     const program = createProgram(testFilePath);
-    const events = analyzeTsFile(testFilePath, program, customFunction);
+    const events = analyzeTsFile(testFilePath, program, customFunctionSignatures);
 
     // Test that Address interface is expanded
     const eventWithAddress = events.find(e => e.properties.address || e.properties.location);
@@ -431,8 +436,9 @@ test.describe('analyzeTsFile', () => {
 
   test('should handle shorthand property assignments correctly', () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
+    const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
     const program = createProgram(testFilePath);
-    const events = analyzeTsFile(testFilePath, program, customFunction);
+    const events = analyzeTsFile(testFilePath, program, customFunctionSignatures);
 
     // Test that shorthand 'items' property is correctly expanded
     const mixpanelEvent = events.find(e => e.eventName === 'purchase_confirmed');
@@ -445,8 +451,9 @@ test.describe('analyzeTsFile', () => {
 
   test('should handle variable references correctly', () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
+    const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
     const program = createProgram(testFilePath);
-    const events = analyzeTsFile(testFilePath, program, customFunction);
+    const events = analyzeTsFile(testFilePath, program, customFunctionSignatures);
 
     // Test that variable references like segmentProps are resolved
     const segmentEvent = events.find(e => e.eventName === 'user_checkout');
@@ -460,8 +467,9 @@ test.describe('analyzeTsFile', () => {
 
   test('should exclude action field from Snowplow properties', () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
+    const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
     const program = createProgram(testFilePath);
-    const events = analyzeTsFile(testFilePath, program, customFunction);
+    const events = analyzeTsFile(testFilePath, program, customFunctionSignatures);
 
     const snowplowEvent = events.find(e => e.source === 'snowplow');
     assert.ok(snowplowEvent);
@@ -472,8 +480,9 @@ test.describe('analyzeTsFile', () => {
 
   test('should handle mParticle three-parameter format', () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
+    const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
     const program = createProgram(testFilePath);
-    const events = analyzeTsFile(testFilePath, program, customFunction);
+    const events = analyzeTsFile(testFilePath, program, customFunctionSignatures);
 
     const mparticleEvent = events.find(e => e.source === 'mparticle');
     assert.ok(mparticleEvent);
@@ -484,8 +493,9 @@ test.describe('analyzeTsFile', () => {
 
   test('should handle readonly array types correctly', () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
+    const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
     const program = createProgram(testFilePath);
-    const events = analyzeTsFile(testFilePath, program, customFunction);
+    const events = analyzeTsFile(testFilePath, program, customFunctionSignatures);
 
     // Test ReadonlyArray<Product> in checkout3
     const pendoEvent = events.find(e => e.eventName === 'customer_checkout');
@@ -498,8 +508,9 @@ test.describe('analyzeTsFile', () => {
 
   test('should handle exported vs non-exported interfaces', () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
+    const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
     const program = createProgram(testFilePath);
-    const events = analyzeTsFile(testFilePath, program, customFunction);
+    const events = analyzeTsFile(testFilePath, program, customFunctionSignatures);
 
     // Both exported Product and non-exported Address should be expanded
     const eventWithBoth = events.find(e => e.properties.items && e.properties.location);
@@ -646,7 +657,8 @@ test.describe('analyzeTsFile', () => {
   test('should correctly analyze React TypeScript file with custom function', () => {
     const reactFilePath = path.join(fixturesDir, 'typescript-react', 'main.tsx');
     const program = createProgram(reactFilePath);
-    const events = analyzeTsFile(reactFilePath, program, 'tracker.track');
+    const customFunctionSignatures = [parseCustomFunctionSignature('tracker.track')];
+    const events = analyzeTsFile(reactFilePath, program, customFunctionSignatures);
 
     // Should find both tracker.track events (cart_update and complex_operation)
     const trackEvents = events.filter(e => e.source === 'custom');
@@ -692,7 +704,8 @@ test.describe('analyzeTsFile', () => {
     
     // This was the specific case that was causing "Cannot read properties of undefined (reading 'kind')"
     assert.doesNotThrow(() => {
-      const events = analyzeTsFile(reactFilePath, program, 'track');
+      const customFunctionSignatures = [parseCustomFunctionSignature('track')];
+      const events = analyzeTsFile(reactFilePath, program, customFunctionSignatures);
       assert.ok(Array.isArray(events));
       
       // Should find the analytics.track call when looking for 'track' custom function
@@ -723,7 +736,8 @@ test.describe('analyzeTsFile', () => {
 
     customFunctionTests.forEach(customFunction => {
       assert.doesNotThrow(() => {
-        const events = analyzeTsFile(reactFilePath, program, customFunction);
+        const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
+        const events = analyzeTsFile(reactFilePath, program, customFunctionSignatures);
         assert.ok(Array.isArray(events));
       }, `Should not throw error with custom function: ${customFunction}`);
     });
@@ -743,7 +757,8 @@ test.describe('analyzeTsFile', () => {
 
     complexCustomFunctions.forEach(customFunction => {
       assert.doesNotThrow(() => {
-        const events = analyzeTsFile(reactFilePath, program, customFunction);
+        const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
+        const events = analyzeTsFile(reactFilePath, program, customFunctionSignatures);
         assert.ok(Array.isArray(events));
       }, `Should not crash with complex custom function: ${customFunction}`);
     });
@@ -769,7 +784,8 @@ test.describe('analyzeTsFile', () => {
     // The file has complex type intersections: MappedProps & ExplicitProps & ActionProps
     // This should not cause AST traversal issues
     assert.doesNotThrow(() => {
-      const events = analyzeTsFile(reactFilePath, program, 'uploadError');
+      const customFunctionSignatures = [parseCustomFunctionSignature('uploadError')];
+      const events = analyzeTsFile(reactFilePath, program, customFunctionSignatures);
       assert.ok(Array.isArray(events));
     });
   });
@@ -780,7 +796,8 @@ test.describe('analyzeTsFile', () => {
     
     // The file uses React.createRef<any>() which creates complex AST nodes
     assert.doesNotThrow(() => {
-      const events = analyzeTsFile(reactFilePath, program, 'open');
+      const customFunctionSignatures = [parseCustomFunctionSignature('open')];
+      const events = analyzeTsFile(reactFilePath, program, customFunctionSignatures);
       assert.ok(Array.isArray(events));
     });
   });
@@ -791,7 +808,8 @@ test.describe('analyzeTsFile', () => {
     
     // Should work without errors for file containing both patterns
     assert.doesNotThrow(() => {
-      const events = analyzeTsFile(reactFilePath, program, 'track');
+      const customFunctionSignatures = [parseCustomFunctionSignature('track')];
+      const events = analyzeTsFile(reactFilePath, program, customFunctionSignatures);
       
       assert.ok(Array.isArray(events));
       
@@ -822,7 +840,8 @@ test.describe('analyzeTsFile', () => {
 
     edgeCaseCustomFunctions.forEach(customFunction => {
       assert.doesNotThrow(() => {
-        const events = analyzeTsFile(reactFilePath, program, customFunction);
+        const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
+        const events = analyzeTsFile(reactFilePath, program, customFunctionSignatures);
         assert.ok(Array.isArray(events));
       }, `Should handle edge case custom function: ${customFunction}`);
     });
@@ -862,7 +881,8 @@ test.describe('analyzeTsFile', () => {
 
     variants.forEach(({ sig, event }) => {
       const program = createProgram(testFilePath);
-      const events = analyzeTsFile(testFilePath, program, sig);
+      const customFunctionSignatures = [parseCustomFunctionSignature(sig)];
+      const events = analyzeTsFile(testFilePath, program, customFunctionSignatures);
       const found = events.find(e => e.eventName === event && e.source === 'custom');
       assert.ok(found, `Should detect ${event} for signature ${sig}`);
     });

@@ -3,6 +3,7 @@ const assert = require('node:assert');
 const path = require('path');
 const fs = require('fs');
 const { analyzePythonFile } = require('../src/analyze/python');
+const { parseCustomFunctionSignature } = require('../src/analyze/utils/customFunctionParser');
 
 test.describe('analyzePythonFile', () => {
   const fixturesDir = path.join(__dirname, 'fixtures');
@@ -10,7 +11,8 @@ test.describe('analyzePythonFile', () => {
   
   test('should correctly analyze Python file with multiple tracking providers', async () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
-    const events = await analyzePythonFile(testFilePath, customFunction);
+    const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
+    const events = await analyzePythonFile(testFilePath, customFunctionSignatures);
     
     // Sort events by eventName for consistent ordering
     events.sort((a, b) => a.eventName.localeCompare(b.eventName));
@@ -124,7 +126,8 @@ test.describe('analyzePythonFile', () => {
   
   test('should handle files without tracking events', async () => {
     const emptyTestFile = path.join(fixturesDir, 'python', 'empty.py');
-    const events = await analyzePythonFile(emptyTestFile, 'customTrack');
+    const customFunctionSignatures = [parseCustomFunctionSignature('customTrack')];
+    const events = await analyzePythonFile(emptyTestFile, customFunctionSignatures);
     assert.deepStrictEqual(events, []);
   });
   
@@ -138,7 +141,8 @@ test.describe('analyzePythonFile', () => {
   
   test('should handle nested property types correctly', async () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
-    const events = await analyzePythonFile(testFilePath, customFunction);
+    const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
+    const events = await analyzePythonFile(testFilePath, customFunctionSignatures);
     
     const customEvent = events.find(e => e.eventName === 'custom_event');
     assert.ok(customEvent);
@@ -154,7 +158,8 @@ test.describe('analyzePythonFile', () => {
   
   test('should match expected tracking-schema.yaml output', async () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
-    const events = await analyzePythonFile(testFilePath, customFunction);
+    const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
+    const events = await analyzePythonFile(testFilePath, customFunctionSignatures);
     
     // Create a map of events by name for easier verification
     const eventMap = {};
@@ -294,7 +299,8 @@ def customTrackFunction(user_id: str, event_name: str, params: Dict[str, Any]) -
     pass
 `);
     
-    const events = await analyzePythonFile(typeTestFile, 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)');
+    const customFunctionSignatures = [parseCustomFunctionSignature('customTrackFunction(userId, EVENT_NAME, PROPERTIES)')];
+    const events = await analyzePythonFile(typeTestFile, customFunctionSignatures);
     assert.strictEqual(events.length, 1);
     
     const event = events[0];
@@ -325,7 +331,8 @@ def customTrackFunction(user_id: str, event_name: str, params: Dict[str, Any]) -
     ];
 
     for (const { sig, event } of variants) {
-      const events = await analyzePythonFile(testFilePath, sig);
+      const customFunctionSignatures = [parseCustomFunctionSignature(sig)];
+      const events = await analyzePythonFile(testFilePath, customFunctionSignatures);
       const found = events.find(e => e.eventName === event && e.source === 'custom');
       assert.ok(found, `Should detect ${event} for signature ${sig}`);
     }

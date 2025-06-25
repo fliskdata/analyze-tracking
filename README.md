@@ -57,6 +57,13 @@ yourCustomTrackFunctionName(userId, EVENT_NAME, PROPERTIES)
 
 If your function follows the standard format `yourCustomTrackFunctionName(EVENT_NAME, PROPERTIES)`, you can simply pass in `yourCustomTrackFunctionName` to `--customFunction` as a shorthand.
 
+You can also pass in multiple custom function signatures by passing in the `--customFunction` option multiple times or by passing in a space-separated list of function signatures.
+
+```sh
+npx @flisk/analyze-tracking /path/to/project --customFunction "yourFunc1" --customFunction "yourFunc2(userId, EVENT_NAME, PROPERTIES)"
+npx @flisk/analyze-tracking /path/to/project -c "yourFunc1" "yourFunc2(userId, EVENT_NAME, PROPERTIES)"
+```
+
 
 ## What's Generated?
 A clear YAML schema that shows where your events are tracked, their properties, and more.
