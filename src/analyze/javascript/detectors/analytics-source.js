@@ -43,8 +43,61 @@ function detectAnalyticsSource(node, customFunction) {
  * @returns {boolean}
  */
 function isCustomFunction(node, customFunction) {
-  return node.callee.type === NODE_TYPES.IDENTIFIER && 
-         node.callee.name === customFunction;
+  if (!customFunction) return false;
+
+  // Support dot-separated names like "CustomModule.track"
+  const parts = customFunction.split('.');
+
+  // Simple identifier (no dot)
+  if (parts.length === 1) {
+    return node.callee.type === NODE_TYPES.IDENTIFIER && node.callee.name === customFunction;
+  }
+
+  // For dot-separated names, the callee should be a MemberExpression chain.
+  if (node.callee.type !== NODE_TYPES.MEMBER_EXPRESSION) {
+    return false;
+  }
+
+  return matchesMemberChain(node.callee, parts);
+}
+
+/**
+ * Recursively verifies that a MemberExpression chain matches the expected parts.
+ * Example: parts ["CustomModule", "track"] should match `CustomModule.track()`.
+ * @param {Object} memberExpr - AST MemberExpression node
+ * @param {string[]} parts - Expected name segments (left -> right)
+ * @returns {boolean}
+ */
+function matchesMemberChain(memberExpr, parts) {
+  let currentNode = memberExpr;
+  let idx = parts.length - 1; // start from the rightmost property
+
+  while (currentNode && idx >= 0) {
+    const expectedPart = parts[idx];
+
+    // property should match current expectedPart
+    if (currentNode.type === NODE_TYPES.MEMBER_EXPRESSION) {
+      // Ensure property is Identifier and matches
+      if (
+        currentNode.property.type !== NODE_TYPES.IDENTIFIER ||
+        currentNode.property.name !== expectedPart
+      ) {
+        return false;
+      }
+
+      // Move to the object of the MemberExpression
+      currentNode = currentNode.object;
+      idx -= 1;
+    } else if (currentNode.type === NODE_TYPES.IDENTIFIER) {
+      // We reached the leftmost Identifier; it should match the first part
+      return idx === 0 && currentNode.name === expectedPart;
+    } else {
+      // Unexpected node type (e.g., ThisExpression, CallExpression, etc.)
+      return false;
+    }
+  }
+
+  return false;
 }
 
 /**

@@ -308,3 +308,18 @@ customTrackFunction1('custom_event1', { foo: 'bar' });
 customTrackFunction2('user101', 'custom_event2', { foo: 'bar' });
 customTrackFunction3('custom_event3', { foo: 'bar' }, 'user@example.com');
 customTrackFunction4('user202', 'custom_event4', { city: 'San Francisco' }, { foo: 'bar' }, 'user@example.com');
+
+// -----------------------------------------------------------------------------
+// Dot-separated custom tracking function (module-style)
+// -----------------------------------------------------------------------------
+
+namespace CustomModule {
+  export function track(userId: string, eventName: string, params: Record<string, any>): void {
+    console.log('CustomModule.track', userId, eventName, params);
+  }
+}
+
+CustomModule.track('user333', 'custom_module_event', {
+  order_id: 'order_xyz',
+  foo: 'bar'
+});
