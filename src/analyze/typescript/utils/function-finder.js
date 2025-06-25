@@ -110,6 +110,16 @@ function findParentFunctionName(node) {
     }
   }
 
+  // Property declaration in class: myFunc = () => {}
+  if (ts.isPropertyDeclaration(parent) && parent.name) {
+    if (ts.isIdentifier(parent.name)) {
+      return parent.name.escapedText;
+    }
+    if (ts.isStringLiteral(parent.name)) {
+      return parent.name.text;
+    }
+  }
+
   // Method property in object literal: { myFunc() {} }
   if (ts.isMethodDeclaration(parent) && parent.name) {
     return parent.name.escapedText;
