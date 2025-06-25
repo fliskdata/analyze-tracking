@@ -5,11 +5,23 @@ source:
   commit: d3774b76a3d1528c76c4bdb500dc32ee508e6381
   timestamp: '2025-05-29T15:55:59Z'
 events:
+  document_upload_clicked:
+    implementations:
+      - path: main.tsx
+        line: 53
+        function: onFileUploadClick
+        destination: segment
+    properties:
+      documentId:
+        type: any
+      documentType:
+        type: string
+
   cart_viewed:
     implementations:
       - path: main.tsx
-        line: 15
-        function: ShoppingCart
+        line: 89
+        function: useEffect()
         destination: posthog
     properties:
       item_count:
@@ -20,8 +32,8 @@ events:
   add_to_cart:
     implementations:
       - path: main.tsx
-        line: 26
-        function: handleAddToCart
+        line: 101
+        function: useCallback(handleAddToCart)
         destination: segment
     properties:
       product_id:
@@ -34,8 +46,8 @@ events:
   item_added:
     implementations:
       - path: main.tsx
-        line: 34
-        function: handleAddToCart
+        line: 108
+        function: useCallback(handleAddToCart)
         destination: amplitude
     properties:
       item_details:
@@ -55,7 +67,7 @@ events:
   remove_from_cart:
     implementations:
       - path: main.tsx
-        line: 44
+        line: 119
         function: removeFromCart
         destination: mixpanel
     properties:
@@ -67,7 +79,7 @@ events:
   begin_checkout:
     implementations:
       - path: main.tsx
-        line: 54
+        line: 130
         function: handleCheckout
         destination: googleanalytics
     properties:
@@ -92,7 +104,7 @@ events:
   checkout_started:
     implementations:
       - path: main.tsx
-        line: 62
+        line: 137
         function: handleCheckout
         destination: rudderstack
     properties:
@@ -115,7 +127,7 @@ events:
   InitiateCheckout:
     implementations:
       - path: main.tsx
-        line: 69
+        line: 143
         function: handleCheckout
         destination: mparticle
     properties:

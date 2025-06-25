@@ -518,25 +518,37 @@ test.describe('analyzeTsFile', () => {
     // Sort events by line number for consistent ordering
     events.sort((a, b) => a.line - b.line);
 
-    assert.strictEqual(events.length, 7);
+    // Updated count - 8 events for regular analysis (complex_operation is only detected with custom function)
+    assert.strictEqual(events.length, 8);
+
+    // Test new Segment event from ComplexUploadComponent (regression test pattern)
+    const complexSegmentEvent = events.find(e => e.source === 'segment' && e.eventName === 'document_upload_clicked');
+    assert.ok(complexSegmentEvent);
+    assert.strictEqual(complexSegmentEvent.eventName, 'document_upload_clicked');
+    assert.strictEqual(complexSegmentEvent.functionName, 'onFileUploadClick'); // Arrow function methods now show proper names
+    assert.strictEqual(complexSegmentEvent.line, 53);
+    assert.deepStrictEqual(complexSegmentEvent.properties, {
+      documentId: { type: 'any' },
+      documentType: { type: 'string' }
+    });
 
     // Test PostHog event
     const posthogEvent = events.find(e => e.source === 'posthog');
     assert.ok(posthogEvent);
     assert.strictEqual(posthogEvent.eventName, 'cart_viewed');
     assert.strictEqual(posthogEvent.functionName, 'useEffect()');
-    assert.strictEqual(posthogEvent.line, 15);
+    assert.strictEqual(posthogEvent.line, 89);
     assert.deepStrictEqual(posthogEvent.properties, {
       item_count: { type: 'number' },
       total_value: { type: 'number' }
     });
 
-    // Test Segment event
-    const segmentEvent = events.find(e => e.source === 'segment');
+    // Test Segment event from useCallback
+    const segmentEvent = events.find(e => e.source === 'segment' && e.eventName === 'add_to_cart');
     assert.ok(segmentEvent);
     assert.strictEqual(segmentEvent.eventName, 'add_to_cart');
     assert.strictEqual(segmentEvent.functionName, 'useCallback(handleAddToCart)');
-    assert.strictEqual(segmentEvent.line, 27);
+    assert.strictEqual(segmentEvent.line, 101);
     assert.deepStrictEqual(segmentEvent.properties, {
       product_id: { type: 'string' },
       product_name: { type: 'string' },
@@ -548,7 +560,7 @@ test.describe('analyzeTsFile', () => {
     assert.ok(amplitudeEvent);
     assert.strictEqual(amplitudeEvent.eventName, 'item_added');
     assert.strictEqual(amplitudeEvent.functionName, 'useCallback(handleAddToCart)');
-    assert.strictEqual(amplitudeEvent.line, 34);
+    assert.strictEqual(amplitudeEvent.line, 108);
     assert.deepStrictEqual(amplitudeEvent.properties, {
       item_details: {
         type: 'object',
@@ -567,7 +579,7 @@ test.describe('analyzeTsFile', () => {
     assert.ok(mixpanelEvent);
     assert.strictEqual(mixpanelEvent.eventName, 'remove_from_cart');
     assert.strictEqual(mixpanelEvent.functionName, 'removeFromCart');
-    assert.strictEqual(mixpanelEvent.line, 45);
+    assert.strictEqual(mixpanelEvent.line, 119);
     assert.deepStrictEqual(mixpanelEvent.properties, {
       product_id: { type: 'string' },
       timestamp: { type: 'string' }
@@ -578,7 +590,7 @@ test.describe('analyzeTsFile', () => {
     assert.ok(gaEvent);
     assert.strictEqual(gaEvent.eventName, 'begin_checkout');
     assert.strictEqual(gaEvent.functionName, 'handleCheckout');
-    assert.strictEqual(gaEvent.line, 56);
+    assert.strictEqual(gaEvent.line, 130);
     assert.deepStrictEqual(gaEvent.properties, {
       items: {
         type: 'array',
@@ -596,7 +608,7 @@ test.describe('analyzeTsFile', () => {
     assert.ok(rudderstackEvent);
     assert.strictEqual(rudderstackEvent.eventName, 'checkout_started');
     assert.strictEqual(rudderstackEvent.functionName, 'handleCheckout');
-    assert.strictEqual(rudderstackEvent.line, 63);
+    assert.strictEqual(rudderstackEvent.line, 137);
     assert.deepStrictEqual(rudderstackEvent.properties, {
       products: {
         type: 'array',
@@ -613,7 +625,7 @@ test.describe('analyzeTsFile', () => {
     assert.ok(mparticleEvent);
     assert.strictEqual(mparticleEvent.eventName, 'InitiateCheckout');
     assert.strictEqual(mparticleEvent.functionName, 'handleCheckout');
-    assert.strictEqual(mparticleEvent.line, 69);
+    assert.strictEqual(mparticleEvent.line, 143);
     assert.deepStrictEqual(mparticleEvent.properties, {
       cart_items: {
         type: 'array',
@@ -624,6 +636,9 @@ test.describe('analyzeTsFile', () => {
       },
       checkout_step: { type: 'number' }
     });
+
+    // Note: cart_update event is only detected with custom function detection
+    // Note: complex_operation event is only detected with custom function detection
   });
 
   test('should correctly analyze React TypeScript file with custom function', () => {
@@ -631,14 +646,205 @@ test.describe('analyzeTsFile', () => {
     const program = createProgram(reactFilePath);
     const events = analyzeTsFile(reactFilePath, program, 'tracker.track');
 
-    console.log({ events });
-    const trackEvent = events.find(e => e.source === 'custom');
+    // Should find both tracker.track events (cart_update and complex_operation)
+    const trackEvents = events.filter(e => e.source === 'custom');
+    assert.strictEqual(trackEvents.length, 2);
 
-    assert.strictEqual(trackEvent.eventName, 'cart_update');
-    assert.strictEqual(trackEvent.functionName, 'trackCartUpdate');
-    assert.strictEqual(trackEvent.line, 81);
-    assert.deepStrictEqual(trackEvent.properties, {
+    const cartUpdateEvent = trackEvents.find(e => e.eventName === 'cart_update');
+    assert.ok(cartUpdateEvent);
+    assert.strictEqual(cartUpdateEvent.eventName, 'cart_update');
+    assert.strictEqual(cartUpdateEvent.functionName, 'trackCartUpdate');
+    assert.strictEqual(cartUpdateEvent.line, 155);
+    assert.deepStrictEqual(cartUpdateEvent.properties, {
       cart_size: { type: 'number' }
+    });
+
+    const complexOpEvent = trackEvents.find(e => e.eventName === 'complex_operation');
+    assert.ok(complexOpEvent);
+    assert.strictEqual(complexOpEvent.eventName, 'complex_operation');
+    assert.strictEqual(complexOpEvent.functionName, 'handleComplexOperation');
+    assert.strictEqual(complexOpEvent.line, 62);
+    assert.deepStrictEqual(complexOpEvent.properties, {
+      hasRef: { type: 'boolean' },
+      timestamp: { type: 'number' }
+    });
+  });
+
+  // Regression tests for "Cannot read properties of undefined (reading 'kind')" fix
+  test('should handle complex React class component patterns without crashing (regression test)', () => {
+    const reactFilePath = path.join(fixturesDir, 'typescript-react', 'main.tsx');
+    const program = createProgram(reactFilePath);
+    
+    // This should not throw any errors - the main test is that it doesn't crash
+    assert.doesNotThrow(() => {
+      const events = analyzeTsFile(reactFilePath, program);
+      // Should complete analysis without throwing undefined .kind errors
+      assert.ok(Array.isArray(events));
+      assert.ok(events.length > 0);
+    });
+  });
+
+  test('should handle complex class component with custom function detection without crashing', () => {
+    const reactFilePath = path.join(fixturesDir, 'typescript-react', 'main.tsx');
+    const program = createProgram(reactFilePath);
+    
+    // This was the specific case that was causing "Cannot read properties of undefined (reading 'kind')"
+    assert.doesNotThrow(() => {
+      const events = analyzeTsFile(reactFilePath, program, 'track');
+      assert.ok(Array.isArray(events));
+      
+      // Should find the analytics.track call when looking for 'track' custom function
+      const analyticsEvent = events.find(e => e.eventName === 'document_upload_clicked');
+      assert.ok(analyticsEvent);
+      assert.strictEqual(analyticsEvent.source, 'segment');
+      assert.strictEqual(analyticsEvent.line, 53);
+      assert.deepStrictEqual(analyticsEvent.properties, {
+        documentId: { type: 'any' },
+        documentType: { type: 'string' }
+      });
+    });
+  });
+
+  test('should handle various custom function detection patterns without undefined errors', () => {
+    const reactFilePath = path.join(fixturesDir, 'typescript-react', 'main.tsx');
+    const program = createProgram(reactFilePath);
+    
+    // Test various custom function patterns that could trigger the bug
+    const customFunctionTests = [
+      'track',
+      'analytics.track', 
+      'tracker.track',
+      'this.track',
+      'mixpanel.track',
+      'nonexistent.function'
+    ];
+
+    customFunctionTests.forEach(customFunction => {
+      assert.doesNotThrow(() => {
+        const events = analyzeTsFile(reactFilePath, program, customFunction);
+        assert.ok(Array.isArray(events));
+      }, `Should not throw error with custom function: ${customFunction}`);
+    });
+  });
+
+  test('should handle nested property access expressions in custom function detection', () => {
+    const reactFilePath = path.join(fixturesDir, 'typescript-react', 'main.tsx');
+    const program = createProgram(reactFilePath);
+    
+    // Test deeply nested property access that could cause undefined node traversal
+    const complexCustomFunctions = [
+      'this.props.analytics.track',
+      'window.analytics.track',
+      'deep.nested.property.track',
+      'undefined.property.access'
+    ];
+
+    complexCustomFunctions.forEach(customFunction => {
+      assert.doesNotThrow(() => {
+        const events = analyzeTsFile(reactFilePath, program, customFunction);
+        assert.ok(Array.isArray(events));
+      }, `Should not crash with complex custom function: ${customFunction}`);
+    });
+  });
+
+  test('should correctly identify React class method contexts without undefined errors', () => {
+    const reactFilePath = path.join(fixturesDir, 'typescript-react', 'main.tsx');
+    const program = createProgram(reactFilePath);
+    
+    const events = analyzeTsFile(reactFilePath, program);
+    
+    // Should find the analytics.track call in the arrow function method
+    const analyticsEvent = events.find(e => e.eventName === 'document_upload_clicked');
+    assert.ok(analyticsEvent);
+    assert.strictEqual(analyticsEvent.functionName, 'onFileUploadClick'); // Arrow function methods now show proper names
+    assert.strictEqual(analyticsEvent.source, 'segment');
+  });
+
+  test('should handle TypeScript React component with complex type intersections', () => {
+    const reactFilePath = path.join(fixturesDir, 'typescript-react', 'main.tsx');
+    const program = createProgram(reactFilePath);
+    
+    // The file has complex type intersections: MappedProps & ExplicitProps & ActionProps
+    // This should not cause AST traversal issues
+    assert.doesNotThrow(() => {
+      const events = analyzeTsFile(reactFilePath, program, 'uploadError');
+      assert.ok(Array.isArray(events));
+    });
+  });
+
+  test('should handle React refs and generic type parameters without errors', () => {
+    const reactFilePath = path.join(fixturesDir, 'typescript-react', 'main.tsx');
+    const program = createProgram(reactFilePath);
+    
+    // The file uses React.createRef<any>() which creates complex AST nodes
+    assert.doesNotThrow(() => {
+      const events = analyzeTsFile(reactFilePath, program, 'open');
+      assert.ok(Array.isArray(events));
+    });
+  });
+
+  test('should handle both React functional and class components correctly', () => {
+    const reactFilePath = path.join(fixturesDir, 'typescript-react', 'main.tsx');
+    const program = createProgram(reactFilePath);
+    
+    // Should work without errors for file containing both patterns
+    assert.doesNotThrow(() => {
+      const events = analyzeTsFile(reactFilePath, program, 'track');
+      
+      assert.ok(Array.isArray(events));
+      
+      // Should have events from both functional and class components
+      assert.ok(events.length > 0);
+      
+      // Should have functional component events (from hooks)
+      const functionalEvents = events.filter(e => e.functionName.includes('useCallback') || e.functionName.includes('useEffect'));
+      assert.ok(functionalEvents.length > 0);
+      
+      // Should have class component events (they now show proper method names)
+      const classEvents = events.filter(e => e.functionName === 'onFileUploadClick' || e.functionName === 'handleComplexOperation');
+      assert.ok(classEvents.length > 0);
+    });
+  });
+
+  test('should handle edge cases in isCustomFunction without undefined property access', () => {
+    const reactFilePath = path.join(fixturesDir, 'typescript-react', 'main.tsx');
+    const program = createProgram(reactFilePath);
+    
+    // These edge cases were specifically causing the "reading 'kind'" error
+    const edgeCaseCustomFunctions = [
+      'track', // matches .track in analytics.track
+      'current', // matches .current in dropzoneRef.current
+      'props', // matches this.props
+      'state' // common React property
+    ];
+
+    edgeCaseCustomFunctions.forEach(customFunction => {
+      assert.doesNotThrow(() => {
+        const events = analyzeTsFile(reactFilePath, program, customFunction);
+        assert.ok(Array.isArray(events));
+      }, `Should handle edge case custom function: ${customFunction}`);
+    });
+  });
+
+  test('should preserve correct event extraction while fixing undefined errors', () => {
+    const reactFilePath = path.join(fixturesDir, 'typescript-react', 'main.tsx');
+    const program = createProgram(reactFilePath);
+    
+    // Verify that our fix doesn't break the actual tracking detection
+    const events = analyzeTsFile(reactFilePath, program);
+    
+    // Should correctly identify multiple tracking events including the complex class component
+    assert.ok(events.length >= 8);
+    
+    // Should still correctly identify the analytics.track call from complex component
+    const complexEvent = events.find(e => e.eventName === 'document_upload_clicked');
+    assert.ok(complexEvent);
+    assert.strictEqual(complexEvent.source, 'segment');
+    assert.strictEqual(complexEvent.functionName, 'onFileUploadClick');
+    assert.strictEqual(complexEvent.line, 53);
+    assert.deepStrictEqual(complexEvent.properties, {
+      documentId: { type: 'any' },
+      documentType: { type: 'string' }
     });
   });
 });

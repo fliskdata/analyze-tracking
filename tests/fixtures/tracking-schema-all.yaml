@@ -778,10 +778,21 @@ events:
         type: array
         items:
           type: string
+  document_upload_clicked:
+    implementations:
+      - path: typescript-react/main.tsx
+        line: 53
+        function: onFileUploadClick
+        destination: segment
+    properties:
+      documentId:
+        type: any
+      documentType:
+        type: string
   cart_viewed:
     implementations:
       - path: typescript-react/main.tsx
-        line: 15
+        line: 89
         function: useEffect()
         destination: posthog
     properties:
@@ -792,7 +803,7 @@ events:
   add_to_cart:
     implementations:
       - path: typescript-react/main.tsx
-        line: 27
+        line: 101
         function: useCallback(handleAddToCart)
         destination: segment
     properties:
@@ -805,7 +816,7 @@ events:
   item_added:
     implementations:
       - path: typescript-react/main.tsx
-        line: 34
+        line: 108
         function: useCallback(handleAddToCart)
         destination: amplitude
     properties:
@@ -825,7 +836,7 @@ events:
   remove_from_cart:
     implementations:
       - path: typescript-react/main.tsx
-        line: 45
+        line: 119
         function: removeFromCart
         destination: mixpanel
     properties:
@@ -836,7 +847,7 @@ events:
   begin_checkout:
     implementations:
       - path: typescript-react/main.tsx
-        line: 56
+        line: 130
         function: handleCheckout
         destination: googleanalytics
     properties:
@@ -860,7 +871,7 @@ events:
   checkout_started:
     implementations:
       - path: typescript-react/main.tsx
-        line: 63
+        line: 137
         function: handleCheckout
         destination: rudderstack
     properties:
@@ -882,7 +893,7 @@ events:
   InitiateCheckout:
     implementations:
       - path: typescript-react/main.tsx
-        line: 69
+        line: 143
         function: handleCheckout
         destination: mparticle
     properties:
