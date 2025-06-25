@@ -164,6 +164,17 @@ def main() -> None:
     customTrackFunction3("custom_event3", {"foo": "bar"}, "user@example.com")
     customTrackFunction4("user202", "custom_event4", {"city": "San Francisco"}, {"foo": "bar"}, "user@example.com")
 
+    # Dot-separated custom tracking function (module-style)
+    class CustomModule:
+        @staticmethod
+        def track(user_id: str, event_name: str, params: Dict[str, Any]) -> None:  # type: ignore[return-value]
+            print("CustomModule.track", user_id, event_name, params)
+
+    CustomModule.track("user444", "custom_module_event", {
+        "order_id": "order_xyz",
+        "foo": "bar"
+    })
+
 # Stub variant definitions to satisfy linters (not executed)
 
 def customTrackFunction0(event_name: str, params: Dict[str, Any]) -> None: ...

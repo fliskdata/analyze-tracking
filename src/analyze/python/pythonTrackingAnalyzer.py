@@ -315,6 +315,12 @@ class TrackingVisitor(ast.NodeVisitor):
         if method_name == 'track' and self._is_snowplow_tracker_call(node):
             return 'snowplow'
         
+        # Handle dot-separated custom function names like CustomModule.track
+        if self._custom_fn_name and '.' in self._custom_fn_name:
+            full_name = f"{obj_id}.{method_name}"
+            if full_name == self._custom_fn_name:
+                return 'custom'
+        
         return None
     
     def _detect_function_call_source(self, node: ast.Call) -> Optional[str]:
