@@ -16,6 +16,14 @@ func customTrackFunction(userId string, eventName string, params map[string]any)
 	log.Printf("Custom track: %s - %s - %+v\n", userId, eventName, params)
 }
 
+// Stub custom tracking variants for tests
+func customTrackFunction0(eventName string, params map[string]any)                   {}
+func customTrackFunction1(eventName string, params map[string]any)                   {}
+func customTrackFunction2(userId string, eventName string, params map[string]any)    {}
+func customTrackFunction3(eventName string, params map[string]any, userEmail string) {}
+func customTrackFunction4(userId string, eventName string, userAddress map[string]any, params map[string]any, userEmail string) {
+}
+
 func segmentTrack(userId string) {
 	client := analytics.New("YOUR_SEGMENT_WRITE_KEY")
 	client.Enqueue(analytics.Track{
@@ -108,4 +116,11 @@ func main() {
 		"list": list,
 		"obj":  obj,
 	})
+
+	// Calls for additional custom tracking variants
+	customTrackFunction0("custom_event0", map[string]any{"foo": "bar"})
+	customTrackFunction1("custom_event1", map[string]any{"foo": "bar"})
+	customTrackFunction2("user101", "custom_event2", map[string]any{"foo": "bar"})
+	customTrackFunction3("custom_event3", map[string]any{"foo": "bar"}, "user@example.com")
+	customTrackFunction4("user202", "custom_event4", map[string]any{"city": "San Francisco"}, map[string]any{"foo": "bar"}, "user@example.com")
 }

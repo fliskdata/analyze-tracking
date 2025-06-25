@@ -849,4 +849,21 @@ test.describe('analyzeTsFile', () => {
       documentType: { type: 'string' }
     });
   });
+
+  test('should detect events for all custom function signature variations', () => {
+    const variants = [
+      { sig: 'customTrackFunction0', event: 'custom_event0' },
+      { sig: 'customTrackFunction1(EVENT_NAME, PROPERTIES)', event: 'custom_event1' },
+      { sig: 'customTrackFunction2(userId, EVENT_NAME, PROPERTIES)', event: 'custom_event2' },
+      { sig: 'customTrackFunction3(EVENT_NAME, PROPERTIES, userEmail)', event: 'custom_event3' },
+      { sig: 'customTrackFunction4(userId, EVENT_NAME, userAddress, PROPERTIES, userEmail)', event: 'custom_event4' },
+    ];
+
+    variants.forEach(({ sig, event }) => {
+      const program = createProgram(testFilePath);
+      const events = analyzeTsFile(testFilePath, program, sig);
+      const found = events.find(e => e.eventName === event && e.source === 'custom');
+      assert.ok(found, `Should detect ${event} for signature ${sig}`);
+    });
+  });
 });

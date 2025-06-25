@@ -313,4 +313,20 @@ def customTrackFunction(user_id: str, event_name: str, params: Dict[str, Any]) -
     // Clean up
     fs.unlinkSync(typeTestFile);
   });
+  
+  test('should detect events for all custom function signature variations', async () => {
+    const variants = [
+      { sig: 'customTrackFunction0', event: 'custom_event0' },
+      { sig: 'customTrackFunction1(EVENT_NAME, PROPERTIES)', event: 'custom_event1' },
+      { sig: 'customTrackFunction2(userId, EVENT_NAME, PROPERTIES)', event: 'custom_event2' },
+      { sig: 'customTrackFunction3(EVENT_NAME, PROPERTIES, userEmail)', event: 'custom_event3' },
+      { sig: 'customTrackFunction4(userId, EVENT_NAME, userAddress, PROPERTIES, userEmail)', event: 'custom_event4' },
+    ];
+
+    for (const { sig, event } of variants) {
+      const events = await analyzePythonFile(testFilePath, sig);
+      const found = events.find(e => e.eventName === event && e.source === 'custom');
+      assert.ok(found, `Should detect ${event} for signature ${sig}`);
+    }
+  });
 });
