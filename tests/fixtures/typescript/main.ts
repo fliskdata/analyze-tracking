@@ -291,3 +291,20 @@ const purchaseEvent = {
 customTrackFunction('user555', TRACKING_EVENTS.ECOMMERCE_PURCHASE, purchaseEvent);
 
 analytics.track(ECOMMERCE_PURCHASE_V2, {...purchaseEvent});
+
+// -----------------------------------------------------------------------------
+// Additional custom tracking function variants for testing
+// -----------------------------------------------------------------------------
+
+declare function customTrackFunction0(EVENT_NAME: string, PROPERTIES: Record<string, any>): void;
+declare function customTrackFunction1(EVENT_NAME: string, PROPERTIES: Record<string, any>): void;
+declare function customTrackFunction2(userId: string, EVENT_NAME: string, PROPERTIES: Record<string, any>): void;
+declare function customTrackFunction3(EVENT_NAME: string, PROPERTIES: Record<string, any>, userEmail: string): void;
+declare function customTrackFunction4(userId: string, EVENT_NAME: string, userAddress: Record<string, any>, PROPERTIES: Record<string, any>, userEmail: string): void;
+
+// Calls for each variant so tests can verify detection
+customTrackFunction0('custom_event0', { foo: 'bar' });
+customTrackFunction1('custom_event1', { foo: 'bar' });
+customTrackFunction2('user101', 'custom_event2', { foo: 'bar' });
+customTrackFunction3('custom_event3', { foo: 'bar' }, 'user@example.com');
+customTrackFunction4('user202', 'custom_event4', { city: 'San Francisco' }, { foo: 'bar' }, 'user@example.com');

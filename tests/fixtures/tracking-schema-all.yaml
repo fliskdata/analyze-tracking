@@ -8,7 +8,7 @@ events:
   Signed Up:
     implementations:
       - path: go/main.go
-        line: 21
+        line: 29
         function: segmentTrack
         destination: segment
     properties:
@@ -21,7 +21,7 @@ events:
   some_event:
     implementations:
       - path: go/main.go
-        line: 33
+        line: 41
         function: mixpanelTrack
         destination: mixpanel
     properties:
@@ -34,7 +34,7 @@ events:
   Button Clicked:
     implementations:
       - path: go/main.go
-        line: 44
+        line: 52
         function: amplitudeTrack
         destination: amplitude
       - path: python/main.py
@@ -61,7 +61,7 @@ events:
   user_signed_up:
     implementations:
       - path: go/main.go
-        line: 64
+        line: 72
         function: posthogTrack
         destination: posthog
       - path: python/main.py
@@ -88,7 +88,7 @@ events:
   add-to-basket:
     implementations:
       - path: go/main.go
-        line: 81
+        line: 89
         function: snowplowTrack
         destination: snowplow
       - path: python/main.py
@@ -117,7 +117,7 @@ events:
   custom_event:
     implementations:
       - path: go/main.go
-        line: 105
+        line: 113
         function: main
         destination: custom
       - path: python/main.py

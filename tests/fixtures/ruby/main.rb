@@ -127,3 +127,13 @@ module TrackingHelpers
     )
   end
 end
+
+# -----------------------------------------------------------------------------
+# Additional custom tracking function variant calls for testing
+# -----------------------------------------------------------------------------
+
+customTrackFunction0('custom_event0', { foo: 'bar' })
+customTrackFunction1('custom_event1', { foo: 'bar' })
+customTrackFunction2('user101', 'custom_event2', { foo: 'bar' })
+customTrackFunction3('custom_event3', { foo: 'bar' }, 'user@example.com')
+customTrackFunction4('user202', 'custom_event4', { city: 'San Francisco' }, { foo: 'bar' }, 'user@example.com')

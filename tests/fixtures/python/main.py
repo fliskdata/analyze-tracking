@@ -156,3 +156,22 @@ def main() -> None:
     posthog_capture("user123", "email", True, "premium")
     snowplow_track_events("shop", 2)
     customTrackFunction("user999", "custom_event", {"key": "value", "nested": {"a": [1,2,3]}})
+
+    # Additional custom tracking function variant calls for testing
+    customTrackFunction0("custom_event0", {"foo": "bar"})
+    customTrackFunction1("custom_event1", {"foo": "bar"})
+    customTrackFunction2("user101", "custom_event2", {"foo": "bar"})
+    customTrackFunction3("custom_event3", {"foo": "bar"}, "user@example.com")
+    customTrackFunction4("user202", "custom_event4", {"city": "San Francisco"}, {"foo": "bar"}, "user@example.com")
+
+# Stub variant definitions to satisfy linters (not executed)
+
+def customTrackFunction0(event_name: str, params: Dict[str, Any]) -> None: ...
+
+def customTrackFunction1(event_name: str, params: Dict[str, Any]) -> None: ...
+
+def customTrackFunction2(user_id: str, event_name: str, params: Dict[str, Any]) -> None: ...
+
+def customTrackFunction3(event_name: str, params: Dict[str, Any], user_email: str) -> None: ...
+
+def customTrackFunction4(user_id: str, event_name: str, user_address: Dict[str, Any], params: Dict[str, Any], user_email: str) -> None: ...

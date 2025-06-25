@@ -154,3 +154,13 @@ customTrackFunction('user999', 'customEvent', {
   value: 12345678,
   list: ['item1', 'item2', 'item3']
 });
+
+// -----------------------------------------------------------------------------
+// Additional custom tracking function variants for testing
+// -----------------------------------------------------------------------------
+
+customTrackFunction0('custom_event0', { foo: 'bar' });
+customTrackFunction1('custom_event1', { foo: 'bar' });
+customTrackFunction2('user101', 'custom_event2', { foo: 'bar' });
+customTrackFunction3('custom_event3', { foo: 'bar' }, 'user@example.com');
+customTrackFunction4('user202', 'custom_event4', { city: 'San Francisco' }, { foo: 'bar' }, 'user@example.com');
