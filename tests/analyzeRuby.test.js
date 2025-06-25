@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const path = require('path');
 const { analyzeRubyFile } = require('../src/analyze/ruby');
+const { parseCustomFunctionSignature } = require('../src/analyze/utils/customFunctionParser');
 
 test.describe('analyzeRubyFile', () => {
   const fixturesDir = path.join(__dirname, 'fixtures');
@@ -9,7 +10,8 @@ test.describe('analyzeRubyFile', () => {
   
   test('should correctly analyze Ruby file with multiple tracking providers', async () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
-    const events = await analyzeRubyFile(testFilePath, customFunction);
+    const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
+    const events = await analyzeRubyFile(testFilePath, customFunctionSignatures);
     
     // Sort events by eventName for consistent ordering
     events.sort((a, b) => a.eventName.localeCompare(b.eventName));
@@ -113,7 +115,8 @@ test.describe('analyzeRubyFile', () => {
   
   test('should handle files without tracking events', async () => {
     const emptyTestFile = path.join(fixturesDir, 'ruby', 'empty.rb');
-    const events = await analyzeRubyFile(emptyTestFile, 'customTrack');
+    const customFunctionSignatures = [parseCustomFunctionSignature('customTrack')];
+    const events = await analyzeRubyFile(emptyTestFile, customFunctionSignatures);
     assert.deepStrictEqual(events, []);
   });
   
@@ -127,7 +130,8 @@ test.describe('analyzeRubyFile', () => {
   
   test('should handle nested property types correctly', async () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
-    const events = await analyzeRubyFile(testFilePath, customFunction);
+    const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
+    const events = await analyzeRubyFile(testFilePath, customFunctionSignatures);
     
     const customEvent = events.find(e => e.eventName === 'custom_event');
     assert.ok(customEvent);
@@ -159,7 +163,8 @@ test.describe('analyzeRubyFile', () => {
   
   test('should handle all property types correctly', async () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
-    const events = await analyzeRubyFile(testFilePath, customFunction);
+    const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
+    const events = await analyzeRubyFile(testFilePath, customFunctionSignatures);
     
     // Test string properties
     const signupEvent = events.find(e => e.eventName === 'User Signed Up');
@@ -181,7 +186,8 @@ test.describe('analyzeRubyFile', () => {
   
   test('should correctly identify function names in different contexts', async () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
-    const events = await analyzeRubyFile(testFilePath, customFunction);
+    const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
+    const events = await analyzeRubyFile(testFilePath, customFunctionSignatures);
     
     // Verify function names are correctly identified
     const functionNames = events.map(e => e.functionName).sort();
@@ -198,7 +204,8 @@ test.describe('analyzeRubyFile', () => {
   
   test('should detect custom functions that are methods of a module', async () => {
     const customFunction = 'CustomModule.track(userId, EVENT_NAME, PROPERTIES)';
-    const events = await analyzeRubyFile(testFilePath, customFunction);
+    const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
+    const events = await analyzeRubyFile(testFilePath, customFunctionSignatures);
     
     // Should find the CustomModule.track call
     const customModuleEvent = events.find(e => e.source === 'custom' && e.functionName === 'CustomModule.track');
@@ -244,7 +251,8 @@ test.describe('analyzeRubyFile', () => {
     ];
 
     for (const { sig, event } of variants) {
-      const events = await analyzeRubyFile(testFilePath, sig);
+      const customFunctionSignatures = [parseCustomFunctionSignature(sig)];
+      const events = await analyzeRubyFile(testFilePath, customFunctionSignatures);
       const found = events.find(e => e.eventName === event && e.source === 'custom');
       assert.ok(found, `Should detect ${event} for signature ${sig}`);
     }

@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const path = require('path');
 const { analyzeJsFile } = require('../src/analyze/javascript');
+const { parseCustomFunctionSignature } = require('../src/analyze/utils/customFunctionParser');
 
 test.describe('analyzeJsFile', () => {
   const fixturesDir = path.join(__dirname, 'fixtures');
@@ -9,7 +10,8 @@ test.describe('analyzeJsFile', () => {
   
   test('should correctly analyze JavaScript file with multiple tracking providers', () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
-    const events = analyzeJsFile(testFilePath, customFunction);
+    const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
+    const events = analyzeJsFile(testFilePath, customFunctionSignatures);
     
     // Sort events by line number for consistent ordering
     events.sort((a, b) => a.line - b.line);
@@ -207,7 +209,8 @@ test.describe('analyzeJsFile', () => {
       fs.writeFileSync(emptyTestFile, '// Empty file\n');
     }
     
-    const events = analyzeJsFile(emptyTestFile, 'customTrack');
+    const customFunctionSignatures = [parseCustomFunctionSignature('customTrack')];
+    const events = analyzeJsFile(emptyTestFile, customFunctionSignatures);
     assert.deepStrictEqual(events, []);
   });
   
@@ -221,7 +224,8 @@ test.describe('analyzeJsFile', () => {
   
   test('should handle nested property types correctly', () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
-    const events = analyzeJsFile(testFilePath, customFunction);
+    const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
+    const events = analyzeJsFile(testFilePath, customFunctionSignatures);
     
     // Test nested object properties
     const eventWithNestedObj = events.find(e => e.properties.address);
@@ -245,7 +249,8 @@ test.describe('analyzeJsFile', () => {
   
   test('should detect array types correctly', () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
-    const events = analyzeJsFile(testFilePath, customFunction);
+    const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
+    const events = analyzeJsFile(testFilePath, customFunctionSignatures);
     
     // Test array of objects
     const pendoEvent = events.find(e => e.eventName === 'customer checkout');
@@ -266,7 +271,8 @@ test.describe('analyzeJsFile', () => {
   
   test('should handle different function contexts correctly', () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
-    const events = analyzeJsFile(testFilePath, customFunction);
+    const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
+    const events = analyzeJsFile(testFilePath, customFunctionSignatures);
     
     // Test function declaration
     const funcDeclEvent = events.find(e => e.functionName === 'test12345678');
@@ -287,7 +293,8 @@ test.describe('analyzeJsFile', () => {
   
   test('should handle case variations in provider names', () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
-    const events = analyzeJsFile(testFilePath, customFunction);
+    const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
+    const events = analyzeJsFile(testFilePath, customFunctionSignatures);
     
     // mParticle is used with lowercase 'p' in the test file
     const mparticleEvent = events.find(e => e.source === 'mparticle');
@@ -297,7 +304,8 @@ test.describe('analyzeJsFile', () => {
   
   test('should exclude action field from Snowplow properties', () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
-    const events = analyzeJsFile(testFilePath, customFunction);
+    const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
+    const events = analyzeJsFile(testFilePath, customFunctionSignatures);
     
     const snowplowEvent = events.find(e => e.source === 'snowplow');
     assert.ok(snowplowEvent);
@@ -309,7 +317,8 @@ test.describe('analyzeJsFile', () => {
   
   test('should handle mParticle three-parameter format', () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
-    const events = analyzeJsFile(testFilePath, customFunction);
+    const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
+    const events = analyzeJsFile(testFilePath, customFunctionSignatures);
     
     const mparticleEvent = events.find(e => e.source === 'mparticle');
     assert.ok(mparticleEvent);
@@ -329,7 +338,8 @@ test.describe('analyzeJsFile', () => {
     ];
 
     variants.forEach(({ sig, event }) => {
-      const events = analyzeJsFile(testFilePath, sig);
+      const customFunctionSignatures = [parseCustomFunctionSignature(sig)];
+      const events = analyzeJsFile(testFilePath, customFunctionSignatures);
       const found = events.find(e => e.eventName === event && e.source === 'custom');
       assert.ok(found, `Should detect ${event} for signature ${sig}`);
     });
