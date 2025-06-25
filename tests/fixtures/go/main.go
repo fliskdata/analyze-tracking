@@ -12,8 +12,8 @@ import (
 )
 
 // Custom tracking function for your own hooks
-func customTrackFunction(eventName string, params map[string]any) {
-	log.Printf("Custom track: %s - %+v\n", eventName, params)
+func customTrackFunction(userId string, eventName string, params map[string]any) {
+	log.Printf("Custom track: %s - %s - %+v\n", userId, eventName, params)
 }
 
 func segmentTrack(userId string) {
@@ -102,7 +102,7 @@ func main() {
 		"b": 2,
 		"c": test,
 	}
-	customTrackFunction("custom_event", map[string]any{
+	customTrackFunction("user888", "custom_event", map[string]any{
 		"foo":  "bar",
 		"baz":  baz,
 		"list": list,

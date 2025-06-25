@@ -9,9 +9,10 @@ const { getValueType } = require('./types');
  * Extracts the event name from a tracking call based on the source
  * @param {Object} node - The AST CallNode
  * @param {string} source - The detected analytics source
+ * @param {Object} customConfig - Custom configuration for custom functions
  * @returns {string|null} - The extracted event name or null
  */
-function extractEventName(node, source) {
+function extractEventName(node, source, customConfig = null) {
   if (source === 'segment' || source === 'rudderstack') {
     // Both Segment and Rudderstack use the same format
     const params = node.arguments_?.arguments_?.[0]?.elements;
@@ -50,11 +51,21 @@ function extractEventName(node, source) {
   }
   
   if (source === 'custom') {
-    // Custom function format: customFunction('event_name', {...})
-    const args = node.arguments_?.arguments_;
-    if (args && args.length > 0 && args[0]?.unescaped?.value) {
-      return args[0].unescaped.value;
+    const args = node.arguments_?.arguments_ || [];
+
+    if (!customConfig) {
+      // Fallback: first argument string literal event name
+      if (args[0]?.unescaped?.value) {
+        return args[0].unescaped.value;
+      }
+      return null;
     }
+
+    const eventArg = args[customConfig.eventIndex];
+    if (eventArg?.unescaped?.value) {
+      return eventArg.unescaped.value;
+    }
+    return null;
   }
 
   return null;
@@ -64,9 +75,10 @@ function extractEventName(node, source) {
  * Extracts properties from a tracking call based on the source
  * @param {Object} node - The AST CallNode
  * @param {string} source - The detected analytics source
+ * @param {Object} customConfig - Custom configuration for custom functions
  * @returns {Object|null} - The extracted properties or null
  */
-async function extractProperties(node, source) {
+async function extractProperties(node, source, customConfig = null) {
   const { HashNode, ArrayNode } = await import('@ruby/prism');
 
   if (source === 'segment' || source === 'rudderstack') {
@@ -183,11 +195,35 @@ async function extractProperties(node, source) {
   }
   
   if (source === 'custom') {
-    // Custom function format: customFunction('event_name', {properties})
-    const args = node.arguments_?.arguments_;
-    if (args && args.length > 1 && args[1] instanceof HashNode) {
-      return await extractHashProperties(args[1]);
+    const args = node.arguments_?.arguments_ || [];
+
+    if (!customConfig) {
+      // Legacy fallback behavior
+      if (args.length > 1 && args[1] instanceof HashNode) {
+        return await extractHashProperties(args[1]);
+      }
+      return null;
     }
+
+    const properties = {};
+
+    // Handle extra params first
+    for (const extra of customConfig.extraParams) {
+      const argNode = args[extra.idx];
+      if (!argNode) continue;
+      properties[extra.name] = {
+        type: await getValueType(argNode)
+      };
+    }
+
+    // Handle properties object
+    const propsArg = args[customConfig.propertiesIndex];
+    if (propsArg instanceof HashNode) {
+      const hashProps = await extractHashProperties(propsArg);
+      Object.assign(properties, hashProps);
+    }
+
+    return Object.keys(properties).length > 0 ? properties : null;
   }
 
   return null;

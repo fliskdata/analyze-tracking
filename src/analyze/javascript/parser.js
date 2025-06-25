@@ -70,16 +70,16 @@ function parseFile(filePath) {
  * Walks the AST and finds analytics tracking calls
  * @param {Object} ast - Parsed AST
  * @param {string} filePath - Path to the file being analyzed
- * @param {string} [customFunction] - Custom function name to detect
+ * @param {Object} [customConfig] - Custom function configuration object
  * @returns {Array<Object>} Array of found events
  */
-function findTrackingEvents(ast, filePath, customFunction) {
+function findTrackingEvents(ast, filePath, customConfig) {
   const events = [];
 
   walk.ancestor(ast, {
     [NODE_TYPES.CALL_EXPRESSION]: (node, ancestors) => {
       try {
-        const event = extractTrackingEvent(node, ancestors, filePath, customFunction);
+        const event = extractTrackingEvent(node, ancestors, filePath, customConfig);
         if (event) {
           events.push(event);
         }
@@ -97,25 +97,25 @@ function findTrackingEvents(ast, filePath, customFunction) {
  * @param {Object} node - CallExpression node
  * @param {Array<Object>} ancestors - Ancestor nodes
  * @param {string} filePath - File path
- * @param {string} [customFunction] - Custom function name
+ * @param {Object} [customConfig] - Custom function configuration object
  * @returns {Object|null} Extracted event or null
  */
-function extractTrackingEvent(node, ancestors, filePath, customFunction) {
+function extractTrackingEvent(node, ancestors, filePath, customConfig) {
   // Detect the analytics source
-  const source = detectAnalyticsSource(node, customFunction);
+  const source = detectAnalyticsSource(node, customConfig?.functionName);
   if (source === 'unknown') {
     return null;
   }
 
   // Extract event data based on the source
-  const eventData = extractEventData(node, source);
+  const eventData = extractEventData(node, source, customConfig);
 
   // Get location and context information
   const line = node.loc.start.line;
   const functionName = findWrappingFunction(node, ancestors);
 
   // Process the event data into final format
-  return processEventData(eventData, source, filePath, line, functionName);
+  return processEventData(eventData, source, filePath, line, functionName, customConfig);
 }
 
 module.exports = {

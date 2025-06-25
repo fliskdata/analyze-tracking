@@ -2,8 +2,8 @@
 version: 1
 source:
   repository: git@github.com:fliskdata/analyze-tracking.git
-  commit: 0c20fe5e71e403c5226b7d8685b6263a89a6b8eb
-  timestamp: '2025-05-29T01:28:30Z'
+  commit: f9eeddec7c52731efddc5ca5f8fbd8bf4c6a89cf
+  timestamp: '2025-06-25T03:57:29Z'
 events:
   User Signed Up:
     implementations:
@@ -68,6 +68,8 @@ events:
         function: custom_track_event
         destination: custom
     properties:
+      userId:
+        type: string
       key:
         type: string
       nested:

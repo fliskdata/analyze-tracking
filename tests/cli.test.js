@@ -8,6 +8,8 @@ const _ = require('lodash');
 
 const CLI_PATH = path.join(__dirname, '..', 'bin', 'cli.js');
 
+const customFunctionSignature = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
+
 // Helper function to run CLI and capture output
 function runCLI(targetDir, customFunction, outputFile) {
   const command = `node --no-warnings=ExperimentalWarning "${CLI_PATH}" "${targetDir}" --customFunction "${customFunction}" --output "${outputFile}"`;
@@ -106,7 +108,7 @@ test.describe('CLI End-to-End Tests', () => {
     const expectedFile = path.join(fixturesDir, 'go', 'tracking-schema-go.yaml');
     
     // Run CLI
-    const success = runCLI(targetDir, 'customTrackFunction', outputFile);
+    const success = runCLI(targetDir, customFunctionSignature, outputFile);
     assert.ok(success, 'CLI should run successfully');
     
     // Check output file exists
@@ -122,7 +124,7 @@ test.describe('CLI End-to-End Tests', () => {
     const expectedFile = path.join(fixturesDir, 'javascript', 'tracking-schema-javascript.yaml');
     
     // Run CLI
-    const success = runCLI(targetDir, 'customTrackFunction', outputFile);
+    const success = runCLI(targetDir, customFunctionSignature, outputFile);
     assert.ok(success, 'CLI should run successfully');
     
     // Check output file exists
@@ -138,7 +140,7 @@ test.describe('CLI End-to-End Tests', () => {
     const expectedFile = path.join(fixturesDir, 'typescript', 'tracking-schema-typescript.yaml');
     
     // Run CLI
-    const success = runCLI(targetDir, 'customTrackFunction', outputFile);
+    const success = runCLI(targetDir, customFunctionSignature, outputFile);
     assert.ok(success, 'CLI should run successfully');
     
     // Check output file exists
@@ -154,7 +156,7 @@ test.describe('CLI End-to-End Tests', () => {
     const expectedFile = path.join(fixturesDir, 'python', 'tracking-schema-python.yaml');
     
     // Run CLI
-    const success = runCLI(targetDir, 'customTrackFunction', outputFile);
+    const success = runCLI(targetDir, customFunctionSignature, outputFile);
     assert.ok(success, 'CLI should run successfully');
     
     // Check output file exists
@@ -170,7 +172,7 @@ test.describe('CLI End-to-End Tests', () => {
     const expectedFile = path.join(fixturesDir, 'ruby', 'tracking-schema-ruby.yaml');
     
     // Run CLI
-    const success = runCLI(targetDir, 'customTrackFunction', outputFile);
+    const success = runCLI(targetDir, customFunctionSignature, outputFile);
     assert.ok(success, 'CLI should run successfully');
     
     // Check output file exists
@@ -200,7 +202,7 @@ test.describe('CLI End-to-End Tests', () => {
         );
         
         // Run CLI on the directory with only the empty file
-        const success = runCLI(tempLangDir, 'customTrackFunction', outputFile);
+        const success = runCLI(tempLangDir, customFunctionSignature, outputFile);
         assert.ok(success, `CLI should run successfully for ${lang} empty file`);
         
         // Check output file exists
@@ -228,7 +230,7 @@ test.describe('CLI End-to-End Tests', () => {
     const expectedFile = path.join(fixturesDir, 'tracking-schema-all.yaml');
     
     // Run CLI
-    const success = runCLI(targetDir, 'customTrackFunction', outputFile);
+    const success = runCLI(targetDir, customFunctionSignature, outputFile);
     assert.ok(success, 'CLI should run successfully');
     
     // Check output file exists
@@ -241,7 +243,7 @@ test.describe('CLI End-to-End Tests', () => {
   test('should print YAML to stdout when --stdout is used', async () => {
     const targetDir = path.join(fixturesDir, 'javascript');
     const expectedFile = path.join(fixturesDir, 'javascript', 'tracking-schema-javascript.yaml');
-    const command = `node --no-warnings=ExperimentalWarning "${CLI_PATH}" "${targetDir}" --customFunction "customTrackFunction" --stdout`;
+    const command = `node --no-warnings=ExperimentalWarning "${CLI_PATH}" "${targetDir}" --customFunction "${customFunctionSignature}" --stdout`;
     let stdout;
     try {
       stdout = execSync(command, { encoding: 'utf8' });
@@ -265,7 +267,7 @@ test.describe('CLI End-to-End Tests', () => {
   
   test('should not print output file message when --stdout is used', async () => {
     const targetDir = path.join(fixturesDir, 'javascript');
-    const command = `node --no-warnings=ExperimentalWarning "${CLI_PATH}" "${targetDir}" --customFunction "customTrackFunction" --stdout`;
+    const command = `node --no-warnings=ExperimentalWarning "${CLI_PATH}" "${targetDir}" --customFunction "${customFunctionSignature}" --stdout`;
     let stdout;
     try {
       stdout = execSync(command, { encoding: 'utf8' });
@@ -279,7 +281,7 @@ test.describe('CLI End-to-End Tests', () => {
   test('should print JSON to stdout when --format json is used', async () => {
     const targetDir = path.join(fixturesDir, 'javascript');
     const expectedFile = path.join(fixturesDir, 'javascript', 'tracking-schema-javascript.yaml');
-    const command = `node --no-warnings=ExperimentalWarning "${CLI_PATH}" "${targetDir}" --customFunction "customTrackFunction" --stdout --format json`;
+    const command = `node --no-warnings=ExperimentalWarning "${CLI_PATH}" "${targetDir}" --customFunction "${customFunctionSignature}" --stdout --format json`;
     let stdout;
     try {
       stdout = execSync(command, { encoding: 'utf8' });
@@ -313,7 +315,7 @@ test.describe('CLI End-to-End Tests', () => {
     const targetDir = path.join(fixturesDir, 'javascript');
     const outputFile = path.join(tempDir, 'tracking-schema-javascript-test.json');
     const expectedFile = path.join(fixturesDir, 'javascript', 'tracking-schema-javascript.yaml');
-    const command = `node --no-warnings=ExperimentalWarning "${CLI_PATH}" "${targetDir}" --customFunction "customTrackFunction" --output "${outputFile}" --format json`;
+    const command = `node --no-warnings=ExperimentalWarning "${CLI_PATH}" "${targetDir}" --customFunction "${customFunctionSignature}" --output "${outputFile}" --format json`;
     let stdout;
     try {
       stdout = execSync(command, { encoding: 'utf8' });
@@ -345,7 +347,7 @@ test.describe('CLI End-to-End Tests', () => {
   
   test('should fail with a clear error if --format is not yaml or json', async () => {
     const targetDir = path.join(fixturesDir, 'javascript');
-    const command = `node --no-warnings=ExperimentalWarning "${CLI_PATH}" "${targetDir}" --customFunction "customTrackFunction" --stdout --format xml`;
+    const command = `node --no-warnings=ExperimentalWarning "${CLI_PATH}" "${targetDir}" --customFunction "${customFunctionSignature}" --stdout --format xml`;
     let errorCaught = false;
     try {
       execSync(command, { encoding: 'utf8', stdio: 'pipe' });

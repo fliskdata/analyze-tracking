@@ -8,10 +8,10 @@ const { extractEventName, extractProperties } = require('./extractors');
 const { findWrappingFunction, traverseNode, getLineNumber } = require('./traversal');
 
 class TrackingVisitor {
-  constructor(code, filePath, customFunction = null) {
+  constructor(code, filePath, customConfig = null) {
     this.code = code;
     this.filePath = filePath;
-    this.customFunction = customFunction;
+    this.customConfig = customConfig;
     this.events = [];
   }
 
@@ -22,10 +22,10 @@ class TrackingVisitor {
    */
   async processCallNode(node, ancestors) {
     try {
-      const source = detectSource(node, this.customFunction);
+      const source = detectSource(node, this.customConfig?.functionName);
       if (!source) return;
 
-      const eventName = extractEventName(node, source);
+      const eventName = extractEventName(node, source, this.customConfig);
       if (!eventName) return;
 
       const line = getLineNumber(this.code, node.location);
@@ -33,13 +33,13 @@ class TrackingVisitor {
       // For module-scoped custom functions, use the custom function name as the functionName
       // For simple custom functions, use the wrapping function name
       let functionName;
-      if (source === 'custom' && this.customFunction && this.customFunction.includes('.')) {
-        functionName = this.customFunction;
+      if (source === 'custom' && this.customConfig && this.customConfig.functionName.includes('.')) {
+        functionName = this.customConfig.functionName;
       } else {
         functionName = await findWrappingFunction(node, ancestors);
       }
       
-      const properties = await extractProperties(node, source);
+      const properties = await extractProperties(node, source, this.customConfig);
 
       this.events.push({
         eventName,

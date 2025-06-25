@@ -5,6 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { parseCustomFunctionSignature } = require('../utils/customFunctionParser');
 
 // Singleton instance of Pyodide
 let pyodide = null;
@@ -40,7 +41,7 @@ async function initPyodide() {
  * libraries, extracting event names, properties, and metadata.
  * 
  * @param {string} filePath - Path to the Python file to analyze
- * @param {string} [customFunction=null] - Name of a custom tracking function to detect
+ * @param {string} [customFunctionSignature=null] - Signature of a custom tracking function to detect
  * @returns {Promise<Array<Object>>} Array of tracking events found in the file
  * @returns {Promise<Array>} Empty array if an error occurs
  * 
@@ -52,7 +53,9 @@ async function initPyodide() {
  * // With custom tracking function
  * const events = await analyzePythonFile('./app.py', 'track_event');
  */
-async function analyzePythonFile(filePath, customFunction = null) {
+async function analyzePythonFile(filePath, customFunctionSignature = null) {
+  const customConfig = customFunctionSignature ? parseCustomFunctionSignature(customFunctionSignature) : null;
+
   // Validate inputs
   if (!filePath || typeof filePath !== 'string') {
     console.error('Invalid file path provided');
@@ -83,15 +86,17 @@ async function analyzePythonFile(filePath, customFunction = null) {
     // Set up Python environment with necessary variables
     py.globals.set('code', code);
     py.globals.set('filepath', filePath);
-    py.globals.set('custom_function', customFunction);
+    py.globals.set('custom_config_json', customConfig ? JSON.stringify(customConfig) : null);
+    py.runPython('import json');
+    py.runPython('custom_config = None if custom_config_json == None else json.loads(custom_config_json)');
     // Set __name__ to null to prevent execution of main block
     py.globals.set('__name__', null);
     
     // Load and run the analyzer
     py.runPython(analyzerCode);
     
-    // Execute the analysis and parse results
-    const result = py.runPython('analyze_python_code(code, filepath, custom_function)');
+    // Execute the analysis and parse result
+    const result = py.runPython('analyze_python_code(code, filepath, custom_config)');
     const events = JSON.parse(result);
     
     return events;

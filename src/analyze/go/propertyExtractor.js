@@ -12,9 +12,10 @@ const { extractStringValue, findStructLiteral, findStructField, extractFieldName
  * @param {string} source - Analytics source (e.g., 'segment', 'amplitude')
  * @param {Object} typeContext - Type information context for variable resolution
  * @param {string} currentFunction - Current function context for type lookups
+ * @param {Object} customConfig - Custom configuration for property extraction
  * @returns {Object} Object containing extracted properties with their type information
  */
-function extractProperties(callNode, source, typeContext, currentFunction) {
+function extractProperties(callNode, source, typeContext, currentFunction, customConfig) {
   const properties = {};
   
   switch (source) {
@@ -36,7 +37,7 @@ function extractProperties(callNode, source, typeContext, currentFunction) {
       break;
       
     case ANALYTICS_SOURCES.CUSTOM:
-      extractCustomProperties(callNode, properties, typeContext, currentFunction);
+      extractCustomProperties(callNode, properties, typeContext, currentFunction, customConfig);
       break;
   }
   
@@ -270,10 +271,29 @@ function extractSnowplowProperties(callNode, properties, typeContext, currentFun
  * @param {Object} properties - Object to store extracted properties (modified in place)
  * @param {Object} typeContext - Type information context for variable resolution
  * @param {string} currentFunction - Current function context for type lookups
+ * @param {Object} customConfig - Custom configuration for property extraction
  */
-function extractCustomProperties(callNode, properties, typeContext, currentFunction) {
-  if (callNode.args && callNode.args.length > 1) {
-    extractPropertiesFromExpr(callNode.args[1], properties, typeContext, currentFunction);
+function extractCustomProperties(callNode, properties, typeContext, currentFunction, customConfig) {
+  if (!callNode.args || callNode.args.length === 0) return;
+
+  const args = callNode.args;
+
+  const propsIdx = customConfig?.propertiesIndex ?? 1;
+
+  // Extract extra params first (those not event or properties)
+  if (customConfig && Array.isArray(customConfig.extraParams)) {
+    customConfig.extraParams.forEach(param => {
+      const argNode = args[param.idx];
+      if (argNode) {
+        properties[param.name] = getPropertyInfo(argNode, typeContext, currentFunction);
+      }
+    });
+  }
+
+  // Extract properties map/object (if provided)
+  const propsArg = args[propsIdx];
+  if (propsArg) {
+    extractPropertiesFromExpr(propsArg, properties, typeContext, currentFunction);
   }
 }
 

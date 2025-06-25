@@ -1,9 +1,9 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/fliskdata/analyze-tracking/main/schema.json
 version: 1
 source:
-  repository: git@github.com:fliskdata/example-repo-go.git
-  commit: 760a9a4bd8a4b0c48e56def39a44a0397348839a
-  timestamp: '2025-05-28T00:12:46Z'
+  repository: git@github.com:fliskdata/analyze-tracking.git
+  commit: f9eeddec7c52731efddc5ca5f8fbd8bf4c6a89cf
+  timestamp: '2025-06-25T03:57:29Z'
 events:
   Signed Up:
     implementations:
@@ -83,6 +83,8 @@ events:
         function: main
         destination: custom
     properties:
+      userId:
+        type: string
       foo:
         type: string
       baz:

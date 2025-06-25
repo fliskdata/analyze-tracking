@@ -22,7 +22,7 @@ test.describe('analyzeTsFile', () => {
   }
 
   test('should correctly analyze TypeScript file with multiple tracking providers', () => {
-    const customFunction = 'customTrackFunction';
+    const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const program = createProgram(testFilePath);
     const events = analyzeTsFile(testFilePath, program, customFunction);
 
@@ -36,7 +36,7 @@ test.describe('analyzeTsFile', () => {
     assert.ok(gaEvent);
     assert.strictEqual(gaEvent.source, 'googleanalytics');
     assert.strictEqual(gaEvent.functionName, 'trackOrderCompletedGA');
-    assert.strictEqual(gaEvent.line, 104);
+    assert.strictEqual(gaEvent.line, 105);
     assert.deepStrictEqual(gaEvent.properties, {
       order_id: { type: 'string' },
       products: {
@@ -68,7 +68,7 @@ test.describe('analyzeTsFile', () => {
     assert.ok(segmentEvent);
     assert.strictEqual(segmentEvent.source, 'segment');
     assert.strictEqual(segmentEvent.functionName, 'checkout');
-    assert.strictEqual(segmentEvent.line, 120);
+    assert.strictEqual(segmentEvent.line, 121);
     assert.deepStrictEqual(segmentEvent.properties, {
       stage: { type: 'string' },
       method: { type: 'string' },
@@ -80,7 +80,7 @@ test.describe('analyzeTsFile', () => {
     assert.ok(mixpanelEvent);
     assert.strictEqual(mixpanelEvent.source, 'mixpanel');
     assert.strictEqual(mixpanelEvent.functionName, 'confirmPurchaseMixpanel');
-    assert.strictEqual(mixpanelEvent.line, 129);
+    assert.strictEqual(mixpanelEvent.line, 130);
     assert.deepStrictEqual(mixpanelEvent.properties, {
       order_id: { type: 'string' },
       items: {
@@ -103,7 +103,7 @@ test.describe('analyzeTsFile', () => {
     assert.ok(amplitudeEvent);
     assert.strictEqual(amplitudeEvent.source, 'amplitude');
     assert.strictEqual(amplitudeEvent.functionName, 'checkout');
-    assert.strictEqual(amplitudeEvent.line, 134);
+    assert.strictEqual(amplitudeEvent.line, 135);
     assert.deepStrictEqual(amplitudeEvent.properties, {
       order_id: { type: 'string' },
       items: {
@@ -135,7 +135,7 @@ test.describe('analyzeTsFile', () => {
     assert.ok(rudderstackEvent);
     assert.strictEqual(rudderstackEvent.source, 'rudderstack');
     assert.strictEqual(rudderstackEvent.functionName, 'checkout');
-    assert.strictEqual(rudderstackEvent.line, 149);
+    assert.strictEqual(rudderstackEvent.line, 150);
     assert.deepStrictEqual(rudderstackEvent.properties, {
       order_id: { type: 'string' },
       items: {
@@ -166,7 +166,7 @@ test.describe('analyzeTsFile', () => {
     assert.ok(mparticleEvent);
     assert.strictEqual(mparticleEvent.source, 'mparticle');
     assert.strictEqual(mparticleEvent.functionName, 'checkout2');
-    assert.strictEqual(mparticleEvent.line, 175);
+    assert.strictEqual(mparticleEvent.line, 176);
     assert.deepStrictEqual(mparticleEvent.properties, {
       order_id: { type: 'string' },
       items: {
@@ -197,7 +197,7 @@ test.describe('analyzeTsFile', () => {
     assert.ok(posthogEvent);
     assert.strictEqual(posthogEvent.source, 'posthog');
     assert.strictEqual(posthogEvent.functionName, 'checkout2');
-    assert.strictEqual(posthogEvent.line, 194);
+    assert.strictEqual(posthogEvent.line, 195);
     assert.deepStrictEqual(posthogEvent.properties, {
       order_id: { type: 'string' },
       retry: { type: 'number' },
@@ -229,7 +229,7 @@ test.describe('analyzeTsFile', () => {
     assert.ok(pendoEvent);
     assert.strictEqual(pendoEvent.source, 'pendo');
     assert.strictEqual(pendoEvent.functionName, 'checkout3');
-    assert.strictEqual(pendoEvent.line, 215);
+    assert.strictEqual(pendoEvent.line, 216);
     assert.deepStrictEqual(pendoEvent.properties, {
       order_id: { type: 'string' },
       products: {
@@ -260,7 +260,7 @@ test.describe('analyzeTsFile', () => {
     assert.ok(heapEvent);
     assert.strictEqual(heapEvent.source, 'heap');
     assert.strictEqual(heapEvent.functionName, 'checkout3');
-    assert.strictEqual(heapEvent.line, 229);
+    assert.strictEqual(heapEvent.line, 230);
     assert.deepStrictEqual(heapEvent.properties, {
       user_id: { type: 'string' },
       email: { type: 'string' },
@@ -276,7 +276,7 @@ test.describe('analyzeTsFile', () => {
     assert.ok(snowplowEvent1);
     assert.strictEqual(snowplowEvent1.source, 'snowplow');
     assert.strictEqual(snowplowEvent1.functionName, 'trackSnowplow');
-    assert.strictEqual(snowplowEvent1.line, 246);
+    assert.strictEqual(snowplowEvent1.line, 247);
     assert.deepStrictEqual(snowplowEvent1.properties, {
       category: { type: 'string' },
       label: { type: 'string' },
@@ -288,15 +288,16 @@ test.describe('analyzeTsFile', () => {
     assert.ok(snowplowEvent2);
     assert.strictEqual(snowplowEvent2.source, 'snowplow');
     assert.strictEqual(snowplowEvent2.functionName, 'trackSnowplow2');
-    assert.strictEqual(snowplowEvent2.line, 250);
+    assert.strictEqual(snowplowEvent2.line, 251);
 
     // Test custom function event
     const customEvent = events.find(e => e.eventName === 'custom_event_v2');
     assert.ok(customEvent);
     assert.strictEqual(customEvent.source, 'custom');
     assert.strictEqual(customEvent.functionName, 'global');
-    assert.strictEqual(customEvent.line, 279);
+    assert.strictEqual(customEvent.line, 280);
     assert.deepStrictEqual(customEvent.properties, {
+      userId: { type: 'string' },
       order_id: { type: 'string' },
       value: { type: 'number' },
       list: {
@@ -317,8 +318,9 @@ test.describe('analyzeTsFile', () => {
     assert.ok(constantEvent);
     assert.strictEqual(constantEvent.source, 'custom');
     assert.strictEqual(constantEvent.functionName, 'global');
-    assert.strictEqual(constantEvent.line, 290);
+    assert.strictEqual(constantEvent.line, 291);
     assert.deepStrictEqual(constantEvent.properties, {
+      userId: { type: 'string' },
       orderId: { type: 'string' },
       total: { type: 'number' },
       items: {
@@ -332,7 +334,7 @@ test.describe('analyzeTsFile', () => {
     assert.ok(importedConstantEvent);
     assert.strictEqual(importedConstantEvent.source, 'segment');
     assert.strictEqual(importedConstantEvent.functionName, 'global');
-    assert.strictEqual(importedConstantEvent.line, 292);
+    assert.strictEqual(importedConstantEvent.line, 293);
     assert.deepStrictEqual(importedConstantEvent.properties, {
       orderId: { type: 'string' },
       total: { type: 'number' },
@@ -366,7 +368,7 @@ test.describe('analyzeTsFile', () => {
   });
 
   test('should handle nested property types correctly', () => {
-    const customFunction = 'customTrackFunction';
+    const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const program = createProgram(testFilePath);
     const events = analyzeTsFile(testFilePath, program, customFunction);
 
@@ -400,7 +402,7 @@ test.describe('analyzeTsFile', () => {
   });
 
   test('should detect and expand interface types correctly', () => {
-    const customFunction = 'customTrackFunction';
+    const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const program = createProgram(testFilePath);
     const events = analyzeTsFile(testFilePath, program, customFunction);
 
@@ -428,7 +430,7 @@ test.describe('analyzeTsFile', () => {
   });
 
   test('should handle shorthand property assignments correctly', () => {
-    const customFunction = 'customTrackFunction';
+    const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const program = createProgram(testFilePath);
     const events = analyzeTsFile(testFilePath, program, customFunction);
 
@@ -442,7 +444,7 @@ test.describe('analyzeTsFile', () => {
   });
 
   test('should handle variable references correctly', () => {
-    const customFunction = 'customTrackFunction';
+    const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const program = createProgram(testFilePath);
     const events = analyzeTsFile(testFilePath, program, customFunction);
 
@@ -457,7 +459,7 @@ test.describe('analyzeTsFile', () => {
   });
 
   test('should exclude action field from Snowplow properties', () => {
-    const customFunction = 'customTrackFunction';
+    const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const program = createProgram(testFilePath);
     const events = analyzeTsFile(testFilePath, program, customFunction);
 
@@ -469,7 +471,7 @@ test.describe('analyzeTsFile', () => {
   });
 
   test('should handle mParticle three-parameter format', () => {
-    const customFunction = 'customTrackFunction';
+    const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const program = createProgram(testFilePath);
     const events = analyzeTsFile(testFilePath, program, customFunction);
 
@@ -481,7 +483,7 @@ test.describe('analyzeTsFile', () => {
   });
 
   test('should handle readonly array types correctly', () => {
-    const customFunction = 'customTrackFunction';
+    const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const program = createProgram(testFilePath);
     const events = analyzeTsFile(testFilePath, program, customFunction);
 
@@ -495,7 +497,7 @@ test.describe('analyzeTsFile', () => {
   });
 
   test('should handle exported vs non-exported interfaces', () => {
-    const customFunction = 'customTrackFunction';
+    const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const program = createProgram(testFilePath);
     const events = analyzeTsFile(testFilePath, program, customFunction);
 

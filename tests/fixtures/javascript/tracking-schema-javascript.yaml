@@ -2,8 +2,8 @@
 version: 1
 source:
   repository: git@github.com:fliskdata/analyze-tracking.git
-  commit: 798853671e0a716d89a37d483ab94110022a4eea
-  timestamp: '2025-05-29T12:43:49Z'
+  commit: f9eeddec7c52731efddc5ca5f8fbd8bf4c6a89cf
+  timestamp: '2025-06-25T03:57:29Z'
 events:
   purchase:
     implementations:
@@ -196,3 +196,5 @@ events:
         type: array
         items:
           type: string
+      userId:
+        type: string

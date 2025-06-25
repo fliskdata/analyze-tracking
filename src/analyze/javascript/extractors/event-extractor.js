@@ -20,6 +20,7 @@ const EXTRACTION_STRATEGIES = {
   googleanalytics: extractGoogleAnalyticsEvent,
   snowplow: extractSnowplowEvent,
   mparticle: extractMparticleEvent,
+  custom: extractCustomEvent,
   default: extractDefaultEvent
 };
 
@@ -27,10 +28,14 @@ const EXTRACTION_STRATEGIES = {
  * Extracts event information from a CallExpression node
  * @param {Object} node - AST CallExpression node
  * @param {string} source - Analytics provider source
+ * @param {Object} customConfig - Parsed custom function configuration
  * @returns {EventData} Extracted event data
  */
-function extractEventData(node, source) {
+function extractEventData(node, source, customConfig) {
   const strategy = EXTRACTION_STRATEGIES[source] || EXTRACTION_STRATEGIES.default;
+  if (source === 'custom') {
+    return strategy(node, customConfig);
+  }
   return strategy(node);
 }
 
@@ -114,15 +119,40 @@ function extractDefaultEvent(node) {
 }
 
 /**
+ * Extracts Custom function event data according to signature
+ * @param {Object} node - CallExpression node
+ * @param {Object} customConfig - Parsed custom function configuration
+ * @returns {EventData & {extraArgs:Object}} event data plus extra args map
+ */
+function extractCustomEvent(node, customConfig) {
+  const args = node.arguments || [];
+
+  const eventArg = args[customConfig?.eventIndex ?? 0];
+  const propertiesArg = args[customConfig?.propertiesIndex ?? 1];
+
+  const eventName = getStringValue(eventArg);
+
+  const extraArgs = {};
+  if (customConfig && customConfig.extraParams) {
+    customConfig.extraParams.forEach(extra => {
+      extraArgs[extra.name] = args[extra.idx];
+    });
+  }
+
+  return { eventName, propertiesNode: propertiesArg, extraArgs };
+}
+
+/**
  * Processes extracted event data into final event object
  * @param {EventData} eventData - Raw event data
  * @param {string} source - Analytics source
  * @param {string} filePath - File path
  * @param {number} line - Line number
  * @param {string} functionName - Containing function name
+ * @param {Object} customConfig - Parsed custom function configuration
  * @returns {Object|null} Processed event object or null
  */
-function processEventData(eventData, source, filePath, line, functionName) {
+function processEventData(eventData, source, filePath, line, functionName, customConfig) {
   const { eventName, propertiesNode } = eventData;
 
   if (!eventName || !propertiesNode || propertiesNode.type !== NODE_TYPES.OBJECT_EXPRESSION) {
@@ -130,6 +160,15 @@ function processEventData(eventData, source, filePath, line, functionName) {
   }
 
   let properties = extractProperties(propertiesNode);
+
+  // Handle custom extra params
+  if (source === 'custom' && customConfig && eventData.extraArgs) {
+    for (const [paramName, argNode] of Object.entries(eventData.extraArgs)) {
+      properties[paramName] = {
+        type: inferNodeValueType(argNode)
+      };
+    }
+  }
 
   // Special handling for Snowplow: remove 'action' from properties
   if (source === 'snowplow' && properties.action) {
@@ -171,6 +210,25 @@ function findPropertyByKey(objectNode, key) {
   return objectNode.properties.find(prop => 
     prop.key && (prop.key.name === key || prop.key.value === key)
   );
+}
+
+/**
+ * Infers the type of a value from an AST node (simple heuristic)
+ * @param {Object} node - AST node
+ * @returns {string} inferred type
+ */
+function inferNodeValueType(node) {
+  if (!node) return 'any';
+  switch (node.type) {
+    case NODE_TYPES.LITERAL:
+      return typeof node.value;
+    case NODE_TYPES.OBJECT_EXPRESSION:
+      return 'object';
+    case NODE_TYPES.ARRAY_EXPRESSION:
+      return 'array';
+    default:
+      return 'any';
+  }
 }
 
 module.exports = {

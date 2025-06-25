@@ -12,34 +12,34 @@ const { extractTrackingEvent } = require('./trackingExtractor');
  * @param {Array<Object>} events - Array to collect found tracking events (modified in place)
  * @param {string} filePath - Path to the file being analyzed
  * @param {string} functionName - Name of the current function being processed
- * @param {string|null} customFunction - Name of custom tracking function to detect
+ * @param {Object|null} customConfig - Parsed custom function configuration (or null)
  * @param {Object} typeContext - Type information context for variable resolution
  * @param {string} currentFunction - Current function context for type lookups
  */
-function extractEventsFromBody(body, events, filePath, functionName, customFunction, typeContext, currentFunction) {
+function extractEventsFromBody(body, events, filePath, functionName, customConfig, typeContext, currentFunction) {
   for (const stmt of body) {
     if (stmt.tag === 'exec' && stmt.expr) {
-      processExpression(stmt.expr, events, filePath, functionName, customFunction, typeContext, currentFunction);
+      processExpression(stmt.expr, events, filePath, functionName, customConfig, typeContext, currentFunction);
     } else if (stmt.tag === 'declare' && stmt.value) {
       // Handle variable declarations with tracking calls
-      processExpression(stmt.value, events, filePath, functionName, customFunction, typeContext, currentFunction);
+      processExpression(stmt.value, events, filePath, functionName, customConfig, typeContext, currentFunction);
     } else if (stmt.tag === 'assign' && stmt.rhs) {
       // Handle assignments with tracking calls
-      processExpression(stmt.rhs, events, filePath, functionName, customFunction, typeContext, currentFunction);
+      processExpression(stmt.rhs, events, filePath, functionName, customConfig, typeContext, currentFunction);
     } else if (stmt.tag === 'if' && stmt.body) {
-      extractEventsFromBody(stmt.body, events, filePath, functionName, customFunction, typeContext, currentFunction);
+      extractEventsFromBody(stmt.body, events, filePath, functionName, customConfig, typeContext, currentFunction);
     } else if (stmt.tag === 'elseif' && stmt.body) {
-      extractEventsFromBody(stmt.body, events, filePath, functionName, customFunction, typeContext, currentFunction);
+      extractEventsFromBody(stmt.body, events, filePath, functionName, customConfig, typeContext, currentFunction);
     } else if (stmt.tag === 'else' && stmt.body) {
-      extractEventsFromBody(stmt.body, events, filePath, functionName, customFunction, typeContext, currentFunction);
+      extractEventsFromBody(stmt.body, events, filePath, functionName, customConfig, typeContext, currentFunction);
     } else if (stmt.tag === 'for' && stmt.body) {
-      extractEventsFromBody(stmt.body, events, filePath, functionName, customFunction, typeContext, currentFunction);
+      extractEventsFromBody(stmt.body, events, filePath, functionName, customConfig, typeContext, currentFunction);
     } else if (stmt.tag === 'foreach' && stmt.body) {
-      extractEventsFromBody(stmt.body, events, filePath, functionName, customFunction, typeContext, currentFunction);
+      extractEventsFromBody(stmt.body, events, filePath, functionName, customConfig, typeContext, currentFunction);
     } else if (stmt.tag === 'switch' && stmt.cases) {
       for (const caseNode of stmt.cases) {
         if (caseNode.body) {
-          extractEventsFromBody(caseNode.body, events, filePath, functionName, customFunction, typeContext, currentFunction);
+          extractEventsFromBody(caseNode.body, events, filePath, functionName, customConfig, typeContext, currentFunction);
         }
       }
     }
@@ -52,18 +52,18 @@ function extractEventsFromBody(body, events, filePath, functionName, customFunct
  * @param {Array<Object>} events - Array to collect found tracking events (modified in place)
  * @param {string} filePath - Path to the file being analyzed
  * @param {string} functionName - Name of the current function being processed
- * @param {string|null} customFunction - Name of custom tracking function to detect
+ * @param {Object|null} customConfig - Parsed custom function configuration (or null)
  * @param {Object} typeContext - Type information context for variable resolution
  * @param {string} currentFunction - Current function context for type lookups
  * @param {number} [depth=0] - Current recursion depth (used to prevent infinite recursion)
  */
-function processExpression(expr, events, filePath, functionName, customFunction, typeContext, currentFunction, depth = 0) {
+function processExpression(expr, events, filePath, functionName, customConfig, typeContext, currentFunction, depth = 0) {
   if (!expr || depth > MAX_RECURSION_DEPTH) return; // Prevent infinite recursion with depth limit
   
   // Handle array of expressions
   if (Array.isArray(expr)) {
     for (const item of expr) {
-      processExpression(item, events, filePath, functionName, customFunction, typeContext, currentFunction, depth + 1);
+      processExpression(item, events, filePath, functionName, customConfig, typeContext, currentFunction, depth + 1);
     }
     return;
   }
@@ -71,25 +71,25 @@ function processExpression(expr, events, filePath, functionName, customFunction,
   // Handle single expression with body
   if (expr.body) {
     for (const item of expr.body) {
-      processExpression(item, events, filePath, functionName, customFunction, typeContext, currentFunction, depth + 1);
+      processExpression(item, events, filePath, functionName, customConfig, typeContext, currentFunction, depth + 1);
     }
     return;
   }
   
   // Handle specific node types
   if (expr.tag === 'call') {
-    const trackingCall = extractTrackingEvent(expr, filePath, functionName, customFunction, typeContext, currentFunction);
+    const trackingCall = extractTrackingEvent(expr, filePath, functionName, customConfig, typeContext, currentFunction);
     if (trackingCall) {
       events.push(trackingCall);
     }
     
     // Also process call arguments
     if (expr.args) {
-      processExpression(expr.args, events, filePath, functionName, customFunction, typeContext, currentFunction, depth + 1);
+      processExpression(expr.args, events, filePath, functionName, customConfig, typeContext, currentFunction, depth + 1);
     }
   } else if (expr.tag === 'structlit') {
     // Check if this struct literal is a tracking event
-    const trackingCall = extractTrackingEvent(expr, filePath, functionName, customFunction, typeContext, currentFunction);
+    const trackingCall = extractTrackingEvent(expr, filePath, functionName, customConfig, typeContext, currentFunction);
     if (trackingCall) {
       events.push(trackingCall);
     }
@@ -98,7 +98,7 @@ function processExpression(expr, events, filePath, functionName, customFunction,
     if (!trackingCall && expr.fields) {
       for (const field of expr.fields) {
         if (field.value) {
-          processExpression(field.value, events, filePath, functionName, customFunction, typeContext, currentFunction, depth + 1);
+          processExpression(field.value, events, filePath, functionName, customConfig, typeContext, currentFunction, depth + 1);
         }
       }
     }
@@ -106,13 +106,13 @@ function processExpression(expr, events, filePath, functionName, customFunction,
   
   // Process other common properties that might contain expressions
   if (expr.value && expr.tag !== 'structlit') {
-    processExpression(expr.value, events, filePath, functionName, customFunction, typeContext, currentFunction, depth + 1);
+    processExpression(expr.value, events, filePath, functionName, customConfig, typeContext, currentFunction, depth + 1);
   }
   if (expr.lhs) {
-    processExpression(expr.lhs, events, filePath, functionName, customFunction, typeContext, currentFunction, depth + 1);
+    processExpression(expr.lhs, events, filePath, functionName, customConfig, typeContext, currentFunction, depth + 1);
   }
   if (expr.rhs) {
-    processExpression(expr.rhs, events, filePath, functionName, customFunction, typeContext, currentFunction, depth + 1);
+    processExpression(expr.rhs, events, filePath, functionName, customConfig, typeContext, currentFunction, depth + 1);
   }
 }
 

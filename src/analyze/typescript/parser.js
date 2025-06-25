@@ -65,10 +65,10 @@ function getProgram(filePath, existingProgram) {
  * @param {Object} sourceFile - TypeScript source file
  * @param {Object} checker - TypeScript type checker
  * @param {string} filePath - Path to the file being analyzed
- * @param {string} [customFunction] - Custom function name to detect
+ * @param {Object} [customConfig] - Custom function configuration
  * @returns {Array<Object>} Array of found events
  */
-function findTrackingEvents(sourceFile, checker, filePath, customFunction) {
+function findTrackingEvents(sourceFile, checker, filePath, customConfig) {
   const events = [];
 
   /**
@@ -78,7 +78,7 @@ function findTrackingEvents(sourceFile, checker, filePath, customFunction) {
   function visit(node) {
     try {
       if (ts.isCallExpression(node)) {
-        const event = extractTrackingEvent(node, sourceFile, checker, filePath, customFunction);
+        const event = extractTrackingEvent(node, sourceFile, checker, filePath, customConfig);
         if (event) {
           events.push(event);
         }
@@ -102,25 +102,25 @@ function findTrackingEvents(sourceFile, checker, filePath, customFunction) {
  * @param {Object} sourceFile - TypeScript source file
  * @param {Object} checker - TypeScript type checker
  * @param {string} filePath - File path
- * @param {string} [customFunction] - Custom function name
+ * @param {Object} [customConfig] - Custom function configuration
  * @returns {Object|null} Extracted event or null
  */
-function extractTrackingEvent(node, sourceFile, checker, filePath, customFunction) {
+function extractTrackingEvent(node, sourceFile, checker, filePath, customConfig) {
   // Detect the analytics source
-  const source = detectAnalyticsSource(node, customFunction);
+  const source = detectAnalyticsSource(node, customConfig?.functionName);
   if (source === 'unknown') {
     return null;
   }
 
   // Extract event data based on the source
-  const eventData = extractEventData(node, source, checker, sourceFile);
+  const eventData = extractEventData(node, source, checker, sourceFile, customConfig);
 
   // Get location and context information
   const line = sourceFile.getLineAndCharacterOfPosition(node.getStart()).line + 1;
   const functionName = findWrappingFunction(node);
 
   // Process the event data into final format
-  return processEventData(eventData, source, filePath, line, functionName, checker, sourceFile);
+  return processEventData(eventData, source, filePath, line, functionName, checker, sourceFile, customConfig);
 }
 
 module.exports = {

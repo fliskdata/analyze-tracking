@@ -5,6 +5,7 @@
 
 const fs = require('fs');
 const TrackingVisitor = require('./visitor');
+const { parseCustomFunctionSignature } = require('../utils/customFunctionParser');
 
 // Lazy-loaded parse function from Ruby Prism
 let parse = null;
@@ -16,7 +17,7 @@ let parse = null;
  * @returns {Promise<Array>} Array of tracking events found in the file
  * @throws {Error} If the file cannot be read or parsed
  */
-async function analyzeRubyFile(filePath, customFunction) {
+async function analyzeRubyFile(filePath, customFunctionSignature) {
   // Lazy load the Ruby Prism parser
   if (!parse) {
     const { loadPrism } = await import('@ruby/prism');
@@ -37,7 +38,8 @@ async function analyzeRubyFile(filePath, customFunction) {
     }
 
     // Create a visitor and analyze the AST
-    const visitor = new TrackingVisitor(code, filePath, customFunction);
+    const customConfig = customFunctionSignature ? parseCustomFunctionSignature(customFunctionSignature) : null;
+    const visitor = new TrackingVisitor(code, filePath, customConfig);
     const events = await visitor.analyze(ast);
 
     return events;

@@ -8,7 +8,7 @@ test.describe('analyzeGoFile', () => {
   const testFilePath = path.join(fixturesDir, 'go', 'main.go');
   
   test('should correctly analyze Go file with multiple tracking providers', async () => {
-    const customFunction = 'customTrackFunction';
+    const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const events = await analyzeGoFile(testFilePath, customFunction);
     
     // Sort events by eventName for consistent ordering
@@ -86,6 +86,7 @@ test.describe('analyzeGoFile', () => {
     assert.strictEqual(customEvent.functionName, 'main');
     assert.strictEqual(customEvent.line, 105);
     assert.deepStrictEqual(customEvent.properties, {
+      userId: { type: 'string' },
       foo: { type: 'string' },
       baz: { type: 'number' },
       list: { type: 'array', items: { type: 'string' } },
@@ -115,7 +116,7 @@ test.describe('analyzeGoFile', () => {
   });
   
   test('should handle nested property types correctly', async () => {
-    const customFunction = 'customTrackFunction';
+    const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const events = await analyzeGoFile(testFilePath, customFunction);
     
     const customEvent = events.find(e => e.eventName === 'custom_event');
@@ -139,7 +140,7 @@ test.describe('analyzeGoFile', () => {
   });
   
   test('should match expected tracking-schema.yaml output', async () => {
-    const customFunction = 'customTrackFunction';
+    const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const events = await analyzeGoFile(testFilePath, customFunction);
     
     // Create a map of events by name for easier verification
@@ -223,6 +224,7 @@ test.describe('analyzeGoFile', () => {
     assert.strictEqual(eventMap['custom_event'].line, 105);
     assert.strictEqual(eventMap['custom_event'].functionName, 'main');
     assert.deepStrictEqual(eventMap['custom_event'].properties, {
+      userId: { type: 'string' },
       foo: { type: 'string' },
       baz: { type: 'number' },
       list: { 
