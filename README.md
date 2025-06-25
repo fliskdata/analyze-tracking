@@ -23,38 +23,39 @@ Run without installation! Just use:
 npx @flisk/analyze-tracking /path/to/project [options]
 ```
 
-### Key Options:
+### Key Options
 - `-g, --generateDescription`: Generate descriptions of fields (default: `false`)
 - `-p, --provider <provider>`: Specify a provider (options: `openai`, `gemini`)
 - `-m, --model <model>`: Specify a model (ex: `gpt-4.1-nano`, `gpt-4o-mini`, `gemini-2.0-flash-lite-001`)
 - `-o, --output <output_file>`: Name of the output file (default: `tracking-schema.yaml`)
-- `-c, --customFunction <function_name>`: Specify a custom tracking function
+- `-c, --customFunction <function_signature>`: Specify the signature of your custom tracking function (see [instructions here](#custom-functions))
 - `--format <format>`: Output format, either `yaml` (default) or `json`. If an invalid value is provided, the CLI will exit with an error.
 - `--stdout`: Print the output to the terminal instead of writing to a file (works with both YAML and JSON)
 
 🔑&nbsp; **Important:** If you are using `generateDescription`, you must set the appropriate credentials for the LLM provider you are using as an environment variable. OpenAI uses `OPENAI_API_KEY` and Google Vertex AI uses `GOOGLE_APPLICATION_CREDENTIALS`.
 
-<details>
-  <summary>Note on Custom Functions 💡</summary>
 
-  Use this if you have your own in-house tracker or a wrapper function that calls other tracking libraries.
+### Custom Functions
 
-  We currently only support functions that follow the following format:
-  
-  **JavaScript/TypeScript/Python/Ruby:**
-  ```js
-  yourCustomTrackFunctionName('<event_name>', {
-    <event_parameters>
-  });
-  ```
-  
-  **Go:**
-  ```go
-  yourCustomTrackFunctionName("<event_name>", map[string]any{}{
-    "<property_name>": "<property_value>",
-  })
-  ```
-</details>
+If you have your own in-house tracker or a wrapper function that calls other tracking libraries, you can specify the function signature with the `-c` or `--customFunction` option.
+
+Your function signature should be in the following format:
+```js
+yourCustomTrackFunctionName(EVENT_NAME, PROPERTIES, customFieldOne, customFieldTwo)
+```
+
+- `EVENT_NAME` is the name of the event you are tracking. It should be a string or a pointer to a string.
+- `PROPERTIES` is an object of properties for that event. It should be an object / dictionary.
+- Any additional parameters are other fields you are tracking. They can be of any type. The names you provide for these parameters will be used as the property names in the output.
+
+
+For example, if your function has a userId parameter at the beginning, followed by the event name and properties, you would pass in the following:
+
+```js
+yourCustomTrackFunctionName(userId, EVENT_NAME, PROPERTIES)
+```
+
+If your function follows the format `yourCustomTrackFunctionName(EVENT_NAME, PROPERTIES)`, you can simply pass in `yourCustomTrackFunctionName` to `--customFunction` as a shorthand.
 
 
 ## What's Generated?
