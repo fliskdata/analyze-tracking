@@ -76,7 +76,7 @@ class TracksController
 
   # Custom tracking function
   def custom_track_event
-    customTrackFunction('custom_event', {
+    customTrackFunction('user456', 'custom_event', {
       key: 'value',
       nested: { a: [1, 2, 3] }
     })
@@ -84,18 +84,18 @@ class TracksController
 
   private
 
-  def customTrackFunction(event_name, params = {})
-    puts "Custom track: #{event_name} - #{params}"
+  def customTrackFunction(user_id, event_name, params = {})
+    puts "Custom track: #{user_id} - #{event_name} - #{params}"
   end
 
   module CustomModule
-    def track(event_name, params = {})
+    def track(user_id, event_name, params = {})
       # Mock implementation
     end
   end
 
   def custom_track_module
-    CustomModule.track('custom_event', {
+    CustomModule.track('user789', 'custom_event', {
       key: 'value',
       nested: { a: [1, 2, 3] }
     })

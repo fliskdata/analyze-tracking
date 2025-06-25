@@ -8,7 +8,7 @@ test.describe('analyzeJsFile', () => {
   const testFilePath = path.join(fixturesDir, 'javascript', 'main.js');
   
   test('should correctly analyze JavaScript file with multiple tracking providers', () => {
-    const customFunction = 'customTrackFunction';
+    const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const events = analyzeJsFile(testFilePath, customFunction);
     
     // Sort events by line number for consistent ordering
@@ -189,6 +189,7 @@ test.describe('analyzeJsFile', () => {
     assert.strictEqual(customEvent.functionName, 'global');
     assert.strictEqual(customEvent.line, 152);
     assert.deepStrictEqual(customEvent.properties, {
+      userId: { type: 'string' },
       order_id: { type: 'string' },
       value: { type: 'number' },
       list: {
@@ -219,7 +220,7 @@ test.describe('analyzeJsFile', () => {
   });
   
   test('should handle nested property types correctly', () => {
-    const customFunction = 'customTrackFunction';
+    const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const events = analyzeJsFile(testFilePath, customFunction);
     
     // Test nested object properties
@@ -243,7 +244,7 @@ test.describe('analyzeJsFile', () => {
   });
   
   test('should detect array types correctly', () => {
-    const customFunction = 'customTrackFunction';
+    const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const events = analyzeJsFile(testFilePath, customFunction);
     
     // Test array of objects
@@ -264,7 +265,7 @@ test.describe('analyzeJsFile', () => {
   });
   
   test('should handle different function contexts correctly', () => {
-    const customFunction = 'customTrackFunction';
+    const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const events = analyzeJsFile(testFilePath, customFunction);
     
     // Test function declaration
@@ -285,7 +286,7 @@ test.describe('analyzeJsFile', () => {
   });
   
   test('should handle case variations in provider names', () => {
-    const customFunction = 'customTrackFunction';
+    const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const events = analyzeJsFile(testFilePath, customFunction);
     
     // mParticle is used with lowercase 'p' in the test file
@@ -295,7 +296,7 @@ test.describe('analyzeJsFile', () => {
   });
   
   test('should exclude action field from Snowplow properties', () => {
-    const customFunction = 'customTrackFunction';
+    const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const events = analyzeJsFile(testFilePath, customFunction);
     
     const snowplowEvent = events.find(e => e.source === 'snowplow');
@@ -307,7 +308,7 @@ test.describe('analyzeJsFile', () => {
   });
   
   test('should handle mParticle three-parameter format', () => {
-    const customFunction = 'customTrackFunction';
+    const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const events = analyzeJsFile(testFilePath, customFunction);
     
     const mparticleEvent = events.find(e => e.source === 'mparticle');

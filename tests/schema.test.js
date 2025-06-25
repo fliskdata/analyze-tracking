@@ -9,6 +9,8 @@ const Ajv = require('ajv');
 const CLI_PATH = path.join(__dirname, '..', 'bin', 'cli.js');
 const SCHEMA_PATH = path.join(__dirname, '..', 'schema.json');
 
+const customFunctionSignature = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
+
 // Helper function to run CLI and capture output
 function runCLI(targetDir, customFunction, outputFile) {
   const command = `node --no-warnings=ExperimentalWarning "${CLI_PATH}" "${targetDir}" --customFunction "${customFunction}" --output "${outputFile}"`;
@@ -70,7 +72,7 @@ test.describe('Schema Validation Tests', () => {
     const outputFile = path.join(tempDir, 'tracking-schema-validation-test.yaml');
     
     // Run CLI on entire fixtures directory
-    const success = runCLI(targetDir, 'customTrackFunction', outputFile);
+    const success = runCLI(targetDir, customFunctionSignature, outputFile);
     assert.ok(success, 'CLI should run successfully');
     
     // Check output file exists
@@ -101,7 +103,7 @@ test.describe('Schema Validation Tests', () => {
       const outputFile = path.join(tempDir, `tracking-schema-${lang}-validation-test.yaml`);
       
       // Run CLI for each language directory
-      const success = runCLI(targetDir, 'customTrackFunction', outputFile);
+      const success = runCLI(targetDir, customFunctionSignature, outputFile);
       assert.ok(success, `CLI should run successfully for ${lang}`);
       
       // Validate the generated YAML against the schema
@@ -124,7 +126,7 @@ test.describe('Schema Validation Tests', () => {
     const outputFile = path.join(tempDir, 'tracking-schema-required-fields-test.yaml');
     
     // Run CLI
-    const success = runCLI(targetDir, 'customTrackFunction', outputFile);
+    const success = runCLI(targetDir, customFunctionSignature, outputFile);
     assert.ok(success, 'CLI should run successfully');
     
     // Read and parse the YAML
@@ -166,7 +168,7 @@ test.describe('Schema Validation Tests', () => {
     const outputFile = path.join(tempDir, 'tracking-schema-enum-test.yaml');
     
     // Run CLI
-    const success = runCLI(targetDir, 'customTrackFunction', outputFile);
+    const success = runCLI(targetDir, customFunctionSignature, outputFile);
     assert.ok(success, 'CLI should run successfully');
     
     // Read and parse the YAML

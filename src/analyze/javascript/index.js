@@ -4,6 +4,7 @@
  */
 
 const { parseFile, findTrackingEvents, FileReadError, ParseError } = require('./parser');
+const { parseCustomFunctionSignature } = require('../utils/customFunctionParser');
 
 /**
  * Analyzes a JavaScript file for analytics tracking calls
@@ -11,15 +12,16 @@ const { parseFile, findTrackingEvents, FileReadError, ParseError } = require('./
  * @param {string} [customFunction] - Optional custom function name to detect
  * @returns {Array<Object>} Array of tracking events found in the file
  */
-function analyzeJsFile(filePath, customFunction) {
+function analyzeJsFile(filePath, customFunctionSignature) {
   const events = [];
+  const customConfig = customFunctionSignature ? parseCustomFunctionSignature(customFunctionSignature) : null;
 
   try {
     // Parse the file into an AST
     const ast = parseFile(filePath);
 
     // Find and extract tracking events
-    const foundEvents = findTrackingEvents(ast, filePath, customFunction);
+    const foundEvents = findTrackingEvents(ast, filePath, customConfig);
     events.push(...foundEvents);
 
   } catch (error) {

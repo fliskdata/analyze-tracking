@@ -61,6 +61,7 @@ declare function buildStructEvent(payload: {
 }): unknown;
 
 declare function customTrackFunction(
+  userId: string,
   eventName: string,
   params: Record<string, any>
 ): void;
@@ -276,7 +277,7 @@ const customParams: CustomParams = {
   list: ['itemA', 'itemB'],
   metadata: { source: 'unit_test', retry: false },
 };
-customTrackFunction('custom_event_v2', customParams);
+customTrackFunction('user888', 'custom_event_v2', customParams);
 
 // -----------------------------------------------------------------------------
 // Event name is a const/pointer, not a string literal
@@ -287,6 +288,6 @@ const purchaseEvent = {
   total: 99.99,
   items: ['sku_1', 'sku_2']
 };
-customTrackFunction(TRACKING_EVENTS.ECOMMERCE_PURCHASE, purchaseEvent);
+customTrackFunction('user555', TRACKING_EVENTS.ECOMMERCE_PURCHASE, purchaseEvent);
 
 analytics.track(ECOMMERCE_PURCHASE_V2, {...purchaseEvent});

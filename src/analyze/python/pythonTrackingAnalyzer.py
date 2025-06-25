@@ -53,6 +53,14 @@ ARRAY_TYPES = {'List', 'Tuple', 'Set', 'list', 'tuple', 'set'}
 # Container types that map to objects
 OBJECT_TYPES = {'Dict', 'dict'}
 
+def _safe_id(node: ast.AST) -> Optional[str]:
+    """Return the .id attribute of a node if present."""
+    return getattr(node, 'id', None)
+
+# -------------------------------------------
+# Tracking Visitor
+# -------------------------------------------
+
 class TrackingVisitor(ast.NodeVisitor):
     """
     AST visitor that identifies and extracts analytics tracking calls from Python code.
@@ -68,16 +76,16 @@ class TrackingVisitor(ast.NodeVisitor):
         function_stack: Stack of function contexts for nested functions
         var_types: Dictionary of variable types in the current scope
         var_types_stack: Stack of variable type scopes
-        custom_function: Optional name of a custom tracking function
+        custom_config: Optional custom configuration for custom tracking functions
     """
     
-    def __init__(self, filepath: str, custom_function: Optional[str] = None):
+    def __init__(self, filepath: str, custom_config: Optional[Dict[str, Any]] = None):
         """
         Initialize the tracking visitor.
         
         Args:
             filepath: Path to the Python file being analyzed
-            custom_function: Optional name of a custom tracking function to detect
+            custom_config: Optional custom configuration for custom tracking functions
         """
         self.events: List[AnalyticsEvent] = []
         self.filepath = filepath
@@ -85,7 +93,18 @@ class TrackingVisitor(ast.NodeVisitor):
         self.function_stack: List[str] = []
         self.var_types: Dict[str, PropertyType] = {}
         self.var_types_stack: List[Dict[str, PropertyType]] = []
-        self.custom_function = custom_function
+        self.custom_config = custom_config or None
+        # Store convenience attributes if config provided
+        if self.custom_config:
+            self._custom_fn_name: str = self.custom_config.get('functionName', '')
+            self._event_idx: int = self.custom_config.get('eventIndex', 0)
+            self._props_idx: int = self.custom_config.get('propertiesIndex', 1)
+            self._extra_params = self.custom_config.get('extraParams', [])
+        else:
+            self._custom_fn_name = None
+            self._event_idx = 0
+            self._props_idx = 1
+            self._extra_params = []
         
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         """
@@ -164,8 +183,11 @@ class TrackingVisitor(ast.NodeVisitor):
             
         elif isinstance(annotation, ast.Subscript):
             # Handle generic types like List[int], Dict[str, int]
-            if hasattr(annotation.value, 'id'):
-                container_type = annotation.value.id
+            container_type = getattr(annotation.value, 'id', None)
+            if container_type is None and isinstance(annotation.value, ast.Attribute):
+                container_type = getattr(annotation.value, 'attr', None)
+
+            if container_type:
                 
                 if container_type in ARRAY_TYPES:
                     # Try to get the type parameter for arrays
@@ -272,11 +294,12 @@ class TrackingVisitor(ast.NodeVisitor):
     
     def _detect_method_call_source(self, node: ast.Call) -> Optional[str]:
         """Helper method to detect analytics source from method calls."""
-        if not hasattr(node.func.value, 'id'):
+        obj_val = getattr(node.func, 'value', None)
+        if obj_val is None:
             return None
             
-        obj_id = node.func.value.id
-        method_name = node.func.attr
+        obj_id = _safe_id(obj_val) or ''
+        method_name = getattr(node.func, 'attr', '')
         
         # Check standard analytics libraries
         for source, config in ANALYTICS_SOURCES.items():
@@ -296,7 +319,7 @@ class TrackingVisitor(ast.NodeVisitor):
     
     def _detect_function_call_source(self, node: ast.Call) -> Optional[str]:
         """Helper method to detect analytics source from direct function calls."""
-        func_name = node.func.id
+        func_name = _safe_id(node.func) or ''
         
         # Check for Snowplow direct functions
         if func_name in ['trackStructEvent', 'buildStructEvent']:
@@ -307,7 +330,7 @@ class TrackingVisitor(ast.NodeVisitor):
             return 'snowplow'
         
         # Check for custom tracking function
-        if self.custom_function and func_name == self.custom_function:
+        if self._custom_fn_name and func_name == self._custom_fn_name:
             return 'custom'
         
         return None
@@ -319,7 +342,7 @@ class TrackingVisitor(ast.NodeVisitor):
             
         first_arg = node.args[0]
         if isinstance(first_arg, ast.Call) and isinstance(first_arg.func, ast.Name):
-            return first_arg.func.id == 'BaseEvent'
+            return _safe_id(first_arg.func) == 'BaseEvent'
         return False
     
     def _is_snowplow_tracker_call(self, node: ast.Call) -> bool:
@@ -330,7 +353,7 @@ class TrackingVisitor(ast.NodeVisitor):
         first_arg = node.args[0]
         # Check if first argument is StructuredEvent
         if isinstance(first_arg, ast.Call) and isinstance(first_arg.func, ast.Name):
-            return first_arg.func.id == 'StructuredEvent'
+            return _safe_id(first_arg.func) == 'StructuredEvent'
         
         # Also check if it might be a variable (simple heuristic)
         if isinstance(first_arg, ast.Name) and hasattr(node.func, 'value'):
@@ -418,7 +441,7 @@ class TrackingVisitor(ast.NodeVisitor):
         if len(node.args) >= 1:
             first_arg = node.args[0]
             if isinstance(first_arg, ast.Call) and isinstance(first_arg.func, ast.Name):
-                if first_arg.func.id == 'StructuredEvent':
+                if _safe_id(first_arg.func) == 'StructuredEvent':
                     # Look for action in keyword arguments
                     for keyword in first_arg.keywords:
                         if keyword.arg == 'action' and isinstance(keyword.value, ast.Constant):
@@ -430,9 +453,15 @@ class TrackingVisitor(ast.NodeVisitor):
     
     def _extract_custom_event_name(self, node: ast.Call) -> Optional[str]:
         """Extract event name for custom tracking function."""
-        # Standard format: customFunction('event_name', {...})
-        if len(node.args) >= 1 and isinstance(node.args[0], ast.Constant):
-            return node.args[0].value
+        args = node.args
+
+        # Use configured index if available
+        if len(args) > self._event_idx and isinstance(args[self._event_idx], ast.Constant):
+            return args[self._event_idx].value
+
+        # Fallback heuristics
+        if len(args) >= 1 and isinstance(args[0], ast.Constant):
+            return args[0].value
         return None
     
     def extract_properties(self, node: ast.Call, source: str) -> EventProperties:
@@ -502,6 +531,19 @@ class TrackingVisitor(ast.NodeVisitor):
             # Check if event is not anonymous and extract distinct_id
             user_id_props.update(self._extract_posthog_user_id(node))
             
+        elif source == 'custom':
+            # Populate extra params defined in custom config as properties
+            if self._extra_params:
+                for extra in self._extra_params:
+                    idx = extra.get('idx')
+                    name = extra.get('name')
+                    if idx is None or name is None:
+                        continue
+                    if idx < len(node.args):
+                        prop_type = self._extract_property_type(node.args[idx])
+                        if prop_type:
+                            user_id_props[name] = prop_type
+            
         return user_id_props
     
     def _is_non_null_value(self, node: ast.AST) -> bool:
@@ -559,10 +601,13 @@ class TrackingVisitor(ast.NodeVisitor):
                         return keyword.value
                         
         elif source == 'custom':
-            # Properties are in the second argument
-            if len(node.args) > 1:
+            # Use configured indices where possible
+            if len(node.args) > self._props_idx and isinstance(node.args[self._props_idx], ast.Dict):
+                return node.args[self._props_idx]
+            # Fallbacks (legacy)
+            if len(node.args) >= 2 and isinstance(node.args[1], ast.Dict):
                 return node.args[1]
-                
+            
         elif source == 'posthog':
             # Check named parameters first, then positional
             for keyword in node.keywords:
@@ -576,7 +621,7 @@ class TrackingVisitor(ast.NodeVisitor):
             if len(node.args) >= 1:
                 first_arg = node.args[0]
                 if isinstance(first_arg, ast.Call) and isinstance(first_arg.func, ast.Name):
-                    if first_arg.func.id == 'StructuredEvent':
+                    if _safe_id(first_arg.func) == 'StructuredEvent':
                         # Return None as properties are handled differently for Snowplow
                         return None
                         
@@ -618,7 +663,7 @@ class TrackingVisitor(ast.NodeVisitor):
         if len(node.args) >= 1:
             first_arg = node.args[0]
             if isinstance(first_arg, ast.Call) and isinstance(first_arg.func, ast.Name):
-                if first_arg.func.id == 'StructuredEvent':
+                if _safe_id(first_arg.func) == 'StructuredEvent':
                     # Extract all keyword arguments except 'action'
                     for keyword in first_arg.keywords:
                         if keyword.arg and keyword.arg != 'action':
@@ -755,7 +800,7 @@ class TrackingVisitor(ast.NodeVisitor):
             return "null"
         return "any"
 
-def analyze_python_code(code: str, filepath: str, custom_function: Optional[str] = None) -> str:
+def analyze_python_code(code: str, filepath: str, custom_config: Optional[dict[str, any]] = None) -> str:
     """
     Analyze Python code for analytics tracking calls.
     
@@ -765,7 +810,7 @@ def analyze_python_code(code: str, filepath: str, custom_function: Optional[str]
     Args:
         code: The Python source code to analyze
         filepath: Path to the file being analyzed
-        custom_function: Optional name of a custom tracking function
+        custom_config: Optional custom configuration for custom tracking functions
         
     Returns:
         JSON string containing array of tracking events
@@ -775,7 +820,7 @@ def analyze_python_code(code: str, filepath: str, custom_function: Optional[str]
         tree = ast.parse(code)
         
         # Create visitor and analyze
-        visitor = TrackingVisitor(filepath, custom_function)
+        visitor = TrackingVisitor(filepath, custom_config)
         visitor.visit(tree)
         
         # Return events as JSON

@@ -2,13 +2,13 @@
 version: 1
 source:
   repository: git@github.com:fliskdata/analyze-tracking.git
-  commit: d3774b76a3d1528c76c4bdb500dc32ee508e6381
-  timestamp: '2025-05-29T15:55:59Z'
+  commit: f9eeddec7c52731efddc5ca5f8fbd8bf4c6a89cf
+  timestamp: '2025-06-25T03:57:29Z'
 events:
   order_completed:
     implementations:
       - path: main.ts
-        line: 104
+        line: 105
         function: trackOrderCompletedGA
         destination: googleanalytics
     properties:
@@ -43,7 +43,7 @@ events:
   user_checkout:
     implementations:
       - path: main.ts
-        line: 120
+        line: 121
         function: checkout
         destination: segment
     properties:
@@ -56,7 +56,7 @@ events:
   purchase_confirmed:
     implementations:
       - path: main.ts
-        line: 129
+        line: 130
         function: confirmPurchaseMixpanel
         destination: mixpanel
     properties:
@@ -80,7 +80,7 @@ events:
   checkout_initiated:
     implementations:
       - path: main.ts
-        line: 134
+        line: 135
         function: checkout
         destination: amplitude
     properties:
@@ -115,7 +115,7 @@ events:
   order_finalized:
     implementations:
       - path: main.ts
-        line: 149
+        line: 150
         function: checkout
         destination: rudderstack
     properties:
@@ -148,7 +148,7 @@ events:
   BuyNow:
     implementations:
       - path: main.ts
-        line: 175
+        line: 176
         function: checkout2
         destination: mparticle
     properties:
@@ -181,7 +181,7 @@ events:
   user_action:
     implementations:
       - path: main.ts
-        line: 194
+        line: 195
         function: checkout2
         destination: posthog
     properties:
@@ -216,7 +216,7 @@ events:
   customer_checkout:
     implementations:
       - path: main.ts
-        line: 215
+        line: 216
         function: checkout3
         destination: pendo
     properties:
@@ -249,7 +249,7 @@ events:
   user_login:
     implementations:
       - path: main.ts
-        line: 229
+        line: 230
         function: checkout3
         destination: heap
     properties:
@@ -266,7 +266,7 @@ events:
   item_view:
     implementations:
       - path: main.ts
-        line: 246
+        line: 247
         function: trackSnowplow
         destination: snowplow
     properties:
@@ -281,7 +281,7 @@ events:
   button_click:
     implementations:
       - path: main.ts
-        line: 250
+        line: 251
         function: trackSnowplow2
         destination: snowplow
     properties:
@@ -296,7 +296,7 @@ events:
   custom_event_v2:
     implementations:
       - path: main.ts
-        line: 279
+        line: 280
         function: global
         destination: custom
     properties:
@@ -315,10 +315,12 @@ events:
             type: string
           retry:
             type: boolean
+      userId:
+        type: string
   ecommerce_purchase:
     implementations:
       - path: main.ts
-        line: 290
+        line: 291
         function: global
         destination: custom
     properties:
@@ -330,10 +332,12 @@ events:
         type: array
         items:
           type: string
+      userId:
+        type: string
   ecommerce_purchase_v2:
     implementations:
       - path: main.ts
-        line: 292
+        line: 293
         function: global
         destination: segment
     properties:

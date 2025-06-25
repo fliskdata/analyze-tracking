@@ -13,19 +13,19 @@ const { extractProperties } = require('./propertyExtractor');
  * @param {Object} callNode - AST node representing a function call or struct literal
  * @param {string} filePath - Path to the file being analyzed
  * @param {string} functionName - Name of the function containing this tracking call
- * @param {string|null} customFunction - Name of custom tracking function to detect
+ * @param {Object|null} customConfig - Parsed custom function configuration (or null)
  * @param {Object} typeContext - Type information context for variable resolution
  * @param {string} currentFunction - Current function context for type lookups
  * @returns {Object|null} Tracking event object with eventName, source, properties, etc., or null if not a tracking call
  */
-function extractTrackingEvent(callNode, filePath, functionName, customFunction, typeContext, currentFunction) {
-  const source = detectSource(callNode, customFunction);
+function extractTrackingEvent(callNode, filePath, functionName, customConfig, typeContext, currentFunction) {
+  const source = detectSource(callNode, customConfig ? customConfig.functionName : null);
   if (!source) return null;
   
-  const eventName = extractEventName(callNode, source);
+  const eventName = extractEventName(callNode, source, customConfig);
   if (!eventName) return null;
   
-  const properties = extractProperties(callNode, source, typeContext, currentFunction);
+  const properties = extractProperties(callNode, source, typeContext, currentFunction, customConfig);
   
   // Get line number based on source type
   let line = 0;

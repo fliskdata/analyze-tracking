@@ -10,9 +10,10 @@ const { extractStringValue, findStructLiteral, findStructField, extractSnowplowV
  * Extract event name from a tracking call based on the source
  * @param {Object} callNode - AST node representing a function call or struct literal
  * @param {string} source - Analytics source (e.g., 'segment', 'amplitude')
+ * @param {Object|null} customConfig - Parsed custom function configuration
  * @returns {string|null} Event name or null if not found
  */
-function extractEventName(callNode, source) {
+function extractEventName(callNode, source, customConfig = null) {
   if (!callNode.args || callNode.args.length === 0) {
     // For struct literals, we need to check fields instead of args
     if (!callNode.fields || callNode.fields.length === 0) {
@@ -35,7 +36,7 @@ function extractEventName(callNode, source) {
       return extractSnowplowEventName(callNode);
       
     case ANALYTICS_SOURCES.CUSTOM:
-      return extractCustomEventName(callNode);
+      return extractCustomEventName(callNode, customConfig);
   }
   
   return null;
@@ -142,13 +143,15 @@ function extractSnowplowEventName(callNode) {
  * Extract custom event name
  * Pattern: customFunction("event_name", props)
  * @param {Object} callNode - AST node for custom tracking function call
+ * @param {Object|null} customConfig - Custom configuration object
  * @returns {string|null} Event name or null if not found
  */
-function extractCustomEventName(callNode) {
-  if (callNode.args && callNode.args.length > 0) {
-    return extractStringValue(callNode.args[0]);
-  }
-  return null;
+function extractCustomEventName(callNode, customConfig) {
+  if (!callNode.args || callNode.args.length === 0) return null;
+  const args = callNode.args;
+  const eventIdx = customConfig?.eventIndex ?? 0;
+  const argNode = args[eventIdx];
+  return extractStringValue(argNode);
 }
 
 module.exports = {

@@ -8,7 +8,7 @@ test.describe('analyzeRubyFile', () => {
   const testFilePath = path.join(fixturesDir, 'ruby', 'main.rb');
   
   test('should correctly analyze Ruby file with multiple tracking providers', async () => {
-    const customFunction = 'customTrackFunction';
+    const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const events = await analyzeRubyFile(testFilePath, customFunction);
     
     // Sort events by eventName for consistent ordering
@@ -86,6 +86,7 @@ test.describe('analyzeRubyFile', () => {
     assert.strictEqual(customEvent.functionName, 'custom_track_event');
     assert.strictEqual(customEvent.line, 79);
     assert.deepStrictEqual(customEvent.properties, {
+      userId: { type: 'string' },
       key: { type: 'string' },
       nested: { 
         type: 'object', 
@@ -125,7 +126,7 @@ test.describe('analyzeRubyFile', () => {
   });
   
   test('should handle nested property types correctly', async () => {
-    const customFunction = 'customTrackFunction';
+    const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const events = await analyzeRubyFile(testFilePath, customFunction);
     
     const customEvent = events.find(e => e.eventName === 'custom_event');
@@ -157,7 +158,7 @@ test.describe('analyzeRubyFile', () => {
   });
   
   test('should handle all property types correctly', async () => {
-    const customFunction = 'customTrackFunction';
+    const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const events = await analyzeRubyFile(testFilePath, customFunction);
     
     // Test string properties
@@ -179,7 +180,7 @@ test.describe('analyzeRubyFile', () => {
   });
   
   test('should correctly identify function names in different contexts', async () => {
-    const customFunction = 'customTrackFunction';
+    const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const events = await analyzeRubyFile(testFilePath, customFunction);
     
     // Verify function names are correctly identified
@@ -196,7 +197,7 @@ test.describe('analyzeRubyFile', () => {
   });
   
   test('should detect custom functions that are methods of a module', async () => {
-    const customFunction = 'CustomModule.track';
+    const customFunction = 'CustomModule.track(userId, EVENT_NAME, PROPERTIES)';
     const events = await analyzeRubyFile(testFilePath, customFunction);
     
     // Should find the CustomModule.track call
@@ -205,6 +206,7 @@ test.describe('analyzeRubyFile', () => {
     assert.strictEqual(customModuleEvent.eventName, 'custom_event');
     assert.strictEqual(customModuleEvent.line, 98);
     assert.deepStrictEqual(customModuleEvent.properties, {
+      userId: { type: 'string' },
       key: { type: 'string' },
       nested: { 
         type: 'object', 

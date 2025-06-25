@@ -21,6 +21,7 @@ const EXTRACTION_STRATEGIES = {
   googleanalytics: extractGoogleAnalyticsEvent,
   snowplow: extractSnowplowEvent,
   mparticle: extractMparticleEvent,
+  custom: extractCustomEvent,
   default: extractDefaultEvent
 };
 
@@ -30,10 +31,14 @@ const EXTRACTION_STRATEGIES = {
  * @param {string} source - Analytics provider source
  * @param {Object} checker - TypeScript type checker
  * @param {Object} sourceFile - TypeScript source file
+ * @param {Object} customConfig - Custom configuration for custom extraction
  * @returns {EventData} Extracted event data
  */
-function extractEventData(node, source, checker, sourceFile) {
+function extractEventData(node, source, checker, sourceFile, customConfig) {
   const strategy = EXTRACTION_STRATEGIES[source] || EXTRACTION_STRATEGIES.default;
+  if (source === 'custom') {
+    return strategy(node, checker, sourceFile, customConfig);
+  }
   return strategy(node, checker, sourceFile);
 }
 
@@ -122,6 +127,32 @@ function extractMparticleEvent(node, checker, sourceFile) {
 }
 
 /**
+ * Custom extraction
+ * @param {Object} node - CallExpression node
+ * @param {Object} checker - TypeScript type checker
+ * @param {Object} sourceFile - TypeScript source file
+ * @param {Object} customConfig - Custom configuration for custom extraction
+ * @returns {EventData}
+ */
+function extractCustomEvent(node, checker, sourceFile, customConfig) {
+  const args = node.arguments || [];
+
+  const eventArg = args[customConfig?.eventIndex ?? 0];
+  const propertiesArg = args[customConfig?.propertiesIndex ?? 1];
+
+  const eventName = getStringValue(eventArg, checker, sourceFile);
+
+  const extraArgs = {};
+  if (customConfig && customConfig.extraParams) {
+    customConfig.extraParams.forEach(extra => {
+      extraArgs[extra.name] = args[extra.idx];
+    });
+  }
+
+  return { eventName, propertiesNode: propertiesArg, extraArgs };
+}
+
+/**
  * Default event extraction for standard providers
  * @param {Object} node - CallExpression node
  * @param {Object} checker - TypeScript type checker
@@ -149,9 +180,10 @@ function extractDefaultEvent(node, checker, sourceFile) {
  * @param {string} functionName - Containing function name
  * @param {Object} checker - TypeScript type checker
  * @param {Object} sourceFile - TypeScript source file
+ * @param {Object} customConfig - Custom configuration for custom extraction
  * @returns {Object|null} Processed event object or null
  */
-function processEventData(eventData, source, filePath, line, functionName, checker, sourceFile) {
+function processEventData(eventData, source, filePath, line, functionName, checker, sourceFile, customConfig) {
   const { eventName, propertiesNode } = eventData;
 
   if (!eventName || !propertiesNode) {
@@ -183,6 +215,15 @@ function processEventData(eventData, source, filePath, line, functionName, check
 
   // Clean up any unresolved type markers
   const cleanedProperties = cleanupProperties(properties);
+
+  // Handle custom extra params
+  if (source === 'custom' && customConfig && eventData.extraArgs) {
+    for (const [paramName, argNode] of Object.entries(eventData.extraArgs)) {
+      cleanedProperties[paramName] = {
+        type: inferNodeValueType(argNode)
+      };
+    }
+  }
 
   return {
     eventName,
@@ -366,6 +407,16 @@ function cleanupProperties(properties) {
   }
   
   return cleaned;
+}
+
+function inferNodeValueType(node) {
+  if (!node) return 'any';
+  if (ts.isStringLiteral(node)) return 'string';
+  if (ts.isNumericLiteral(node)) return 'number';
+  if (node.kind === ts.SyntaxKind.TrueKeyword || node.kind === ts.SyntaxKind.FalseKeyword) return 'boolean';
+  if (ts.isArrayLiteralExpression(node)) return 'array';
+  if (ts.isObjectLiteralExpression(node)) return 'object';
+  return 'any';
 }
 
 module.exports = {

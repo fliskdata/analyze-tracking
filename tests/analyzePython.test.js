@@ -9,7 +9,7 @@ test.describe('analyzePythonFile', () => {
   const testFilePath = path.join(fixturesDir, 'python', 'main.py');
   
   test('should correctly analyze Python file with multiple tracking providers', async () => {
-    const customFunction = 'customTrackFunction';
+    const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const events = await analyzePythonFile(testFilePath, customFunction);
     
     // Sort events by eventName for consistent ordering
@@ -22,7 +22,7 @@ test.describe('analyzePythonFile', () => {
     assert.ok(segmentEvent);
     assert.strictEqual(segmentEvent.source, 'segment');
     assert.strictEqual(segmentEvent.functionName, 'segment_track');
-    assert.strictEqual(segmentEvent.line, 11);
+    assert.strictEqual(segmentEvent.line, 80);
     assert.deepStrictEqual(segmentEvent.properties, {
       user_id: { type: 'string' },
       method: { type: 'string' },
@@ -35,7 +35,7 @@ test.describe('analyzePythonFile', () => {
     assert.ok(mixpanelEvent);
     assert.strictEqual(mixpanelEvent.source, 'mixpanel');
     assert.strictEqual(mixpanelEvent.functionName, 'mixpanel_track');
-    assert.strictEqual(mixpanelEvent.line, 21);
+    assert.strictEqual(mixpanelEvent.line, 90);
     assert.deepStrictEqual(mixpanelEvent.properties, {
       distinct_id: { type: 'string' },
       plan: { type: 'string' },
@@ -48,7 +48,7 @@ test.describe('analyzePythonFile', () => {
     assert.ok(amplitudeEvent);
     assert.strictEqual(amplitudeEvent.source, 'amplitude');
     assert.strictEqual(amplitudeEvent.functionName, 'amplitude_track');
-    assert.strictEqual(amplitudeEvent.line, 31);
+    assert.strictEqual(amplitudeEvent.line, 100);
     assert.deepStrictEqual(amplitudeEvent.properties, {
       user_id: { type: 'string' },
       color: { type: 'string' },
@@ -60,7 +60,7 @@ test.describe('analyzePythonFile', () => {
     assert.ok(rudderstackEvent);
     assert.strictEqual(rudderstackEvent.source, 'rudderstack');
     assert.strictEqual(rudderstackEvent.functionName, 'rudderstack_track');
-    assert.strictEqual(rudderstackEvent.line, 47);
+    assert.strictEqual(rudderstackEvent.line, 116);
     assert.deepStrictEqual(rudderstackEvent.properties, {
       user_id: { type: 'string' },
       timestamp: { type: 'number' },
@@ -73,7 +73,7 @@ test.describe('analyzePythonFile', () => {
     assert.ok(posthogEvent1);
     assert.strictEqual(posthogEvent1.source, 'posthog');
     assert.strictEqual(posthogEvent1.functionName, 'posthog_capture');
-    assert.strictEqual(posthogEvent1.line, 58);
+    assert.strictEqual(posthogEvent1.line, 127);
     assert.deepStrictEqual(posthogEvent1.properties, {
       method: { type: 'string' },
       is_free_trial: { type: 'boolean' },
@@ -84,7 +84,7 @@ test.describe('analyzePythonFile', () => {
     assert.ok(posthogEvent2);
     assert.strictEqual(posthogEvent2.source, 'posthog');
     assert.strictEqual(posthogEvent2.functionName, 'posthog_capture');
-    assert.strictEqual(posthogEvent2.line, 64);
+    assert.strictEqual(posthogEvent2.line, 133);
     assert.deepStrictEqual(posthogEvent2.properties, {
       method: { type: 'string' },
       is_free_trial: { type: 'boolean' },
@@ -96,7 +96,7 @@ test.describe('analyzePythonFile', () => {
     assert.ok(snowplowEvent);
     assert.strictEqual(snowplowEvent.source, 'snowplow');
     assert.strictEqual(snowplowEvent.functionName, 'snowplow_track_events');
-    assert.strictEqual(snowplowEvent.line, 74);
+    assert.strictEqual(snowplowEvent.line, 143);
     assert.deepStrictEqual(snowplowEvent.properties, {
       category: { type: 'string' },
       label: { type: 'string' },
@@ -109,8 +109,9 @@ test.describe('analyzePythonFile', () => {
     assert.ok(customEvent);
     assert.strictEqual(customEvent.source, 'custom');
     assert.strictEqual(customEvent.functionName, 'main');
-    assert.strictEqual(customEvent.line, 89);
+    assert.strictEqual(customEvent.line, 158);
     assert.deepStrictEqual(customEvent.properties, {
+      userId: { type: 'string' },
       key: { type: 'string' },
       nested: {
         type: 'object',
@@ -136,7 +137,7 @@ test.describe('analyzePythonFile', () => {
   });
   
   test('should handle nested property types correctly', async () => {
-    const customFunction = 'customTrackFunction';
+    const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const events = await analyzePythonFile(testFilePath, customFunction);
     
     const customEvent = events.find(e => e.eventName === 'custom_event');
@@ -152,7 +153,7 @@ test.describe('analyzePythonFile', () => {
   });
   
   test('should match expected tracking-schema.yaml output', async () => {
-    const customFunction = 'customTrackFunction';
+    const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const events = await analyzePythonFile(testFilePath, customFunction);
     
     // Create a map of events by name for easier verification
@@ -177,7 +178,7 @@ test.describe('analyzePythonFile', () => {
     assert.ok(eventMap['User Signed Up']);
     assert.strictEqual(eventMap['User Signed Up'].eventName, 'User Signed Up');
     assert.strictEqual(eventMap['User Signed Up'].source, 'segment');
-    assert.strictEqual(eventMap['User Signed Up'].line, 11);
+    assert.strictEqual(eventMap['User Signed Up'].line, 80);
     assert.strictEqual(eventMap['User Signed Up'].functionName, 'segment_track');
     assert.deepStrictEqual(eventMap['User Signed Up'].properties, {
       user_id: { type: 'string' },
@@ -189,7 +190,7 @@ test.describe('analyzePythonFile', () => {
     assert.ok(eventMap['Purchase Completed']);
     assert.strictEqual(eventMap['Purchase Completed'].eventName, 'Purchase Completed');
     assert.strictEqual(eventMap['Purchase Completed'].source, 'mixpanel');
-    assert.strictEqual(eventMap['Purchase Completed'].line, 21);
+    assert.strictEqual(eventMap['Purchase Completed'].line, 90);
     assert.strictEqual(eventMap['Purchase Completed'].functionName, 'mixpanel_track');
     assert.deepStrictEqual(eventMap['Purchase Completed'].properties, {
       distinct_id: { type: 'string' },
@@ -201,7 +202,7 @@ test.describe('analyzePythonFile', () => {
     assert.ok(eventMap['Button Clicked']);
     assert.strictEqual(eventMap['Button Clicked'].eventName, 'Button Clicked');
     assert.strictEqual(eventMap['Button Clicked'].source, 'amplitude');
-    assert.strictEqual(eventMap['Button Clicked'].line, 31);
+    assert.strictEqual(eventMap['Button Clicked'].line, 100);
     assert.strictEqual(eventMap['Button Clicked'].functionName, 'amplitude_track');
     assert.deepStrictEqual(eventMap['Button Clicked'].properties, {
       user_id: { type: 'string' },
@@ -212,7 +213,7 @@ test.describe('analyzePythonFile', () => {
     assert.ok(eventMap['User Logged In']);
     assert.strictEqual(eventMap['User Logged In'].eventName, 'User Logged In');
     assert.strictEqual(eventMap['User Logged In'].source, 'rudderstack');
-    assert.strictEqual(eventMap['User Logged In'].line, 47);
+    assert.strictEqual(eventMap['User Logged In'].line, 116);
     assert.strictEqual(eventMap['User Logged In'].functionName, 'rudderstack_track');
     assert.deepStrictEqual(eventMap['User Logged In'].properties, {
       user_id: { type: 'string' },
@@ -224,7 +225,7 @@ test.describe('analyzePythonFile', () => {
     assert.ok(eventMap['user_signed_up']);
     assert.strictEqual(eventMap['user_signed_up'].eventName, 'user_signed_up');
     assert.strictEqual(eventMap['user_signed_up'].source, 'posthog');
-    assert.strictEqual(eventMap['user_signed_up'].line, 58);
+    assert.strictEqual(eventMap['user_signed_up'].line, 127);
     assert.strictEqual(eventMap['user_signed_up'].functionName, 'posthog_capture');
     assert.deepStrictEqual(eventMap['user_signed_up'].properties, {
       method: { type: 'string' },
@@ -235,7 +236,7 @@ test.describe('analyzePythonFile', () => {
     assert.ok(eventMap['user_cancelled_subscription']);
     assert.strictEqual(eventMap['user_cancelled_subscription'].eventName, 'user_cancelled_subscription');
     assert.strictEqual(eventMap['user_cancelled_subscription'].source, 'posthog');
-    assert.strictEqual(eventMap['user_cancelled_subscription'].line, 64);
+    assert.strictEqual(eventMap['user_cancelled_subscription'].line, 133);
     assert.strictEqual(eventMap['user_cancelled_subscription'].functionName, 'posthog_capture');
     assert.deepStrictEqual(eventMap['user_cancelled_subscription'].properties, {
       method: { type: 'string' },
@@ -246,7 +247,7 @@ test.describe('analyzePythonFile', () => {
     assert.ok(eventMap['add-to-basket']);
     assert.strictEqual(eventMap['add-to-basket'].eventName, 'add-to-basket');
     assert.strictEqual(eventMap['add-to-basket'].source, 'snowplow');
-    assert.strictEqual(eventMap['add-to-basket'].line, 74);
+    assert.strictEqual(eventMap['add-to-basket'].line, 143);
     assert.strictEqual(eventMap['add-to-basket'].functionName, 'snowplow_track_events');
     assert.deepStrictEqual(eventMap['add-to-basket'].properties, {
       category: { type: 'string' },
@@ -258,9 +259,10 @@ test.describe('analyzePythonFile', () => {
     assert.ok(eventMap['custom_event']);
     assert.strictEqual(eventMap['custom_event'].eventName, 'custom_event');
     assert.strictEqual(eventMap['custom_event'].source, 'custom');
-    assert.strictEqual(eventMap['custom_event'].line, 89);
+    assert.strictEqual(eventMap['custom_event'].line, 158);
     assert.strictEqual(eventMap['custom_event'].functionName, 'main');
     assert.deepStrictEqual(eventMap['custom_event'].properties, {
+      userId: { type: 'string' },
       key: { type: 'string' },
       nested: {
         type: 'object',
@@ -281,18 +283,18 @@ from typing import List, Dict, Any
 def track_with_types() -> None:
     items: List[int] = [1, 2, 3]
     config: Dict[str, Any] = {"enabled": True}
-    customTrackFunction("types_test", {
+    customTrackFunction("user111", "types_test", {
         "items": items,
         "config": config,
         "inline_list": [1, 2, 3],
         "inline_dict": {"a": 1, "b": "two"}
     })
 
-def customTrackFunction(event_name: str, params: Dict[str, Any]) -> None:
+def customTrackFunction(user_id: str, event_name: str, params: Dict[str, Any]) -> None:
     pass
 `);
     
-    const events = await analyzePythonFile(typeTestFile, 'customTrackFunction');
+    const events = await analyzePythonFile(typeTestFile, 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)');
     assert.strictEqual(events.length, 1);
     
     const event = events[0];

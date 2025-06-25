@@ -44,8 +44,8 @@ Your function signature should be in the following format:
 yourCustomTrackFunctionName(EVENT_NAME, PROPERTIES, customFieldOne, customFieldTwo)
 ```
 
-- `EVENT_NAME` is the name of the event you are tracking. It should be a string or a pointer to a string.
-- `PROPERTIES` is an object of properties for that event. It should be an object / dictionary.
+- `EVENT_NAME` is the name of the event you are tracking. It should be a string or a pointer to a string. This is required.
+- `PROPERTIES` is an object of properties for that event. It should be an object / dictionary. This is optional.
 - Any additional parameters are other fields you are tracking. They can be of any type. The names you provide for these parameters will be used as the property names in the output.
 
 
@@ -55,7 +55,7 @@ For example, if your function has a userId parameter at the beginning, followed 
 yourCustomTrackFunctionName(userId, EVENT_NAME, PROPERTIES)
 ```
 
-If your function follows the format `yourCustomTrackFunctionName(EVENT_NAME, PROPERTIES)`, you can simply pass in `yourCustomTrackFunctionName` to `--customFunction` as a shorthand.
+If your function follows the standard format `yourCustomTrackFunctionName(EVENT_NAME, PROPERTIES)`, you can simply pass in `yourCustomTrackFunctionName` to `--customFunction` as a shorthand.
 
 
 ## What's Generated?

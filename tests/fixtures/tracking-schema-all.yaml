@@ -2,8 +2,8 @@
 version: 1
 source:
   repository: git@github.com:fliskdata/analyze-tracking.git
-  commit: 9ae0c52c8416a1e8ef447ac443bb877c9e42a052
-  timestamp: '2025-05-29T20:41:34Z'
+  commit: f9eeddec7c52731efddc5ca5f8fbd8bf4c6a89cf
+  timestamp: '2025-06-25T03:57:29Z'
 events:
   Signed Up:
     implementations:
@@ -38,7 +38,7 @@ events:
         function: amplitudeTrack
         destination: amplitude
       - path: python/main.py
-        line: 31
+        line: 100
         function: amplitude_track
         destination: amplitude
     properties:
@@ -65,7 +65,7 @@ events:
         function: posthogTrack
         destination: posthog
       - path: python/main.py
-        line: 58
+        line: 127
         function: posthog_capture
         destination: posthog
       - path: ruby/main.rb
@@ -92,7 +92,7 @@ events:
         function: snowplowTrack
         destination: snowplow
       - path: python/main.py
-        line: 74
+        line: 143
         function: snowplow_track_events
         destination: snowplow
       - path: ruby/main.rb
@@ -121,7 +121,7 @@ events:
         function: main
         destination: custom
       - path: python/main.py
-        line: 89
+        line: 158
         function: main
         destination: custom
       - path: ruby/main.rb
@@ -129,6 +129,8 @@ events:
         function: custom_track_event
         destination: custom
     properties:
+      userId:
+        type: string
       foo:
         type: string
       baz:
@@ -346,10 +348,12 @@ events:
         type: array
         items:
           type: string
+      userId:
+        type: string
   User Signed Up:
     implementations:
       - path: python/main.py
-        line: 11
+        line: 80
         function: segment_track
         destination: segment
       - path: ruby/main.rb
@@ -368,7 +372,7 @@ events:
   Purchase Completed:
     implementations:
       - path: python/main.py
-        line: 21
+        line: 90
         function: mixpanel_track
         destination: mixpanel
       - path: ruby/main.rb
@@ -389,7 +393,7 @@ events:
   User Logged In:
     implementations:
       - path: python/main.py
-        line: 47
+        line: 116
         function: rudderstack_track
         destination: rudderstack
     properties:
@@ -404,7 +408,7 @@ events:
   user_cancelled_subscription:
     implementations:
       - path: python/main.py
-        line: 64
+        line: 133
         function: posthog_capture
         destination: posthog
     properties:
@@ -441,7 +445,7 @@ events:
   order_completed:
     implementations:
       - path: typescript/main.ts
-        line: 104
+        line: 105
         function: trackOrderCompletedGA
         destination: googleanalytics
     properties:
@@ -476,7 +480,7 @@ events:
   user_checkout:
     implementations:
       - path: typescript/main.ts
-        line: 120
+        line: 121
         function: checkout
         destination: segment
     properties:
@@ -489,7 +493,7 @@ events:
   purchase_confirmed:
     implementations:
       - path: typescript/main.ts
-        line: 129
+        line: 130
         function: confirmPurchaseMixpanel
         destination: mixpanel
     properties:
@@ -513,7 +517,7 @@ events:
   checkout_initiated:
     implementations:
       - path: typescript/main.ts
-        line: 134
+        line: 135
         function: checkout
         destination: amplitude
     properties:
@@ -548,7 +552,7 @@ events:
   order_finalized:
     implementations:
       - path: typescript/main.ts
-        line: 149
+        line: 150
         function: checkout
         destination: rudderstack
     properties:
@@ -581,7 +585,7 @@ events:
   BuyNow:
     implementations:
       - path: typescript/main.ts
-        line: 175
+        line: 176
         function: checkout2
         destination: mparticle
     properties:
@@ -614,7 +618,7 @@ events:
   user_action:
     implementations:
       - path: typescript/main.ts
-        line: 194
+        line: 195
         function: checkout2
         destination: posthog
     properties:
@@ -649,7 +653,7 @@ events:
   customer_checkout:
     implementations:
       - path: typescript/main.ts
-        line: 215
+        line: 216
         function: checkout3
         destination: pendo
     properties:
@@ -682,7 +686,7 @@ events:
   user_login:
     implementations:
       - path: typescript/main.ts
-        line: 229
+        line: 230
         function: checkout3
         destination: heap
     properties:
@@ -699,7 +703,7 @@ events:
   item_view:
     implementations:
       - path: typescript/main.ts
-        line: 246
+        line: 247
         function: trackSnowplow
         destination: snowplow
     properties:
@@ -714,7 +718,7 @@ events:
   button_click:
     implementations:
       - path: typescript/main.ts
-        line: 250
+        line: 251
         function: trackSnowplow2
         destination: snowplow
     properties:
@@ -729,7 +733,7 @@ events:
   custom_event_v2:
     implementations:
       - path: typescript/main.ts
-        line: 279
+        line: 280
         function: global
         destination: custom
     properties:
@@ -748,10 +752,12 @@ events:
             type: string
           retry:
             type: boolean
+      userId:
+        type: string
   ecommerce_purchase:
     implementations:
       - path: typescript/main.ts
-        line: 290
+        line: 291
         function: global
         destination: custom
     properties:
@@ -763,10 +769,12 @@ events:
         type: array
         items:
           type: string
+      userId:
+        type: string
   ecommerce_purchase_v2:
     implementations:
       - path: typescript/main.ts
-        line: 292
+        line: 293
         function: global
         destination: segment
     properties:
@@ -810,7 +818,7 @@ events:
       product_id:
         type: string
       product_name:
-        type: string  
+        type: string
       price:
         type: number
   item_added:

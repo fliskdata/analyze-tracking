@@ -149,7 +149,7 @@ const myClass = new MyClass(12345678);
 myClass.trackSnowplow();
 
 // custom tracking example
-customTrackFunction('customEvent', {
+customTrackFunction('user999', 'customEvent', {
   order_id: 'order123',
   value: 12345678,
   list: ['item1', 'item2', 'item3']

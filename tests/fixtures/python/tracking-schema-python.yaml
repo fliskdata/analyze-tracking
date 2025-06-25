@@ -2,13 +2,13 @@
 version: 1
 source:
   repository: git@github.com:fliskdata/analyze-tracking.git
-  commit: 271fcbec42330eda86add4be3a606e5d63d85eff
-  timestamp: '2025-05-28T19:02:47Z'
+  commit: f9eeddec7c52731efddc5ca5f8fbd8bf4c6a89cf
+  timestamp: '2025-06-25T03:57:29Z'
 events:
   User Signed Up:
     implementations:
       - path: main.py
-        line: 11
+        line: 80
         function: segment_track
         destination: segment
     properties:
@@ -23,7 +23,7 @@ events:
   Purchase Completed:
     implementations:
       - path: main.py
-        line: 21
+        line: 90
         function: mixpanel_track
         destination: mixpanel
     properties:
@@ -40,7 +40,7 @@ events:
   Button Clicked:
     implementations:
       - path: main.py
-        line: 31
+        line: 100
         function: amplitude_track
         destination: amplitude
     properties:
@@ -53,7 +53,7 @@ events:
   User Logged In:
     implementations:
       - path: main.py
-        line: 47
+        line: 116
         function: rudderstack_track
         destination: rudderstack
     properties:
@@ -68,7 +68,7 @@ events:
   user_signed_up:
     implementations:
       - path: main.py
-        line: 58
+        line: 127
         function: posthog_capture
         destination: posthog
     properties:
@@ -81,7 +81,7 @@ events:
   user_cancelled_subscription:
     implementations:
       - path: main.py
-        line: 64
+        line: 133
         function: posthog_capture
         destination: posthog
     properties:
@@ -94,7 +94,7 @@ events:
   add-to-basket:
     implementations:
       - path: main.py
-        line: 74
+        line: 143
         function: snowplow_track_events
         destination: snowplow
     properties:
@@ -109,10 +109,12 @@ events:
   custom_event:
     implementations:
       - path: main.py
-        line: 89
+        line: 158
         function: main
         destination: custom
     properties:
+      userId:
+        type: string
       key:
         type: string
       nested:
