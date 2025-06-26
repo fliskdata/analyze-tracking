@@ -13,8 +13,6 @@ const { getProgram, findTrackingEvents, ProgramError, SourceFileError } = requir
  * @returns {Array<Object>} Array of tracking events found in the file
  */
 function analyzeTsFile(filePath, program = null, customFunctionSignatures = null) {
-  const events = [];
-
   try {
     // Get or create TypeScript program (only once)
     const tsProgram = getProgram(filePath, program);
@@ -28,29 +26,17 @@ function analyzeTsFile(filePath, program = null, customFunctionSignatures = null
     // Get type checker
     const checker = tsProgram.getTypeChecker();
 
-    // -------- Built-in providers pass --------
-    const builtInEvents = findTrackingEvents(sourceFile, checker, filePath, null);
-    events.push(...builtInEvents);
+    // Single-pass collection covering built-in + all custom configs
+    const events = findTrackingEvents(sourceFile, checker, filePath, customFunctionSignatures || []);
 
-    // -------- Custom function passes --------
-    if (Array.isArray(customFunctionSignatures) && customFunctionSignatures.length > 0) {
-      for (const customConfig of customFunctionSignatures) {
-        if (!customConfig) continue;
-        const customEvents = findTrackingEvents(sourceFile, checker, filePath, customConfig);
-        events.push(...customEvents);
-      }
-    }
-
-    // Deduplicate events (source|eventName|line|functionName)
-    const uniqueEvents = new Map();
+    // Deduplicate events
+    const unique = new Map();
     for (const evt of events) {
       const key = `${evt.source}|${evt.eventName}|${evt.line}|${evt.functionName}`;
-      if (!uniqueEvents.has(key)) {
-        uniqueEvents.set(key, evt);
-      }
+      if (!unique.has(key)) unique.set(key, evt);
     }
 
-    return Array.from(uniqueEvents.values());
+    return Array.from(unique.values());
 
   } catch (error) {
     if (error instanceof ProgramError) {

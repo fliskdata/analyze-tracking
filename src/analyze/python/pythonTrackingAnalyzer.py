@@ -806,33 +806,56 @@ class TrackingVisitor(ast.NodeVisitor):
             return "null"
         return "any"
 
-def analyze_python_code(code: str, filepath: str, custom_config: Optional[dict[str, any]] = None) -> str:
+def analyze_python_code(code: str, filepath: str, custom_config: Optional[any] = None) -> str:
     """
     Analyze Python code for analytics tracking calls.
-    
-    This function parses Python code and identifies analytics tracking calls,
-    extracting event names, properties, and metadata.
-    
+
+    The function supports either a single custom configuration object or a list
+    of such objects, allowing detection of multiple custom tracking functions
+    without parsing the source code multiple times.
+
     Args:
         code: The Python source code to analyze
         filepath: Path to the file being analyzed
-        custom_config: Optional custom configuration for custom tracking functions
-        
+        custom_config: None, a single custom config dict, or a list of configs
+
     Returns:
         JSON string containing array of tracking events
     """
     try:
-        # Parse the Python code
+        # Parse the Python code only once
         tree = ast.parse(code)
-        
-        # Create visitor and analyze
-        visitor = TrackingVisitor(filepath, custom_config)
-        visitor.visit(tree)
-        
-        # Return events as JSON
-        return json.dumps(visitor.events)
-    except Exception as e:
-        # Return empty array on parse errors
+
+        events: List[AnalyticsEvent] = []
+
+        def run_visitor(cfg: Optional[dict]) -> None:
+            vis = TrackingVisitor(filepath, cfg)
+            vis.visit(tree)
+            events.extend(vis.events)
+
+        # Built-in providers pass (no custom config)
+        run_visitor(None)
+
+        # Handle list or single custom configuration
+        if custom_config:
+            if isinstance(custom_config, list):
+                for cfg in custom_config:
+                    if cfg:
+                        run_visitor(cfg)
+            else:
+                run_visitor(custom_config)  # single config for backward compat
+
+        # Deduplicate events (source|eventName|line|functionName)
+        unique: Dict[str, AnalyticsEvent] = {}
+        for evt in events:
+            key = f"{evt['source']}|{evt['eventName']}|{evt['line']}|{evt['functionName']}"
+            if key not in unique:
+                unique[key] = evt
+
+        return json.dumps(list(unique.values()))
+
+    except Exception:
+        # Return empty array on failure
         return json.dumps([])
 
 # Command-line interface
