@@ -164,9 +164,18 @@ function processEventData(eventData, source, filePath, line, functionName, custo
   // Handle custom extra params
   if (source === 'custom' && customConfig && eventData.extraArgs) {
     for (const [paramName, argNode] of Object.entries(eventData.extraArgs)) {
-      properties[paramName] = {
-        type: inferNodeValueType(argNode)
-      };
+      if (argNode && argNode.type === NODE_TYPES.OBJECT_EXPRESSION) {
+        // Extract detailed properties from object expression
+        properties[paramName] = {
+          type: 'object',
+          properties: extractProperties(argNode)
+        };
+      } else {
+        // For non-object arguments, use simple type inference
+        properties[paramName] = {
+          type: inferNodeValueType(argNode)
+        };
+      }
     }
   }
 

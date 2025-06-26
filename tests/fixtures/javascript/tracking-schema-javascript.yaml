@@ -198,3 +198,74 @@ events:
           type: string
       userId:
         type: string
+  custom_event0:
+    implementations:
+      - path: main.js
+        line: 162
+        function: global
+        destination: custom
+    properties:
+      foo:
+        type: string
+  custom_event1:
+    implementations:
+      - path: main.js
+        line: 163
+        function: global
+        destination: custom
+    properties:
+      foo:
+        type: string
+  custom_event2:
+    implementations:
+      - path: main.js
+        line: 164
+        function: global
+        destination: custom
+    properties:
+      foo:
+        type: string
+      userId:
+        type: string
+  custom_event3:
+    implementations:
+      - path: main.js
+        line: 165
+        function: global
+        destination: custom
+    properties:
+      foo:
+        type: string
+      userEmail:
+        type: string
+  custom_event4:
+    implementations:
+      - path: main.js
+        line: 166
+        function: global
+        destination: custom
+    properties:
+      foo:
+        type: string
+      userId:
+        type: string
+      userAddress:
+        type: object
+        properties:
+          city:
+            type: string
+      userEmail:
+        type: string
+  custom_module_event:
+    implementations:
+      - path: main.js
+        line: 178
+        function: global
+        destination: custom
+    properties:
+      order_id:
+        type: string
+      foo:
+        type: string
+      userId:
+        type: string

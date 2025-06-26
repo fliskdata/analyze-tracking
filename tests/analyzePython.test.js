@@ -337,4 +337,37 @@ def customTrackFunction(user_id: str, event_name: str, params: Dict[str, Any]) -
       assert.ok(found, `Should detect ${event} for signature ${sig}`);
     }
   });
+  
+  test('should detect events when multiple custom function signatures are provided together', async () => {
+    const variants = [
+      'customTrackFunction(userId, EVENT_NAME, PROPERTIES)',
+      'customTrackFunction0',
+      'customTrackFunction1(EVENT_NAME, PROPERTIES)',
+      'customTrackFunction2(userId, EVENT_NAME, PROPERTIES)',
+      'customTrackFunction3(EVENT_NAME, PROPERTIES, userEmail)',
+      'customTrackFunction4(userId, EVENT_NAME, userAddress, PROPERTIES, userEmail)',
+      'CustomModule.track(userId, EVENT_NAME, PROPERTIES)'
+    ];
+
+    const customFunctionSignatures = variants.map(parseCustomFunctionSignature);
+    const events = await analyzePythonFile(testFilePath, customFunctionSignatures);
+
+    const expectedEventNames = [
+      'custom_event',
+      'custom_event0',
+      'custom_event1',
+      'custom_event2',
+      'custom_event3',
+      'custom_event4',
+      'custom_module_event'
+    ];
+
+    expectedEventNames.forEach(eventName => {
+      const evt = events.find(e => e.eventName === eventName && e.source === 'custom');
+      assert.ok(evt, `Expected to find event ${eventName}`);
+    });
+
+    const builtInCount = events.filter(e => e.source !== 'custom').length;
+    assert.ok(builtInCount >= 7, 'Should still include built-in events');
+  });
 });

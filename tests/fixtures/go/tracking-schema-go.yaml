@@ -102,3 +102,61 @@ events:
             type: number
           c:
             type: string
+  custom_event0:
+    implementations:
+      - path: main.go
+        line: 121
+        function: main
+        destination: custom
+    properties:
+      foo:
+        type: string
+  custom_event1:
+    implementations:
+      - path: main.go
+        line: 122
+        function: main
+        destination: custom
+    properties:
+      foo:
+        type: string
+  custom_event2:
+    implementations:
+      - path: main.go
+        line: 123
+        function: main
+        destination: custom
+    properties:
+      userId:
+        type: string
+      foo:
+        type: string
+  custom_event3:
+    implementations:
+      - path: main.go
+        line: 124
+        function: main
+        destination: custom
+    properties:
+      foo:
+        type: string
+      userEmail:
+        type: string
+  custom_event4:
+    implementations:
+      - path: main.go
+        line: 125
+        function: main
+        destination: custom
+    properties:
+      userId:
+        type: string
+      userAddress:
+        type: object
+        properties:
+          city:
+            type: string
+      foo:
+        type: string
+      userEmail:
+        type: string

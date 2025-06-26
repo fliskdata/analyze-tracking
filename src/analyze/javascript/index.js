@@ -14,16 +14,33 @@ const { parseFile, findTrackingEvents, FileReadError, ParseError } = require('./
 function analyzeJsFile(filePath, customFunctionSignatures = null) {
   const events = [];
 
-  // temporary: only support one custom function signature for now, will add support for multiple in the future
-  const customConfig = !!customFunctionSignatures?.length ? customFunctionSignatures[0] : null;
-
   try {
-    // Parse the file into an AST
+    // Parse the file into an AST once
     const ast = parseFile(filePath);
 
-    // Find and extract tracking events
-    const foundEvents = findTrackingEvents(ast, filePath, customConfig);
-    events.push(...foundEvents);
+    // -------- Built-in providers pass --------
+    const builtInEvents = findTrackingEvents(ast, filePath, null);
+    events.push(...builtInEvents);
+
+    // -------- Custom function passes --------
+    if (Array.isArray(customFunctionSignatures) && customFunctionSignatures.length > 0) {
+      for (const customConfig of customFunctionSignatures) {
+        if (!customConfig) continue;
+        const customEvents = findTrackingEvents(ast, filePath, customConfig);
+        events.push(...customEvents);
+      }
+    }
+
+    // Deduplicate events (by source | eventName | line | functionName)
+    const uniqueEvents = new Map();
+    for (const evt of events) {
+      const key = `${evt.source}|${evt.eventName}|${evt.line}|${evt.functionName}`;
+      if (!uniqueEvents.has(key)) {
+        uniqueEvents.set(key, evt);
+      }
+    }
+
+    return Array.from(uniqueEvents.values());
 
   } catch (error) {
     if (error instanceof FileReadError) {
@@ -35,7 +52,7 @@ function analyzeJsFile(filePath, customFunctionSignatures = null) {
     }
   }
 
-  return events;
+  return [];
 }
 
 module.exports = { analyzeJsFile };

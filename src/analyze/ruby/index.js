@@ -26,24 +26,43 @@ async function analyzeRubyFile(filePath, customFunctionSignatures = null) {
   try {
     // Read the file content
     const code = fs.readFileSync(filePath, 'utf8');
-    
-    // Parse the Ruby code into an AST
+
+    // Parse the Ruby code into an AST once
     let ast;
     try {
       ast = await parse(code);
     } catch (parseError) {
       console.error(`Error parsing file ${filePath}:`, parseError.message);
-      return []; // Return empty events array if parsing fails
+      return [];
     }
 
-    // temporary: only support one custom function signature for now, will add support for multiple in the future
-    const customConfig = !!customFunctionSignatures?.length ? customFunctionSignatures[0] : null;
+    const events = [];
 
-    // Create a visitor and analyze the AST
-    const visitor = new TrackingVisitor(code, filePath, customConfig);
-    const events = await visitor.analyze(ast);
+    // -------- Built-in providers pass --------
+    let visitor = new TrackingVisitor(code, filePath, null);
+    const builtInEvents = await visitor.analyze(ast);
+    events.push(...builtInEvents);
 
-    return events;
+    // -------- Custom config passes --------
+    if (Array.isArray(customFunctionSignatures) && customFunctionSignatures.length > 0) {
+      for (const customConfig of customFunctionSignatures) {
+        if (!customConfig) continue;
+        const customVisitor = new TrackingVisitor(code, filePath, customConfig);
+        const customEvents = await customVisitor.analyze(ast);
+        events.push(...customEvents);
+      }
+    }
+
+    // Deduplicate events
+    const uniqueEvents = new Map();
+    for (const evt of events) {
+      const key = `${evt.source}|${evt.eventName}|${evt.line}|${evt.functionName}`;
+      if (!uniqueEvents.has(key)) {
+        uniqueEvents.set(key, evt);
+      }
+    }
+
+    return Array.from(uniqueEvents.values());
 
   } catch (fileError) {
     console.error(`Error reading or processing file ${filePath}:`, fileError.message);
