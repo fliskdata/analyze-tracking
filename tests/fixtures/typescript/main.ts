@@ -282,14 +282,14 @@ customTrackFunction('user888', 'custom_event_v2', customParams);
 // -----------------------------------------------------------------------------
 // Event name is a const/pointer, not a string literal
 // -----------------------------------------------------------------------------
-import { TRACKING_EVENTS, ECOMMERCE_PURCHASE_V2 } from "./constants";
+import { TRACKING_EVENTS, TRACKING_EVENTS_FROZEN, ECOMMERCE_PURCHASE_V2 } from "./constants";
 const purchaseEvent = {
   orderId: 'order_123',
   total: 99.99,
   items: ['sku_1', 'sku_2']
 };
 customTrackFunction('user555', TRACKING_EVENTS.ECOMMERCE_PURCHASE, purchaseEvent);
-
+mixpanel.track(TRACKING_EVENTS_FROZEN.ECOMMERCE_PURCHASE, {orderId: purchaseEvent.orderId, total: purchaseEvent.total, items: purchaseEvent.items});
 analytics.track(ECOMMERCE_PURCHASE_V2, {...purchaseEvent});
 
 // -----------------------------------------------------------------------------

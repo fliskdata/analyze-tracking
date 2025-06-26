@@ -2,8 +2,8 @@
 version: 1
 source:
   repository: git@github.com:fliskdata/analyze-tracking.git
-  commit: f9eeddec7c52731efddc5ca5f8fbd8bf4c6a89cf
-  timestamp: '2025-06-25T03:57:29Z'
+  commit: c5cb9b287b787da97c8d3d41b229ed14a8650ac9
+  timestamp: '2025-06-26T04:25:24Z'
 events:
   Signed Up:
     implementations:
@@ -161,6 +161,144 @@ events:
             type: array
             items:
               type: number
+  custom_event0:
+    implementations:
+      - path: go/main.go
+        line: 121
+        function: main
+        destination: custom
+      - path: javascript/main.js
+        line: 162
+        function: global
+        destination: custom
+      - path: python/main.py
+        line: 161
+        function: main
+        destination: custom
+      - path: ruby/main.rb
+        line: 135
+        function: global
+        destination: custom
+      - path: typescript/main.ts
+        line: 306
+        function: global
+        destination: custom
+    properties:
+      foo:
+        type: string
+  custom_event1:
+    implementations:
+      - path: go/main.go
+        line: 122
+        function: main
+        destination: custom
+      - path: javascript/main.js
+        line: 163
+        function: global
+        destination: custom
+      - path: python/main.py
+        line: 162
+        function: main
+        destination: custom
+      - path: ruby/main.rb
+        line: 136
+        function: global
+        destination: custom
+      - path: typescript/main.ts
+        line: 307
+        function: global
+        destination: custom
+    properties:
+      foo:
+        type: string
+  custom_event2:
+    implementations:
+      - path: go/main.go
+        line: 123
+        function: main
+        destination: custom
+      - path: javascript/main.js
+        line: 164
+        function: global
+        destination: custom
+      - path: python/main.py
+        line: 163
+        function: main
+        destination: custom
+      - path: ruby/main.rb
+        line: 137
+        function: global
+        destination: custom
+      - path: typescript/main.ts
+        line: 308
+        function: global
+        destination: custom
+    properties:
+      userId:
+        type: string
+      foo:
+        type: string
+  custom_event3:
+    implementations:
+      - path: go/main.go
+        line: 124
+        function: main
+        destination: custom
+      - path: javascript/main.js
+        line: 165
+        function: global
+        destination: custom
+      - path: python/main.py
+        line: 164
+        function: main
+        destination: custom
+      - path: ruby/main.rb
+        line: 138
+        function: global
+        destination: custom
+      - path: typescript/main.ts
+        line: 309
+        function: global
+        destination: custom
+    properties:
+      userEmail:
+        type: string
+      foo:
+        type: string
+  custom_event4:
+    implementations:
+      - path: go/main.go
+        line: 125
+        function: main
+        destination: custom
+      - path: javascript/main.js
+        line: 166
+        function: global
+        destination: custom
+      - path: python/main.py
+        line: 165
+        function: main
+        destination: custom
+      - path: ruby/main.rb
+        line: 139
+        function: global
+        destination: custom
+      - path: typescript/main.ts
+        line: 310
+        function: global
+        destination: custom
+    properties:
+      userId:
+        type: string
+      userAddress:
+        type: object
+        properties:
+          city:
+            type: string
+      userEmail:
+        type: string
+      foo:
+        type: string
   purchase:
     implementations:
       - path: javascript/main.js
@@ -354,6 +492,46 @@ events:
           type: string
       userId:
         type: string
+  custom_module_event:
+    implementations:
+      - path: javascript/main.js
+        line: 178
+        function: global
+        destination: custom
+      - path: python/main.py
+        line: 173
+        function: main
+        destination: custom
+      - path: typescript/main.ts
+        line: 322
+        function: global
+        destination: custom
+    properties:
+      order_id:
+        type: string
+      foo:
+        type: string
+      userId:
+        type: string
+  ecommerce_purchase_frozen:
+    implementations:
+      - path: javascript/main.js
+        line: 190
+        function: global
+        destination: mixpanel
+      - path: typescript/main.ts
+        line: 292
+        function: global
+        destination: mixpanel
+    properties:
+      orderId:
+        type: string
+      total:
+        type: number
+      items:
+        type: array
+        items:
+          type: string
   User Signed Up:
     implementations:
       - path: python/main.py
@@ -924,162 +1102,3 @@ events:
               type: string
       checkout_step:
         type: number
-  custom_event0:
-    implementations:
-      - path: go/main.go
-        line: 121
-        function: main
-        destination: custom
-      - path: javascript/main.js
-        line: 162
-        function: global
-        destination: custom
-      - path: python/main.py
-        line: 161
-        function: main
-        destination: custom
-      - path: ruby/main.rb
-        line: 135
-        function: global
-        destination: custom
-      - path: typescript/main.ts
-        line: 306
-        function: global
-        destination: custom
-    properties:
-      foo:
-        type: string
-  custom_event1:
-    implementations:
-      - path: go/main.go
-        line: 122
-        function: main
-        destination: custom
-      - path: javascript/main.js
-        line: 163
-        function: global
-        destination: custom
-      - path: python/main.py
-        line: 162
-        function: main
-        destination: custom
-      - path: ruby/main.rb
-        line: 136
-        function: global
-        destination: custom
-      - path: typescript/main.ts
-        line: 307
-        function: global
-        destination: custom
-    properties:
-      foo:
-        type: string
-  custom_event2:
-    implementations:
-      - path: go/main.go
-        line: 123
-        function: main
-        destination: custom
-      - path: javascript/main.js
-        line: 164
-        function: global
-        destination: custom
-      - path: python/main.py
-        line: 163
-        function: main
-        destination: custom
-      - path: ruby/main.rb
-        line: 137
-        function: global
-        destination: custom
-      - path: typescript/main.ts
-        line: 308
-        function: global
-        destination: custom
-    properties:
-      userId:
-        type: string
-      foo:
-        type: string
-  custom_event3:
-    implementations:
-      - path: go/main.go
-        line: 124
-        function: main
-        destination: custom
-      - path: javascript/main.js
-        line: 165
-        function: global
-        destination: custom
-      - path: python/main.py
-        line: 164
-        function: main
-        destination: custom
-      - path: ruby/main.rb
-        line: 138
-        function: global
-        destination: custom
-      - path: typescript/main.ts
-        line: 309
-        function: global
-        destination: custom
-    properties:
-      foo:
-        type: string
-      userEmail:
-        type: string
-  custom_event4:
-    implementations:
-      - path: go/main.go
-        line: 125
-        function: main
-        destination: custom
-      - path: javascript/main.js
-        line: 166
-        function: global
-        destination: custom
-      - path: python/main.py
-        line: 165
-        function: main
-        destination: custom
-      - path: ruby/main.rb
-        line: 139
-        function: global
-        destination: custom
-      - path: typescript/main.ts
-        line: 310
-        function: global
-        destination: custom
-    properties:
-      userId:
-        type: string
-      userAddress:
-        type: object
-        properties:
-          city:
-            type: string
-      userEmail:
-        type: string
-      foo:
-        type: string
-  custom_module_event:
-    implementations:
-      - path: javascript/main.js
-        line: 178
-        function: global
-        destination: custom
-      - path: python/main.py
-        line: 173
-        function: main
-        destination: custom
-      - path: typescript/main.ts
-        line: 322
-        function: global
-        destination: custom
-    properties:
-      userId:
-        type: string
-      order_id:
-        type: string
-      foo:
-        type: string
