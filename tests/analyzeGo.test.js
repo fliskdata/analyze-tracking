@@ -263,4 +263,35 @@ test.describe('analyzeGoFile', () => {
       assert.ok(found, `Should detect ${event} for signature ${sig}`);
     }
   });
+  
+  test('should detect events when multiple custom function signatures are provided together', async () => {
+    const variants = [
+      'customTrackFunction(userId, EVENT_NAME, PROPERTIES)',
+      'customTrackFunction0',
+      'customTrackFunction1(EVENT_NAME, PROPERTIES)',
+      'customTrackFunction2(userId, EVENT_NAME, PROPERTIES)',
+      'customTrackFunction3(EVENT_NAME, PROPERTIES, userEmail)',
+      'customTrackFunction4(userId, EVENT_NAME, userAddress, PROPERTIES, userEmail)'
+    ];
+
+    const customFunctionSignatures = variants.map(parseCustomFunctionSignature);
+    const events = await analyzeGoFile(testFilePath, customFunctionSignatures);
+
+    const expectedEventNames = [
+      'custom_event',
+      'custom_event0',
+      'custom_event1',
+      'custom_event2',
+      'custom_event3',
+      'custom_event4'
+    ];
+
+    expectedEventNames.forEach(eventName => {
+      const evt = events.find(e => e.eventName === eventName && e.source === 'custom');
+      assert.ok(evt, `Expected to find event ${eventName}`);
+    });
+
+    const builtInCount = events.filter(e => e.source !== 'custom').length;
+    assert.ok(builtInCount >= 5, 'Should still include built-in events');
+  });
 });

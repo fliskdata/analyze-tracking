@@ -349,3 +349,74 @@ events:
         type: array
         items:
           type: string
+  custom_event0:
+    implementations:
+      - path: main.ts
+        line: 306
+        function: global
+        destination: custom
+    properties:
+      foo:
+        type: string
+  custom_event1:
+    implementations:
+      - path: main.ts
+        line: 307
+        function: global
+        destination: custom
+    properties:
+      foo:
+        type: string
+  custom_event2:
+    implementations:
+      - path: main.ts
+        line: 308
+        function: global
+        destination: custom
+    properties:
+      foo:
+        type: string
+      userId:
+        type: string
+  custom_event3:
+    implementations:
+      - path: main.ts
+        line: 309
+        function: global
+        destination: custom
+    properties:
+      foo:
+        type: string
+      userEmail:
+        type: string
+  custom_event4:
+    implementations:
+      - path: main.ts
+        line: 310
+        function: global
+        destination: custom
+    properties:
+      foo:
+        type: string
+      userId:
+        type: string
+      userAddress:
+        type: object
+        properties:
+          city:
+            type: string
+      userEmail:
+        type: string
+  custom_module_event:
+    implementations:
+      - path: main.ts
+        line: 322
+        function: global
+        destination: custom
+    properties:
+      order_id:
+        type: string
+      foo:
+        type: string
+      userId:
+        type: string

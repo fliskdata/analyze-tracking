@@ -219,9 +219,31 @@ function processEventData(eventData, source, filePath, line, functionName, check
   // Handle custom extra params
   if (source === 'custom' && customConfig && eventData.extraArgs) {
     for (const [paramName, argNode] of Object.entries(eventData.extraArgs)) {
-      cleanedProperties[paramName] = {
-        type: inferNodeValueType(argNode)
-      };
+      if (argNode && ts.isObjectLiteralExpression(argNode)) {
+        // Extract detailed properties from object literal expression
+        cleanedProperties[paramName] = {
+          type: 'object',
+          properties: extractProperties(checker, argNode)
+        };
+      } else if (argNode && ts.isIdentifier(argNode)) {
+        // Handle identifier references to objects
+        const resolvedNode = resolveIdentifierToInitializer(checker, argNode, sourceFile);
+        if (resolvedNode && ts.isObjectLiteralExpression(resolvedNode)) {
+          cleanedProperties[paramName] = {
+            type: 'object',
+            properties: extractProperties(checker, resolvedNode)
+          };
+        } else {
+          cleanedProperties[paramName] = {
+            type: inferNodeValueType(argNode)
+          };
+        }
+      } else {
+        // For non-object arguments, use simple type inference
+        cleanedProperties[paramName] = {
+          type: inferNodeValueType(argNode)
+        };
+      }
     }
   }
 

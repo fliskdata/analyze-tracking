@@ -53,53 +53,69 @@ async function initPyodide() {
  * const events = await analyzePythonFile('./app.py', 'track_event');
  */
 async function analyzePythonFile(filePath, customFunctionSignatures = null) {
-  // temporary: only support one custom function signature for now, will add support for multiple in the future
-  const customConfig = !!customFunctionSignatures?.length ? customFunctionSignatures[0] : null;
-
   // Validate inputs
   if (!filePath || typeof filePath !== 'string') {
     console.error('Invalid file path provided');
     return [];
   }
 
-  try {
-    // Check if file exists before reading
-    if (!fs.existsSync(filePath)) {
-      console.error(`File not found: ${filePath}`);
-      return [];
-    }
+  // Check if file exists before reading
+  if (!fs.existsSync(filePath)) {
+    console.error(`File not found: ${filePath}`);
+    return [];
+  }
 
-    // Read the Python file
+  try {
+    // Read the Python file only once
     const code = fs.readFileSync(filePath, 'utf8');
-    
+
     // Initialize Pyodide if not already done
     const py = await initPyodide();
-    
-    // Load the Python analyzer code
+
+    // Load the Python analyzer code (idempotent – redefining functions is fine)
     const analyzerPath = path.join(__dirname, 'pythonTrackingAnalyzer.py');
     if (!fs.existsSync(analyzerPath)) {
       throw new Error(`Python analyzer not found at: ${analyzerPath}`);
     }
-    
     const analyzerCode = fs.readFileSync(analyzerPath, 'utf8');
-    
-    // Set up Python environment with necessary variables
-    py.globals.set('code', code);
-    py.globals.set('filepath', filePath);
-    py.globals.set('custom_config_json', customConfig ? JSON.stringify(customConfig) : null);
-    py.runPython('import json');
-    py.runPython('custom_config = None if custom_config_json == None else json.loads(custom_config_json)');
-    // Set __name__ to null to prevent execution of main block
+    // Prevent the analyzer from executing any __main__ blocks that expect CLI usage
     py.globals.set('__name__', null);
-    
-    // Load and run the analyzer
     py.runPython(analyzerCode);
-    
-    // Execute the analysis and parse result
-    const result = py.runPython('analyze_python_code(code, filepath, custom_config)');
-    const events = JSON.parse(result);
-    
-    return events;
+
+    // Helper to run analysis with a given custom config (can be null)
+    const runAnalysis = (customConfig) => {
+      py.globals.set('code', code);
+      py.globals.set('filepath', filePath);
+      py.globals.set('custom_config_json', customConfig ? JSON.stringify(customConfig) : null);
+      py.runPython('import json');
+      py.runPython('custom_config = None if custom_config_json == None else json.loads(custom_config_json)');
+      const result = py.runPython('analyze_python_code(code, filepath, custom_config)');
+      return JSON.parse(result);
+    };
+
+    const events = [];
+
+    // Built-in providers pass (no custom config)
+    events.push(...runAnalysis(null));
+
+    // Custom configs passes
+    if (Array.isArray(customFunctionSignatures) && customFunctionSignatures.length > 0) {
+      for (const customConfig of customFunctionSignatures) {
+        if (!customConfig) continue;
+        events.push(...runAnalysis(customConfig));
+      }
+    }
+
+    // Deduplicate events
+    const uniqueEvents = new Map();
+    for (const evt of events) {
+      const key = `${evt.source}|${evt.eventName}|${evt.line}|${evt.functionName}`;
+      if (!uniqueEvents.has(key)) {
+        uniqueEvents.set(key, evt);
+      }
+    }
+
+    return Array.from(uniqueEvents.values());
   } catch (error) {
     // Log detailed error information for debugging
     console.error(`Error analyzing Python file ${filePath}:`, error);

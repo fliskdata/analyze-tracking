@@ -344,4 +344,39 @@ test.describe('analyzeJsFile', () => {
       assert.ok(found, `Should detect ${event} for signature ${sig}`);
     });
   });
+  
+  test('should detect events when multiple custom function signatures are provided together', () => {
+    const variants = [
+      'customTrackFunction(userId, EVENT_NAME, PROPERTIES)',
+      'customTrackFunction0',
+      'customTrackFunction1(EVENT_NAME, PROPERTIES)',
+      'customTrackFunction2(userId, EVENT_NAME, PROPERTIES)',
+      'customTrackFunction3(EVENT_NAME, PROPERTIES, userEmail)',
+      'customTrackFunction4(userId, EVENT_NAME, userAddress, PROPERTIES, userEmail)',
+      'CustomModule.track(userId, EVENT_NAME, PROPERTIES)'
+    ];
+
+    const customFunctionSignatures = variants.map(parseCustomFunctionSignature);
+    const events = analyzeJsFile(testFilePath, customFunctionSignatures);
+
+    // Each variant triggers exactly one event in the fixture file
+    const expectedEventNames = [
+      'customEvent',
+      'custom_event0',
+      'custom_event1',
+      'custom_event2',
+      'custom_event3',
+      'custom_event4',
+      'custom_module_event'
+    ];
+
+    expectedEventNames.forEach(eventName => {
+      const evt = events.find(e => e.eventName === eventName && e.source === 'custom');
+      assert.ok(evt, `Expected to find event ${eventName}`);
+    });
+
+    // Sanity check – ensure we did not lose built-in provider events
+    const builtInProvidersCount = events.filter(e => e.source !== 'custom').length;
+    assert.ok(builtInProvidersCount >= 10, 'Should still include built-in events');
+  });
 });

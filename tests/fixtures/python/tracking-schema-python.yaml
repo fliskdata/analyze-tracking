@@ -124,3 +124,74 @@ events:
             type: array
             items:
               type: number
+  custom_event0:
+    implementations:
+      - path: main.py
+        line: 161
+        function: main
+        destination: custom
+    properties:
+      foo:
+        type: string
+  custom_event1:
+    implementations:
+      - path: main.py
+        line: 162
+        function: main
+        destination: custom
+    properties:
+      foo:
+        type: string
+  custom_event2:
+    implementations:
+      - path: main.py
+        line: 163
+        function: main
+        destination: custom
+    properties:
+      userId:
+        type: string
+      foo:
+        type: string
+  custom_event3:
+    implementations:
+      - path: main.py
+        line: 164
+        function: main
+        destination: custom
+    properties:
+      foo:
+        type: string
+      userEmail:
+        type: string
+  custom_event4:
+    implementations:
+      - path: main.py
+        line: 165
+        function: main
+        destination: custom
+    properties:
+      userId:
+        type: string
+      userAddress:
+        type: object
+        properties:
+          city:
+            type: string
+      foo:
+        type: string
+      userEmail:
+        type: string
+  custom_module_event:
+    implementations:
+      - path: main.py
+        line: 173
+        function: main
+        destination: custom
+    properties:
+      userId:
+        type: string
+      order_id:
+        type: string
+      foo:
+        type: string

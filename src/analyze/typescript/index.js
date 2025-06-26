@@ -15,13 +15,10 @@ const { getProgram, findTrackingEvents, ProgramError, SourceFileError } = requir
 function analyzeTsFile(filePath, program = null, customFunctionSignatures = null) {
   const events = [];
 
-  // temporary: only support one custom function signature for now, will add support for multiple in the future
-  const customConfig = !!customFunctionSignatures?.length ? customFunctionSignatures[0] : null;
-
   try {
-    // Get or create TypeScript program
+    // Get or create TypeScript program (only once)
     const tsProgram = getProgram(filePath, program);
-    
+
     // Get source file from program
     const sourceFile = tsProgram.getSourceFile(filePath);
     if (!sourceFile) {
@@ -31,9 +28,29 @@ function analyzeTsFile(filePath, program = null, customFunctionSignatures = null
     // Get type checker
     const checker = tsProgram.getTypeChecker();
 
-    // Find and extract tracking events
-    const foundEvents = findTrackingEvents(sourceFile, checker, filePath, customConfig);
-    events.push(...foundEvents);
+    // -------- Built-in providers pass --------
+    const builtInEvents = findTrackingEvents(sourceFile, checker, filePath, null);
+    events.push(...builtInEvents);
+
+    // -------- Custom function passes --------
+    if (Array.isArray(customFunctionSignatures) && customFunctionSignatures.length > 0) {
+      for (const customConfig of customFunctionSignatures) {
+        if (!customConfig) continue;
+        const customEvents = findTrackingEvents(sourceFile, checker, filePath, customConfig);
+        events.push(...customEvents);
+      }
+    }
+
+    // Deduplicate events (source|eventName|line|functionName)
+    const uniqueEvents = new Map();
+    for (const evt of events) {
+      const key = `${evt.source}|${evt.eventName}|${evt.line}|${evt.functionName}`;
+      if (!uniqueEvents.has(key)) {
+        uniqueEvents.set(key, evt);
+      }
+    }
+
+    return Array.from(uniqueEvents.values());
 
   } catch (error) {
     if (error instanceof ProgramError) {
@@ -45,7 +62,7 @@ function analyzeTsFile(filePath, program = null, customFunctionSignatures = null
     }
   }
 
-  return events;
+  return [];
 }
 
 module.exports = { analyzeTsFile };
