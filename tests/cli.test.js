@@ -16,7 +16,11 @@ const customFunctionSignatures = [
   'customTrackFunction2(userId, EVENT_NAME, PROPERTIES)',
   'customTrackFunction3(EVENT_NAME, PROPERTIES, userEmail)',
   'customTrackFunction4(userId, EVENT_NAME, userAddress, PROPERTIES, userEmail)',
-  'CustomModule.track(userId, EVENT_NAME, PROPERTIES)'
+  'CustomModule.track(userId, EVENT_NAME, PROPERTIES)',
+  'customTrackFunction5',
+  'customTrackFunction6(EVENT_NAME, PROPERTIES)',
+  'this.props.customTrackFunction6(EVENT_NAME, PROPERTIES)',
+  'customTrackFunction7(EVENT_NAME, PROPERTIES)',
 ];
 
 // Helper function to run CLI and capture output

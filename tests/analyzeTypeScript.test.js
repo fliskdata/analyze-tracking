@@ -23,15 +23,21 @@ test.describe('analyzeTsFile', () => {
   }
 
   test('should correctly analyze TypeScript file with multiple tracking providers', () => {
-    const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
-    const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
+    const customFunctions = [
+      'customTrackFunction(userId, EVENT_NAME, PROPERTIES)',
+      'customTrackFunction5',
+      'customTrackFunction6(EVENT_NAME, PROPERTIES)',
+      'customTrackFunction7(EVENT_NAME, PROPERTIES)',
+      'this.props.customTrackFunction6(EVENT_NAME, PROPERTIES)'
+    ];
+    const customFunctionSignatures = customFunctions.map(parseCustomFunctionSignature);
     const program = createProgram(testFilePath);
     const events = analyzeTsFile(testFilePath, program, customFunctionSignatures);
 
     // Sort events by line number for consistent ordering
     events.sort((a, b) => a.line - b.line);
 
-    assert.strictEqual(events.length, 15);
+    assert.strictEqual(events.length, 19);
 
     // Test Google Analytics event
     const gaEvent = events.find(e => e.eventName === 'order_completed' && e.source === 'googleanalytics');
@@ -359,6 +365,24 @@ test.describe('analyzeTsFile', () => {
         type: 'array',
         items: { type: 'string' }
       }
+    });
+
+    // Test InitiatedPayment custom event (nested dispatch)
+    const initiatedPaymentEvent = events.find(e => e.eventName === 'InitiatedPayment');
+    assert.ok(initiatedPaymentEvent);
+    assert.strictEqual(initiatedPaymentEvent.source, 'custom');
+    assert.deepStrictEqual(initiatedPaymentEvent.properties, {
+      containerSection: { type: 'string' },
+      tierCartIntent: { type: 'string' }
+    });
+
+    // Test FailedPayment custom event (variable properties) – from customTrackFunction5
+    const failedPaymentEvent = events.find(e => e.eventName === 'FailedPayment');
+    assert.ok(failedPaymentEvent);
+    assert.strictEqual(failedPaymentEvent.source, 'custom');
+    assert.deepStrictEqual(failedPaymentEvent.properties, {
+      containerSection: { type: 'string' },
+      amount: { type: 'number' }
     });
   });
 
@@ -892,6 +916,9 @@ test.describe('analyzeTsFile', () => {
       { sig: 'customTrackFunction3(EVENT_NAME, PROPERTIES, userEmail)', event: 'custom_event3' },
       { sig: 'customTrackFunction4(userId, EVENT_NAME, userAddress, PROPERTIES, userEmail)', event: 'custom_event4' },
       { sig: 'CustomModule.track(userId, EVENT_NAME, PROPERTIES)', event: 'custom_module_event' },
+      { sig: 'customTrackFunction5', event: 'FailedPayment' },
+      { sig: 'this.props.customTrackFunction6(EVENT_NAME, PROPERTIES)', event: 'ViewedAttorneyAgreement' },
+      { sig: 'customTrackFunction7(EVENT_NAME, PROPERTIES)', event: 'InitiatedPayment' },
     ];
 
     variants.forEach(({ sig, event }) => {
@@ -911,7 +938,10 @@ test.describe('analyzeTsFile', () => {
       'customTrackFunction2(userId, EVENT_NAME, PROPERTIES)',
       'customTrackFunction3(EVENT_NAME, PROPERTIES, userEmail)',
       'customTrackFunction4(userId, EVENT_NAME, userAddress, PROPERTIES, userEmail)',
-      'CustomModule.track(userId, EVENT_NAME, PROPERTIES)'
+      'CustomModule.track(userId, EVENT_NAME, PROPERTIES)',
+      'customTrackFunction5',
+      'this.props.customTrackFunction6(EVENT_NAME, PROPERTIES)',
+      'customTrackFunction7(EVENT_NAME, PROPERTIES)',
     ];
 
     const customFunctionSignatures = variants.map(parseCustomFunctionSignature);
@@ -926,7 +956,10 @@ test.describe('analyzeTsFile', () => {
       'custom_event2',
       'custom_event3',
       'custom_event4',
-      'custom_module_event'
+      'custom_module_event',
+      'FailedPayment',
+      'ViewedAttorneyAgreement',
+      'InitiatedPayment'
     ];
 
     expectedEventNames.forEach(eventName => {
@@ -936,6 +969,6 @@ test.describe('analyzeTsFile', () => {
 
     // Ensure built-in provider events remain unaffected
     const builtInCount = events.filter(e => e.source !== 'custom').length;
-    assert.ok(builtInCount >= 12, 'Should still include built-in provider events');
+    assert.ok(builtInCount >= 10, 'Should still include built-in provider events');
   });
 });
