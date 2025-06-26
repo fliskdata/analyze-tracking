@@ -66,22 +66,95 @@ function parseFile(filePath) {
   }
 }
 
+// ---------------------------------------------
+// Helper – custom function matcher
+// ---------------------------------------------
+
 /**
- * Walks the AST and finds analytics tracking calls
- * @param {Object} ast - Parsed AST
- * @param {string} filePath - Path to the file being analyzed
- * @param {Object} [customConfig] - Custom function configuration object
- * @returns {Array<Object>} Array of found events
+ * Determines whether a CallExpression node matches the provided custom function name.
+ * Supports both simple identifiers (e.g. myTrack) and dot-separated members (e.g. Custom.track).
+ * The logic mirrors isCustomFunction from detectors/analytics-source.js but is kept local to avoid
+ * circular dependencies.
+ * @param {Object} node  – CallExpression AST node
+ * @param {string} fnName – Custom function name (could include dots)
+ * @returns {boolean}
  */
-function findTrackingEvents(ast, filePath, customConfig) {
+function nodeMatchesCustomFunction(node, fnName) {
+  if (!fnName || !node.callee) return false;
+
+  const parts = fnName.split('.');
+
+  // Simple identifier case
+  if (parts.length === 1) {
+    return node.callee.type === NODE_TYPES.IDENTIFIER && node.callee.name === fnName;
+  }
+
+  // Member expression chain case
+  if (node.callee.type !== NODE_TYPES.MEMBER_EXPRESSION) {
+    return false;
+  }
+
+  // Walk the chain from the right-most property to the leftmost object
+  let currentNode = node.callee;
+  let idx = parts.length - 1;
+
+  while (currentNode && idx >= 0) {
+    const expected = parts[idx];
+
+    if (currentNode.type === NODE_TYPES.MEMBER_EXPRESSION) {
+      if (
+        currentNode.property.type !== NODE_TYPES.IDENTIFIER ||
+        currentNode.property.name !== expected
+      ) {
+        return false;
+      }
+      currentNode = currentNode.object;
+      idx -= 1;
+    } else if (currentNode.type === NODE_TYPES.IDENTIFIER) {
+      return idx === 0 && currentNode.name === expected;
+    } else {
+      return false;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Walk the AST once and find tracking events for built-in providers plus any number of custom
+ * function configurations. This avoids the previous O(n * customConfigs) behaviour.
+ *
+ * @param {Object}  ast                      – Parsed AST of the source file
+ * @param {string}  filePath                 – Absolute/relative path to the source file
+ * @param {Object[]} [customConfigs=[]]      – Array of parsed custom function configurations
+ * @returns {Array<Object>}                  – List of extracted tracking events
+ */
+function findTrackingEvents(ast, filePath, customConfigs = []) {
   const events = [];
 
   walk.ancestor(ast, {
     [NODE_TYPES.CALL_EXPRESSION]: (node, ancestors) => {
       try {
-        const event = extractTrackingEvent(node, ancestors, filePath, customConfig);
-        if (event) {
-          events.push(event);
+        let matchedCustomConfig = null;
+
+        // Attempt to match any custom function first to avoid mis-classifying built-in providers
+        if (Array.isArray(customConfigs) && customConfigs.length > 0) {
+          for (const cfg of customConfigs) {
+            if (cfg && nodeMatchesCustomFunction(node, cfg.functionName)) {
+              matchedCustomConfig = cfg;
+              break;
+            }
+          }
+        }
+
+        if (matchedCustomConfig) {
+          // Force source to 'custom' and use matched config
+          const event = extractTrackingEvent(node, ancestors, filePath, matchedCustomConfig);
+          if (event) events.push(event);
+        } else {
+          // Let built-in detector figure out source (pass undefined customFunction)
+          const event = extractTrackingEvent(node, ancestors, filePath, null);
+          if (event) events.push(event);
         }
       } catch (error) {
         console.error(`Error processing node in ${filePath}:`, error.message);

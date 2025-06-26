@@ -12,35 +12,21 @@ const { parseFile, findTrackingEvents, FileReadError, ParseError } = require('./
  * @returns {Array<Object>} Array of tracking events found in the file
  */
 function analyzeJsFile(filePath, customFunctionSignatures = null) {
-  const events = [];
-
   try {
     // Parse the file into an AST once
     const ast = parseFile(filePath);
 
-    // -------- Built-in providers pass --------
-    const builtInEvents = findTrackingEvents(ast, filePath, null);
-    events.push(...builtInEvents);
-
-    // -------- Custom function passes --------
-    if (Array.isArray(customFunctionSignatures) && customFunctionSignatures.length > 0) {
-      for (const customConfig of customFunctionSignatures) {
-        if (!customConfig) continue;
-        const customEvents = findTrackingEvents(ast, filePath, customConfig);
-        events.push(...customEvents);
-      }
-    }
+    // Single pass extraction covering built-in + all custom configs
+    const events = findTrackingEvents(ast, filePath, customFunctionSignatures || []);
 
     // Deduplicate events (by source | eventName | line | functionName)
-    const uniqueEvents = new Map();
+    const unique = new Map();
     for (const evt of events) {
       const key = `${evt.source}|${evt.eventName}|${evt.line}|${evt.functionName}`;
-      if (!uniqueEvents.has(key)) {
-        uniqueEvents.set(key, evt);
-      }
+      if (!unique.has(key)) unique.set(key, evt);
     }
 
-    return Array.from(uniqueEvents.values());
+    return Array.from(unique.values());
 
   } catch (error) {
     if (error instanceof FileReadError) {

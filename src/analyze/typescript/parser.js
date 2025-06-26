@@ -65,32 +65,55 @@ function getProgram(filePath, existingProgram) {
  * @param {Object} sourceFile - TypeScript source file
  * @param {Object} checker - TypeScript type checker
  * @param {string} filePath - Path to the file being analyzed
- * @param {Object} [customConfig] - Custom function configuration
+ * @param {Array<Object>} [customConfigs] - Array of custom function configurations
  * @returns {Array<Object>} Array of found events
  */
-function findTrackingEvents(sourceFile, checker, filePath, customConfig) {
+function findTrackingEvents(sourceFile, checker, filePath, customConfigs = []) {
   const events = [];
 
   /**
-   * Visitor function for AST traversal
-   * @param {Object} node - Current AST node
+   * Helper to test if a CallExpression matches a custom function name.
+   * We simply rely on node.expression.getText() which preserves the fully qualified name.
    */
+  const matchesCustomFn = (callNode, fnName) => {
+    if (!fnName) return false;
+    try {
+      return callNode.expression && callNode.expression.getText() === fnName;
+    } catch {
+      return false;
+    }
+  };
+
   function visit(node) {
     try {
       if (ts.isCallExpression(node)) {
-        const event = extractTrackingEvent(node, sourceFile, checker, filePath, customConfig);
-        if (event) {
-          events.push(event);
+        let matchedCustom = null;
+
+        if (Array.isArray(customConfigs) && customConfigs.length > 0) {
+          for (const cfg of customConfigs) {
+            if (cfg && matchesCustomFn(node, cfg.functionName)) {
+              matchedCustom = cfg;
+              break;
+            }
+          }
         }
+
+        const event = extractTrackingEvent(
+          node,
+          sourceFile,
+          checker,
+          filePath,
+          matchedCustom /* may be null */
+        );
+        if (event) events.push(event);
       }
-      // Continue traversing the AST
+
       ts.forEachChild(node, visit);
     } catch (error) {
       console.error(`Error processing node in ${filePath}:`, error.message);
     }
   }
 
-  // Start traversal from the root
   ts.forEachChild(sourceFile, visit);
 
   return events;

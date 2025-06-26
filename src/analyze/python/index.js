@@ -93,29 +93,14 @@ async function analyzePythonFile(filePath, customFunctionSignatures = null) {
       return JSON.parse(result);
     };
 
-    const events = [];
+    // Prepare config argument (array or null)
+    const configArg = Array.isArray(customFunctionSignatures) && customFunctionSignatures.length > 0
+      ? customFunctionSignatures
+      : null;
 
-    // Built-in providers pass (no custom config)
-    events.push(...runAnalysis(null));
+    const events = runAnalysis(configArg);
 
-    // Custom configs passes
-    if (Array.isArray(customFunctionSignatures) && customFunctionSignatures.length > 0) {
-      for (const customConfig of customFunctionSignatures) {
-        if (!customConfig) continue;
-        events.push(...runAnalysis(customConfig));
-      }
-    }
-
-    // Deduplicate events
-    const uniqueEvents = new Map();
-    for (const evt of events) {
-      const key = `${evt.source}|${evt.eventName}|${evt.line}|${evt.functionName}`;
-      if (!uniqueEvents.has(key)) {
-        uniqueEvents.set(key, evt);
-      }
-    }
-
-    return Array.from(uniqueEvents.values());
+    return events;
   } catch (error) {
     // Log detailed error information for debugging
     console.error(`Error analyzing Python file ${filePath}:`, error);

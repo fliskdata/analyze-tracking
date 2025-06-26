@@ -36,33 +36,18 @@ async function analyzeRubyFile(filePath, customFunctionSignatures = null) {
       return [];
     }
 
-    const events = [];
-
-    // -------- Built-in providers pass --------
-    let visitor = new TrackingVisitor(code, filePath, null);
-    const builtInEvents = await visitor.analyze(ast);
-    events.push(...builtInEvents);
-
-    // -------- Custom config passes --------
-    if (Array.isArray(customFunctionSignatures) && customFunctionSignatures.length > 0) {
-      for (const customConfig of customFunctionSignatures) {
-        if (!customConfig) continue;
-        const customVisitor = new TrackingVisitor(code, filePath, customConfig);
-        const customEvents = await customVisitor.analyze(ast);
-        events.push(...customEvents);
-      }
-    }
+    // Single visitor pass covering all custom configs
+    const visitor = new TrackingVisitor(code, filePath, customFunctionSignatures || []);
+    const events = await visitor.analyze(ast);
 
     // Deduplicate events
-    const uniqueEvents = new Map();
+    const unique = new Map();
     for (const evt of events) {
       const key = `${evt.source}|${evt.eventName}|${evt.line}|${evt.functionName}`;
-      if (!uniqueEvents.has(key)) {
-        uniqueEvents.set(key, evt);
-      }
+      if (!unique.has(key)) unique.set(key, evt);
     }
 
-    return Array.from(uniqueEvents.values());
+    return Array.from(unique.values());
 
   } catch (fileError) {
     console.error(`Error reading or processing file ${filePath}:`, fileError.message);
