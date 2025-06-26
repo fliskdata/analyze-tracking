@@ -1102,3 +1102,36 @@ events:
               type: string
       checkout_step:
         type: number
+  FailedPayment:
+    implementations:
+      - path: typescript/main.ts
+        line: 361
+        function: global
+        destination: custom
+    properties:
+      containerSection:
+        type: string
+      amount:
+        type: number
+  InitiatedPayment:
+    implementations:
+      - path: typescript/main.ts
+        line: 349
+        function: global
+        destination: custom
+      - path: typescript/main.ts
+        line: 422
+        function: trackInitiatedPayment
+        destination: custom
+    properties:
+      containerSection:
+        type: string
+      tierCartIntent:
+        type: string
+  ViewedAttorneyAgreement:
+    implementations:
+      - path: typescript/main.ts
+        line: 375
+        function: handleView
+        destination: custom
+    properties: {}

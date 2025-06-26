@@ -323,3 +323,107 @@ CustomModule.track('user333', 'custom_module_event', {
   order_id: 'order_xyz',
   foo: 'bar'
 });
+
+// -----------------------------------------------------------------------------
+// Additional Object.freeze constant and customTrackFunction6 patterns (new tests)
+// -----------------------------------------------------------------------------
+
+export const TELEMETRY_EVENTS = Object.freeze({
+  VIEWED_TRANSITION: 'ViewedTransition',
+  INITIATED_PAYMENT: 'InitiatedPayment',
+  FAILED_PAYMENT: 'FailedPayment',
+  VIEWED_ATTORNEY_AGREEMENT: 'ViewedAttorneyAgreement',
+  ACCEPTED_ATTORNEY_AGREEMENT: 'AcceptedAttorneyAgreement',
+  DECLINED_ATTORNEY_AGREEMENT_FOR_REFUND: 'DeclinedAttorneyAgreementForRefund',
+  SUCCEEDED_PAYMENT: 'SucceededPayment',
+});
+
+declare function customTrackFunction5(EVENT_NAME: string, PROPERTIES: Record<string, any>): void;
+declare function customTrackFunction6(EVENT_NAME: string, PROPERTIES: Record<string, any>): void;
+declare function customTrackFunction7(EVENT_NAME: string, PROPERTIES: Record<string, any>): void;
+
+declare function dispatch(action: any): void;
+
+// Nested inside another function call (e.g., Redux dispatch pattern)
+dispatch(
+  customTrackFunction7(TELEMETRY_EVENTS.INITIATED_PAYMENT, {
+    containerSection: 'PaymentPage',
+    tierCartIntent: 'Gold',
+  })
+);
+
+// Variable reference as properties argument
+const paymentArgs = {
+  containerSection: 'Checkout',
+  amount: 99.99,
+};
+dispatch(
+  customTrackFunction5(TELEMETRY_EVENTS.FAILED_PAYMENT, paymentArgs)
+);
+
+// Member expression chain: this.props.customTrackFunction6
+class ExampleComponent {
+  props: { customTrackFunction6: (evt: string, props: Record<string, any>) => void };
+
+  constructor() {
+    this.props = {
+      customTrackFunction6: () => {},
+    };
+  }
+
+  handleView() {
+    this.props.customTrackFunction6(TELEMETRY_EVENTS.VIEWED_ATTORNEY_AGREEMENT, {});
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Redux-style mapDispatchToActions with nested customTrackFunction6 patterns
+// -----------------------------------------------------------------------------
+
+interface ExplicitPropsRedux {
+  tier: string;
+  containerSection: string;
+  applicationFeeInCents: number;
+}
+
+interface MappedProps {}
+
+type GlobalErrorObject = { type: string; payload: any };
+
+type ActionProps = Record<string, any>;
+
+declare function closeModal(...args: any[]): void;
+declare function postTelemetryWithConversion(
+  eventName: string,
+  props: Record<string, any>,
+  conversionEvent: string,
+  extra: Record<string, any>,
+  urls: string[],
+  destinations: string[]
+): void;
+
+declare const CONVERSION_TRACKING_EVENTS: { PAYMENT: string };
+declare const CONVERSION_TRACKING_DESTINATIONS: { FACEBOOK: string; GOOGLE: string };
+
+declare function trackUserEvent(eventName: string, props: Record<string, any>): void; // alias to customTrackFunction6
+
+function mapDispatchToActions(dispatch: Function, ownProps: ExplicitPropsRedux & MappedProps): ActionProps {
+  return {
+    closeModal: (...args: any[]) => dispatch(closeModal(...args)),
+    setGlobalError: ({ type, payload }: GlobalErrorObject) => dispatch({ type, payload }),
+
+    // Variable-only properties argument
+    trackFailedPayment: (args: Record<string, any>) => dispatch(
+      customTrackFunction6(TELEMETRY_EVENTS.FAILED_PAYMENT, args)
+    ),
+
+    // Object literal with spread + additional props
+    trackInitiatedPayment: (args: Record<string, any>) => dispatch(
+      customTrackFunction7(TELEMETRY_EVENTS.INITIATED_PAYMENT, {
+        ...args,
+        containerSection: ownProps.containerSection,
+        tierCartIntent: ownProps.tier,
+      })
+    ),
+  };
+}
