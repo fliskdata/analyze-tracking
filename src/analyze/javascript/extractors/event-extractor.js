@@ -28,29 +28,31 @@ const EXTRACTION_STRATEGIES = {
  * Extracts event information from a CallExpression node
  * @param {Object} node - AST CallExpression node
  * @param {string} source - Analytics provider source
+ * @param {Object} constantMap - Collected constant map
  * @param {Object} customConfig - Parsed custom function configuration
  * @returns {EventData} Extracted event data
  */
-function extractEventData(node, source, customConfig) {
+function extractEventData(node, source, constantMap = {}, customConfig) {
   const strategy = EXTRACTION_STRATEGIES[source] || EXTRACTION_STRATEGIES.default;
   if (source === 'custom') {
-    return strategy(node, customConfig);
+    return strategy(node, constantMap, customConfig);
   }
-  return strategy(node);
+  return strategy(node, constantMap);
 }
 
 /**
  * Extracts Google Analytics event data
  * @param {Object} node - CallExpression node
+ * @param {Object} constantMap - Collected constant map
  * @returns {EventData}
  */
-function extractGoogleAnalyticsEvent(node) {
+function extractGoogleAnalyticsEvent(node, constantMap) {
   if (!node.arguments || node.arguments.length < 3) {
     return { eventName: null, propertiesNode: null };
   }
 
   // gtag('event', 'event_name', { properties })
-  const eventName = getStringValue(node.arguments[1]);
+  const eventName = getStringValue(node.arguments[1], constantMap);
   const propertiesNode = node.arguments[2];
 
   return { eventName, propertiesNode };
@@ -59,9 +61,10 @@ function extractGoogleAnalyticsEvent(node) {
 /**
  * Extracts Snowplow event data
  * @param {Object} node - CallExpression node
+ * @param {Object} constantMap - Collected constant map
  * @returns {EventData}
  */
-function extractSnowplowEvent(node) {
+function extractSnowplowEvent(node, constantMap) {
   if (!node.arguments || node.arguments.length === 0) {
     return { eventName: null, propertiesNode: null };
   }
@@ -75,7 +78,7 @@ function extractSnowplowEvent(node) {
     
     if (structEventArg.type === NODE_TYPES.OBJECT_EXPRESSION) {
       const actionProperty = findPropertyByKey(structEventArg, 'action');
-      const eventName = actionProperty ? getStringValue(actionProperty.value) : null;
+      const eventName = actionProperty ? getStringValue(actionProperty.value, constantMap) : null;
       
       return { eventName, propertiesNode: structEventArg };
     }
@@ -87,15 +90,16 @@ function extractSnowplowEvent(node) {
 /**
  * Extracts mParticle event data
  * @param {Object} node - CallExpression node
+ * @param {Object} constantMap - Collected constant map
  * @returns {EventData}
  */
-function extractMparticleEvent(node) {
+function extractMparticleEvent(node, constantMap) {
   if (!node.arguments || node.arguments.length < 3) {
     return { eventName: null, propertiesNode: null };
   }
 
   // mParticle.logEvent('event_name', mParticle.EventType.Navigation, { properties })
-  const eventName = getStringValue(node.arguments[0]);
+  const eventName = getStringValue(node.arguments[0], constantMap);
   const propertiesNode = node.arguments[2];
 
   return { eventName, propertiesNode };
@@ -104,15 +108,16 @@ function extractMparticleEvent(node) {
 /**
  * Default event extraction for standard providers
  * @param {Object} node - CallExpression node
+ * @param {Object} constantMap - Collected constant map
  * @returns {EventData}
  */
-function extractDefaultEvent(node) {
+function extractDefaultEvent(node, constantMap) {
   if (!node.arguments || node.arguments.length < 2) {
     return { eventName: null, propertiesNode: null };
   }
 
   // provider.track('event_name', { properties })
-  const eventName = getStringValue(node.arguments[0]);
+  const eventName = getStringValue(node.arguments[0], constantMap);
   const propertiesNode = node.arguments[1];
 
   return { eventName, propertiesNode };
@@ -121,16 +126,17 @@ function extractDefaultEvent(node) {
 /**
  * Extracts Custom function event data according to signature
  * @param {Object} node - CallExpression node
+ * @param {Object} constantMap - Collected constant map
  * @param {Object} customConfig - Parsed custom function configuration
  * @returns {EventData & {extraArgs:Object}} event data plus extra args map
  */
-function extractCustomEvent(node, customConfig) {
+function extractCustomEvent(node, constantMap, customConfig) {
   const args = node.arguments || [];
 
   const eventArg = args[customConfig?.eventIndex ?? 0];
   const propertiesArg = args[customConfig?.propertiesIndex ?? 1];
 
-  const eventName = getStringValue(eventArg);
+  const eventName = getStringValue(eventArg, constantMap);
 
   const extraArgs = {};
   if (customConfig && customConfig.extraParams) {
@@ -197,12 +203,16 @@ function processEventData(eventData, source, filePath, line, functionName, custo
 /**
  * Gets string value from an AST node
  * @param {Object} node - AST node
+ * @param {Object} constantMap - Collected constant map
  * @returns {string|null} String value or null
  */
-function getStringValue(node) {
+function getStringValue(node, constantMap = {}) {
   if (!node) return null;
   if (node.type === NODE_TYPES.LITERAL && typeof node.value === 'string') {
     return node.value;
+  }
+  if (node.type === NODE_TYPES.MEMBER_EXPRESSION) {
+    return resolveMemberExpressionToString(node, constantMap);
   }
   return null;
 }
@@ -238,6 +248,26 @@ function inferNodeValueType(node) {
     default:
       return 'any';
   }
+}
+
+// Helper to resolve MemberExpression (CONST.KEY) to string using collected constant map
+function resolveMemberExpressionToString(node, constantMap) {
+  if (!node || node.type !== NODE_TYPES.MEMBER_EXPRESSION) return null;
+  if (node.computed) return null; // Only support dot notation
+
+  const object = node.object;
+  const property = node.property;
+
+  if (object.type !== NODE_TYPES.IDENTIFIER) return null;
+  if (property.type !== NODE_TYPES.IDENTIFIER) return null;
+
+  const objName = object.name;
+  const propName = property.name;
+
+  if (constantMap && constantMap[objName] && typeof constantMap[objName][propName] === 'string') {
+    return constantMap[objName][propName];
+  }
+  return null;
 }
 
 module.exports = {

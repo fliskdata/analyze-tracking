@@ -120,6 +120,57 @@ function nodeMatchesCustomFunction(node, fnName) {
   return false;
 }
 
+// -----------------------------------------------------------------------------
+// Utility – collect constants defined as plain objects or Object.freeze({...})
+// -----------------------------------------------------------------------------
+function collectConstantStringMap(ast) {
+  const map = {};
+
+  walk.simple(ast, {
+    VariableDeclaration(node) {
+      // Only consider const declarations
+      if (node.kind !== 'const') return;
+      node.declarations.forEach(decl => {
+        if (decl.id.type !== NODE_TYPES.IDENTIFIER || !decl.init) return;
+        const name = decl.id.name;
+        let objLiteral = null;
+
+        if (decl.init.type === NODE_TYPES.OBJECT_EXPRESSION) {
+          objLiteral = decl.init;
+        } else if (decl.init.type === NODE_TYPES.CALL_EXPRESSION) {
+          // Check for Object.freeze({...})
+          const callee = decl.init.callee;
+          if (
+            callee &&
+            callee.type === NODE_TYPES.MEMBER_EXPRESSION &&
+            callee.object.type === NODE_TYPES.IDENTIFIER &&
+            callee.object.name === 'Object' &&
+            callee.property.type === NODE_TYPES.IDENTIFIER &&
+            callee.property.name === 'freeze' &&
+            decl.init.arguments.length > 0 &&
+            decl.init.arguments[0].type === NODE_TYPES.OBJECT_EXPRESSION
+          ) {
+            objLiteral = decl.init.arguments[0];
+          }
+        }
+
+        if (objLiteral) {
+          map[name] = {};
+          objLiteral.properties.forEach(prop => {
+            if (!prop.key || !prop.value) return;
+            const keyName = prop.key.name || prop.key.value;
+            if (prop.value.type === NODE_TYPES.LITERAL && typeof prop.value.value === 'string') {
+              map[name][keyName] = prop.value.value;
+            }
+          });
+        }
+      });
+    }
+  });
+
+  return map;
+}
+
 /**
  * Walk the AST once and find tracking events for built-in providers plus any number of custom
  * function configurations. This avoids the previous O(n * customConfigs) behaviour.
@@ -131,6 +182,9 @@ function nodeMatchesCustomFunction(node, fnName) {
  */
 function findTrackingEvents(ast, filePath, customConfigs = []) {
   const events = [];
+
+  // Collect constant mappings once per file
+  const constantMap = collectConstantStringMap(ast);
 
   walk.ancestor(ast, {
     [NODE_TYPES.CALL_EXPRESSION]: (node, ancestors) => {
@@ -148,12 +202,10 @@ function findTrackingEvents(ast, filePath, customConfigs = []) {
         }
 
         if (matchedCustomConfig) {
-          // Force source to 'custom' and use matched config
-          const event = extractTrackingEvent(node, ancestors, filePath, matchedCustomConfig);
+          const event = extractTrackingEvent(node, ancestors, filePath, constantMap, matchedCustomConfig);
           if (event) events.push(event);
         } else {
-          // Let built-in detector figure out source (pass undefined customFunction)
-          const event = extractTrackingEvent(node, ancestors, filePath, null);
+          const event = extractTrackingEvent(node, ancestors, filePath, constantMap, null);
           if (event) events.push(event);
         }
       } catch (error) {
@@ -170,24 +222,18 @@ function findTrackingEvents(ast, filePath, customConfigs = []) {
  * @param {Object} node - CallExpression node
  * @param {Array<Object>} ancestors - Ancestor nodes
  * @param {string} filePath - File path
+ * @param {Object} constantMap - Constant string map
  * @param {Object} [customConfig] - Custom function configuration object
  * @returns {Object|null} Extracted event or null
  */
-function extractTrackingEvent(node, ancestors, filePath, customConfig) {
-  // Detect the analytics source
+function extractTrackingEvent(node, ancestors, filePath, constantMap, customConfig) {
   const source = detectAnalyticsSource(node, customConfig?.functionName);
   if (source === 'unknown') {
     return null;
   }
-
-  // Extract event data based on the source
-  const eventData = extractEventData(node, source, customConfig);
-
-  // Get location and context information
+  const eventData = extractEventData(node, source, constantMap, customConfig);
   const line = node.loc.start.line;
   const functionName = findWrappingFunction(node, ancestors);
-
-  // Process the event data into final format
   return processEventData(eventData, source, filePath, line, functionName, customConfig);
 }
 

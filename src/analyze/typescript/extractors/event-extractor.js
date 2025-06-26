@@ -296,27 +296,75 @@ function resolvePropertyAccessToString(node, checker, sourceFile) {
   try {
     // Get the symbol for the property access
     const symbol = checker.getSymbolAtLocation(node);
-    if (!symbol || !symbol.valueDeclaration) {
-      return null;
-    }
-    
-    // Check if it's a property assignment with a string initializer
-    if (ts.isPropertyAssignment(symbol.valueDeclaration) && 
-        symbol.valueDeclaration.initializer &&
-        ts.isStringLiteral(symbol.valueDeclaration.initializer)) {
-      return symbol.valueDeclaration.initializer.text;
-    }
-    
-    // Check if it's a variable declaration property
-    if (ts.isPropertySignature(symbol.valueDeclaration) ||
-        ts.isMethodSignature(symbol.valueDeclaration)) {
-      // Try to get the type and see if it's a string literal type
-      const type = checker.getTypeAtLocation(node);
-      if (type.isStringLiteral && type.isStringLiteral()) {
-        return type.value;
+    if (symbol && symbol.valueDeclaration) {
+      // Check if it's a property assignment with a string initializer
+      if (ts.isPropertyAssignment(symbol.valueDeclaration) &&
+          symbol.valueDeclaration.initializer &&
+          ts.isStringLiteral(symbol.valueDeclaration.initializer)) {
+        return symbol.valueDeclaration.initializer.text;
+      }
+
+      // Check if it's a variable declaration property (string literal type)
+      if (ts.isPropertySignature(symbol.valueDeclaration) ||
+          ts.isMethodSignature(symbol.valueDeclaration)) {
+        const type = checker.getTypeAtLocation(node);
+        if (type && type.isStringLiteral && type.isStringLiteral()) {
+          return type.value;
+        }
       }
     }
-    
+
+    // ---------------------------------------------------------------------
+    // Fallback – manually resolve patterns like:
+    //   const CONST = { KEY: 'value' };
+    //   const CONST = Object.freeze({ KEY: 'value' });
+    // And later used as CONST.KEY
+    // ---------------------------------------------------------------------
+    if (ts.isIdentifier(node.expression)) {
+      const objIdentifier = node.expression;
+      const initializer = resolveIdentifierToInitializer(checker, objIdentifier, sourceFile);
+      if (initializer) {
+        let objectLiteral = null;
+
+        // Handle direct object literal initializers
+        if (ts.isObjectLiteralExpression(initializer)) {
+          objectLiteral = initializer;
+        }
+        // Handle Object.freeze({ ... }) pattern
+        else if (ts.isCallExpression(initializer)) {
+          const callee = initializer.expression;
+          if (
+            ts.isPropertyAccessExpression(callee) &&
+            ts.isIdentifier(callee.expression) &&
+            callee.expression.escapedText === 'Object' &&
+            callee.name.escapedText === 'freeze' &&
+            initializer.arguments.length > 0 &&
+            ts.isObjectLiteralExpression(initializer.arguments[0])
+          ) {
+            objectLiteral = initializer.arguments[0];
+          }
+        }
+
+        if (objectLiteral) {
+          const propNode = findPropertyByKey(objectLiteral, node.name.escapedText || node.name.text);
+          if (propNode && propNode.initializer && ts.isStringLiteral(propNode.initializer)) {
+            return propNode.initializer.text;
+          }
+        }
+      }
+    }
+
+    // Final fallback – use type information at location (works for imported Object.freeze constants)
+    try {
+      const t = checker.getTypeAtLocation(node);
+      if (t && t.isStringLiteral && typeof t.isStringLiteral === 'function' && t.isStringLiteral()) {
+        return t.value;
+      }
+      if (t && t.flags && (t.flags & ts.TypeFlags.StringLiteral)) {
+        return t.value;
+      }
+    } catch (_) {/* ignore */}
+
     return null;
   } catch (error) {
     return null;

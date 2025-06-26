@@ -179,3 +179,16 @@ CustomModule.track('user321', 'custom_module_event', {
   order_id: 'order123',
   foo: 'bar'
 });
+
+// -----------------------------------------------------------------------------
+// Object.freeze constant tracking example (new test case)
+// -----------------------------------------------------------------------------
+const TRACKING_EVENTS_FROZEN = Object.freeze({
+  ECOMMERCE_PURCHASE: 'ecommerce_purchase_frozen',
+});
+
+mixpanel.track(TRACKING_EVENTS_FROZEN.ECOMMERCE_PURCHASE, {
+  orderId: 'order_123',
+  total: 99.99,
+  items: ['sku_1', 'sku_2']
+});

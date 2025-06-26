@@ -2,8 +2,8 @@
 version: 1
 source:
   repository: git@github.com:fliskdata/analyze-tracking.git
-  commit: f9eeddec7c52731efddc5ca5f8fbd8bf4c6a89cf
-  timestamp: '2025-06-25T03:57:29Z'
+  commit: c5cb9b287b787da97c8d3d41b229ed14a8650ac9
+  timestamp: '2025-06-26T04:25:24Z'
 events:
   purchase:
     implementations:
@@ -269,3 +269,18 @@ events:
         type: string
       userId:
         type: string
+  ecommerce_purchase_frozen:
+    implementations:
+      - path: main.js
+        line: 190
+        function: global
+        destination: mixpanel
+    properties:
+      orderId:
+        type: string
+      total:
+        type: number
+      items:
+        type: array
+        items:
+          type: string
