@@ -1135,3 +1135,12 @@ events:
         function: handleView
         destination: custom
     properties: {}
+  ViewedPage:
+    implementations:
+      - path: typescript-alias/app/components/main.ts
+        line: 10
+        function: global
+        destination: mixpanel
+    properties:
+      foo:
+        type: string
