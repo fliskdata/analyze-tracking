@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "strict": true,
+    "baseUrl": "./",
+    "paths": {
+      "lib/*": ["lib/*"]
+    },
+    "jsx": "preserve"
+  },
+  "include": ["**/*"],
+  "exclude": ["node_modules"]
+} 
