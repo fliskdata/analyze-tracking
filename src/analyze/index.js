@@ -20,10 +20,28 @@ async function analyzeDirectory(dirPath, customFunctions) {
 
   const files = getAllFiles(dirPath);
   const tsFiles = files.filter(file => /\.(tsx?)$/.test(file));
-  const tsProgram = ts.createProgram(tsFiles, {
+
+  // Attempt to reuse project tsconfig.json compiler options for proper module resolution (e.g., path aliases)
+  let tsCompilerOptions = {
     target: ts.ScriptTarget.ESNext,
     module: ts.ModuleKind.CommonJS,
-  });
+    jsx: ts.JsxEmit.Preserve,
+    allowJs: true,
+    noEmit: true,
+  };
+
+  const tsConfigPath = ts.findConfigFile(dirPath, ts.sys.fileExists, 'tsconfig.json');
+  if (tsConfigPath) {
+    const readResult = ts.readConfigFile(tsConfigPath, ts.sys.readFile);
+    if (!readResult.error && readResult.config) {
+      const parsedConfig = ts.parseJsonConfigFileContent(readResult.config, ts.sys, path.dirname(tsConfigPath));
+      if (!parsedConfig.errors || parsedConfig.errors.length === 0) {
+        tsCompilerOptions = { ...tsCompilerOptions, ...parsedConfig.options };
+      }
+    }
+  }
+
+  const tsProgram = ts.createProgram(tsFiles, tsCompilerOptions);
 
   for (const file of files) {
     let events = [];

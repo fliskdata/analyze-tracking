@@ -971,4 +971,19 @@ test.describe('analyzeTsFile', () => {
     const builtInCount = events.filter(e => e.source !== 'custom').length;
     assert.ok(builtInCount >= 10, 'Should still include built-in provider events');
   });
+
+  test('should resolve constants imported via path alias from tsconfig', () => {
+    const aliasFilePath = path.join(fixturesDir, 'typescript-alias', 'app', 'components', 'main.ts');
+    // Pass null program to force internal program creation (tsconfig parsing)
+    const events = analyzeTsFile(aliasFilePath, null, null);
+
+    // Expect one event detected with correct name
+    assert.strictEqual(events.length, 1);
+    const evt = events[0];
+    assert.strictEqual(evt.eventName, 'ViewedPage');
+    assert.strictEqual(evt.source, 'mixpanel');
+    assert.deepStrictEqual(evt.properties, {
+      foo: { type: 'string' }
+    });
+  });
 });

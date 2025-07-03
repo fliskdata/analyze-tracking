@@ -7,6 +7,7 @@ const ts = require('typescript');
 const { detectAnalyticsSource } = require('./detectors');
 const { extractEventData, processEventData } = require('./extractors');
 const { findWrappingFunction } = require('./utils/function-finder');
+const path = require('path');
 
 /**
  * Error thrown when TypeScript program cannot be created
@@ -44,16 +45,37 @@ function getProgram(filePath, existingProgram) {
   }
 
   try {
-    // Create a minimal program for single file analysis
-    const options = {
+    // Try to locate a tsconfig.json nearest to the file to inherit compiler options (important for path aliases)
+    const searchPath = path.dirname(filePath);
+    const configPath = ts.findConfigFile(searchPath, ts.sys.fileExists, 'tsconfig.json');
+
+    let compilerOptions = {
       target: ts.ScriptTarget.Latest,
       module: ts.ModuleKind.CommonJS,
       allowJs: true,
       checkJs: false,
-      noEmit: true
+      noEmit: true,
+      jsx: ts.JsxEmit.Preserve
     };
+    let rootNames = [filePath];
 
-    const program = ts.createProgram([filePath], options);
+    if (configPath) {
+      // Read and parse the tsconfig.json
+      const readResult = ts.readConfigFile(configPath, ts.sys.readFile);
+      if (!readResult.error && readResult.config) {
+        const parseResult = ts.parseJsonConfigFileContent(
+          readResult.config,
+          ts.sys,
+          path.dirname(configPath)
+        );
+        if (!parseResult.errors || parseResult.errors.length === 0) {
+          compilerOptions = { ...compilerOptions, ...parseResult.options };
+          rootNames = parseResult.fileNames.length > 0 ? parseResult.fileNames : rootNames;
+        }
+      }
+    }
+
+    const program = ts.createProgram(rootNames, compilerOptions);
     return program;
   } catch (error) {
     throw new ProgramError(filePath, error);
