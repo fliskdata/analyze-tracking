@@ -289,4 +289,35 @@ test.describe('analyzeRubyFile', () => {
     const builtInCount = events.filter(e => e.source !== 'custom').length;
     assert.ok(builtInCount >= 6, 'Should still include built-in events');
   });
+  
+  test('should detect CustomModule.track inside case/when blocks', async () => {
+    const registrationFile = path.join(fixturesDir, 'ruby', 'registration_module.rb');
+    const customSignature = parseCustomFunctionSignature('CustomModule.track(userId, EVENT_NAME, PROPERTIES)');
+    const events = await analyzeRubyFile(registrationFile, [customSignature]);
+
+    assert.strictEqual(events.length, 1);
+    const evt = events[0];
+    assert.strictEqual(evt.eventName, 'BecameLead');
+    assert.strictEqual(evt.source, 'custom');
+    // function name should be CustomModule.track
+    assert.strictEqual(evt.functionName, 'CustomModule.track');
+    assert.deepStrictEqual(evt.properties, {
+      userId: { type: 'any' },
+      leadType: { type: 'string' },
+      nonInteraction: { type: 'number' }
+    });
+  });
+  
+  test('should detect events in various ruby node types', async () => {
+    const nodeFile = path.join(fixturesDir, 'ruby', 'node_types.rb');
+    const sig = parseCustomFunctionSignature('CustomModule.track(userId, EVENT_NAME, PROPERTIES)');
+    const events = await analyzeRubyFile(nodeFile, [sig]);
+
+    const expected = ['UnlessEvent','WhileEvent','ForEvent','RescueEvent','EnsureEvent','LambdaEvent','ArrayEvent','AndEvent','OrEvent','InterpolationEvent'];
+
+    expected.forEach(ev => {
+      const found = events.find(e => e.eventName === ev);
+      assert.ok(found, `Missing ${ev}`);
+    });
+  });
 });
