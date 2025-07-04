@@ -4,15 +4,17 @@
  */
 
 const { getValueType } = require('./types');
+const prismPromise = import('@ruby/prism');
 
 /**
  * Extracts the event name from a tracking call based on the source
  * @param {Object} node - The AST CallNode
  * @param {string} source - The detected analytics source
  * @param {Object} customConfig - Custom configuration for custom functions
+ * @param {Object} constantMap - Map of constants to resolve constant paths
  * @returns {string|null} - The extracted event name or null
  */
-function extractEventName(node, source, customConfig = null) {
+async function extractEventName(node, source, customConfig = null, constantMap = {}) {
   if (source === 'segment' || source === 'rudderstack') {
     // Both Segment and Rudderstack use the same format
     const params = node.arguments_?.arguments_?.[0]?.elements;
@@ -62,8 +64,33 @@ function extractEventName(node, source, customConfig = null) {
     }
 
     const eventArg = args[customConfig.eventIndex];
-    if (eventArg?.unescaped?.value) {
-      return eventArg.unescaped.value;
+    if (eventArg) {
+      // String literal
+      if (eventArg.unescaped?.value) {
+        return eventArg.unescaped.value;
+      }
+
+      // Constant references
+      const { ConstantReadNode, ConstantPathNode } = await prismPromise;
+      const buildConstPath = (n) => {
+        if (!n) return '';
+        if (n instanceof ConstantReadNode) return n.name;
+        if (n instanceof ConstantPathNode) {
+          const parent = buildConstPath(n.parent);
+          return parent ? `${parent}::${n.name}` : n.name;
+        }
+        return '';
+      };
+
+      if (eventArg instanceof ConstantReadNode) {
+        const name = eventArg.name;
+        // Try to resolve with current constant map, else return name
+        return constantMap[name] || name;
+      }
+      if (eventArg instanceof ConstantPathNode) {
+        const pathStr = buildConstPath(eventArg);
+        return constantMap[pathStr] || pathStr;
+      }
     }
     return null;
   }
@@ -79,7 +106,7 @@ function extractEventName(node, source, customConfig = null) {
  * @returns {Object|null} - The extracted properties or null
  */
 async function extractProperties(node, source, customConfig = null) {
-  const { HashNode, ArrayNode } = await import('@ruby/prism');
+  const { HashNode, ArrayNode } = await prismPromise;
 
   if (source === 'segment' || source === 'rudderstack') {
     // Both Segment and Rudderstack use the same format
@@ -235,7 +262,7 @@ async function extractProperties(node, source, customConfig = null) {
  * @returns {Object} - The extracted properties
  */
 async function extractHashProperties(hashNode) {
-  const { AssocNode, HashNode, ArrayNode } = await import('@ruby/prism');
+  const { AssocNode, HashNode, ArrayNode } = await prismPromise;
   const properties = {};
   
   for (const element of hashNode.elements) {
@@ -278,7 +305,7 @@ async function extractHashProperties(hashNode) {
  * @returns {Object} - Type information for array items
  */
 async function extractArrayItemProperties(arrayNode) {
-  const { HashNode } = await import('@ruby/prism');
+  const { HashNode } = await prismPromise;
 
   if (arrayNode.elements.length === 0) {
     return { type: 'any' };

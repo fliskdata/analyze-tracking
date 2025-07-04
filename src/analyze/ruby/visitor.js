@@ -8,10 +8,11 @@ const { extractEventName, extractProperties } = require('./extractors');
 const { findWrappingFunction, traverseNode, getLineNumber } = require('./traversal');
 
 class TrackingVisitor {
-  constructor(code, filePath, customConfigs = []) {
+  constructor(code, filePath, customConfigs = [], constantMap = {}) {
     this.code = code;
     this.filePath = filePath;
     this.customConfigs = Array.isArray(customConfigs) ? customConfigs : [];
+    this.constantMap = constantMap || {};
     this.events = [];
   }
 
@@ -42,7 +43,7 @@ class TrackingVisitor {
 
       if (!source) return;
 
-      const eventName = extractEventName(node, source, matchedConfig);
+      const eventName = await extractEventName(node, source, matchedConfig, this.constantMap);
       if (!eventName) return;
 
       const line = getLineNumber(this.code, node.location);
