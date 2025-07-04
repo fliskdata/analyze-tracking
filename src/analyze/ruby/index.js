@@ -4,10 +4,161 @@
  */
 
 const fs = require('fs');
+const path = require('path');
 const TrackingVisitor = require('./visitor');
 
 // Lazy-loaded parse function from Ruby Prism
 let parse = null;
+
+/**
+ * Extracts the string literal value from an AST node, ignoring a trailing `.freeze` call.
+ * Supports:
+ *   - StringNode
+ *   - CallNode with receiver StringNode and method `freeze`
+ *
+ * @param {import('@ruby/prism').PrismNode} node
+ * @returns {string|null}
+ */
+async function extractStringLiteral(node) {
+  if (!node) return null;
+
+  const {
+    StringNode,
+    CallNode
+  } = await import('@ruby/prism');
+
+  if (node instanceof StringNode) {
+    return node.unescaped?.value ?? null;
+  }
+
+  // Handle "_Section".freeze pattern
+  if (node instanceof CallNode && node.name === 'freeze' && node.receiver) {
+    return extractStringLiteral(node.receiver);
+  }
+
+  return null;
+}
+
+/**
+ * Recursively traverses an AST to collect constant assignments and build a map
+ * of fully-qualified constant names (e.g. "TelemetryHelper::FINISHED_SECTION")
+ * to their string literal values.
+ *
+ * @param {import('@ruby/prism').PrismNode} node - current AST node
+ * @param {string[]} namespaceStack - stack of module/class names
+ * @param {Object} constantMap - accumulator map of constant path -> string value
+ */
+async function collectConstants(node, namespaceStack, constantMap) {
+  if (!node) return;
+
+  const {
+    ModuleNode,
+    ClassNode,
+    StatementsNode,
+    ConstantWriteNode,
+    ConstantPathWriteNode,
+    ConstantPathNode
+  } = await import('@ruby/prism');
+
+  // Helper to build constant path from ConstantPathNode
+  const buildConstPath = (pathNode) => {
+    if (!pathNode) return '';
+    if (pathNode.type === 'ConstantReadNode') {
+      return pathNode.name;
+    }
+    if (pathNode.type === 'ConstantPathNode') {
+      const parent = buildConstPath(pathNode.parent);
+      return parent ? `${parent}::${pathNode.name}` : pathNode.name;
+    }
+    return '';
+  };
+
+  // Process constant assignments
+  if (node instanceof ConstantWriteNode) {
+    const fullName = [...namespaceStack, node.name].join('::');
+    const literal = await extractStringLiteral(node.value);
+    if (literal !== null) {
+      constantMap[fullName] = literal;
+    }
+  } else if (node instanceof ConstantPathWriteNode) {
+    const fullName = buildConstPath(node.target);
+    const literal = await extractStringLiteral(node.value);
+    if (fullName && literal !== null) {
+      constantMap[fullName] = literal;
+    }
+  }
+
+  // Recurse into children depending on node type
+  if (node instanceof ModuleNode || node instanceof ClassNode) {
+    // Enter namespace
+    const name = node.constantPath?.name || node.name; // ModuleNode has constantPath
+    const childNamespaceStack = name ? [...namespaceStack, name] : namespaceStack;
+
+    if (node.body) {
+      await collectConstants(node.body, childNamespaceStack, constantMap);
+    }
+    return;
+  }
+
+  // Generic traversal for other nodes
+  if (node instanceof StatementsNode) {
+    for (const child of node.body) {
+      await collectConstants(child, namespaceStack, constantMap);
+    }
+    return;
+  }
+
+  // Fallback: iterate over enumerable properties to find nested nodes
+  for (const key of Object.keys(node)) {
+    const val = node[key];
+    if (!val) continue;
+
+    const traverseChild = async (child) => {
+      if (child && typeof child === 'object' && (child.location || child.constructor?.name?.endsWith('Node'))) {
+        await collectConstants(child, namespaceStack, constantMap);
+      }
+    };
+
+    if (Array.isArray(val)) {
+      for (const c of val) {
+        await traverseChild(c);
+      }
+    } else {
+      await traverseChild(val);
+    }
+  }
+}
+
+/**
+ * Builds a map of constant names to their literal string values for all .rb
+ * files in the given directory. This is a best-effort resolver intended for
+ * test fixtures and small projects and is not a fully-fledged Ruby constant
+ * resolver.
+ *
+ * @param {string} directory
+ * @returns {Promise<Object<string,string>>}
+ */
+async function buildConstantMapForDirectory(directory) {
+  const constantMap = {};
+
+  if (!fs.existsSync(directory)) return constantMap;
+
+  const files = fs.readdirSync(directory).filter(f => f.endsWith('.rb'));
+
+  for (const file of files) {
+    const fullPath = path.join(directory, file);
+    try {
+      const content = fs.readFileSync(fullPath, 'utf8');
+      const ast = await parse(content);
+      await collectConstants(ast.value, [], constantMap);
+    } catch (err) {
+      // Ignore parse errors for unrelated files
+      continue;
+    }
+  }
+
+  return constantMap;
+}
 
 /**
  * Analyzes a Ruby file for analytics tracking calls
@@ -27,6 +178,10 @@ async function analyzeRubyFile(filePath, customFunctionSignatures = null) {
     // Read the file content
     const code = fs.readFileSync(filePath, 'utf8');
 
+    // Build constant map for current directory (sibling .rb files)
+    const currentDir = path.dirname(filePath);
+    const constantMap = await buildConstantMapForDirectory(currentDir);
+
     // Parse the Ruby code into an AST once
     let ast;
     try {
@@ -36,8 +191,8 @@ async function analyzeRubyFile(filePath, customFunctionSignatures = null) {
       return [];
     }
 
-    // Single visitor pass covering all custom configs
-    const visitor = new TrackingVisitor(code, filePath, customFunctionSignatures || []);
+    // Single visitor pass covering all custom configs, with constant map for resolution
+    const visitor = new TrackingVisitor(code, filePath, customFunctionSignatures || [], constantMap);
     const events = await visitor.analyze(ast);
 
     // Deduplicate events

@@ -1267,3 +1267,21 @@ events:
         type: string
       j:
         type: number
+  _FinishedSection:
+    implementations:
+      - path: ruby/constant_event.rb
+        line: 8
+        function: CustomModule.track
+        destination: custom
+    properties:
+      userId:
+        type: any
+  _ExternalSection:
+    implementations:
+      - path: ruby/external_constant_use.rb
+        line: 3
+        function: CustomModule.track
+        destination: custom
+    properties:
+      userId:
+        type: number

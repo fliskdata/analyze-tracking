@@ -320,4 +320,26 @@ test.describe('analyzeRubyFile', () => {
       assert.ok(found, `Missing ${ev}`);
     });
   });
+  
+  test('should detect event names passed as constant references', async () => {
+    const constFile = path.join(fixturesDir, 'ruby', 'constant_event.rb');
+    const sig = parseCustomFunctionSignature('CustomModule.track(userId, EVENT_NAME, PROPERTIES)');
+    const events = await analyzeRubyFile(constFile, [sig]);
+    const evt = events.find(e => e.eventName === '_FinishedSection');
+    assert.ok(evt);
+    assert.deepStrictEqual(evt.properties, {
+      userId: { type: 'any' }
+    });
+  });
+  
+  test('should detect event when constant is defined in another file', async () => {
+    const useFile = path.join(fixturesDir, 'ruby', 'external_constant_use.rb');
+    const sig = parseCustomFunctionSignature('CustomModule.track(userId, EVENT_NAME, PROPERTIES)');
+    const events = await analyzeRubyFile(useFile, [sig]);
+    const evt = events.find(e => e.eventName === '_ExternalSection');
+    assert.ok(evt);
+    assert.deepStrictEqual(evt.properties, {
+      userId: { type: 'number' }
+    });
+  });
 });

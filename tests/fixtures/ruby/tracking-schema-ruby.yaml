@@ -287,3 +287,21 @@ events:
         type: string
       foo:
         type: string
+  _FinishedSection:
+    implementations:
+      - path: constant_event.rb
+        line: 8
+        function: CustomModule.track
+        destination: custom
+    properties:
+      userId:
+        type: any
+  _ExternalSection:
+    implementations:
+      - path: external_constant_use.rb
+        line: 3
+        function: CustomModule.track
+        destination: custom
+    properties:
+      userId:
+        type: number
