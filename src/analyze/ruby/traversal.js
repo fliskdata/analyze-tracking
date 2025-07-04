@@ -46,7 +46,9 @@ async function traverseNode(node, nodeVisitor, ancestors = []) {
     AssocNode, 
     ClassNode, 
     ModuleNode,
-    CallNode
+    CallNode,
+    CaseNode,
+    WhenNode
   } = await import('@ruby/prism');
 
   if (!node) return;
@@ -89,7 +91,8 @@ async function traverseNode(node, nodeVisitor, ancestors = []) {
       await traverseNode(node.body, nodeVisitor, ancestors);
     }
   } else if (node instanceof ArgumentsNode) {
-    for (const arg of node.arguments) {
+    const argsList = node.arguments || [];
+    for (const arg of argsList) {
       await traverseNode(arg, nodeVisitor, ancestors);
     }
   } else if (node instanceof HashNode) {
@@ -99,6 +102,55 @@ async function traverseNode(node, nodeVisitor, ancestors = []) {
   } else if (node instanceof AssocNode) {
     await traverseNode(node.key, nodeVisitor, ancestors);
     await traverseNode(node.value, nodeVisitor, ancestors);
+  } else if (node instanceof CaseNode) {
+    // Traverse through each 'when' clause and the optional else clause
+    const whenClauses = node.whens || node.conditions || node.when_bodies || [];
+    for (const when of whenClauses) {
+      await traverseNode(when, nodeVisitor, ancestors);
+    }
+    if (node.else_) {
+      await traverseNode(node.else_, nodeVisitor, ancestors);
+    } else if (node.elseBody) {
+      await traverseNode(node.elseBody, nodeVisitor, ancestors);
+    }
+  } else if (node instanceof WhenNode) {
+    // Handle a single when clause: traverse its condition(s) and body
+    if (Array.isArray(node.conditions)) {
+      for (const cond of node.conditions) {
+        await traverseNode(cond, nodeVisitor, ancestors);
+      }
+    } else if (node.conditions) {
+      await traverseNode(node.conditions, nodeVisitor, ancestors);
+    }
+    if (node.statements) {
+      await traverseNode(node.statements, nodeVisitor, ancestors);
+    }
+    if (node.next) {
+      await traverseNode(node.next, nodeVisitor, ancestors);
+    }
+  } else {
+    // Generic fallback: iterate over enumerable properties to find nested nodes
+    for (const key of Object.keys(node)) {
+      const val = node[key];
+      if (!val) continue;
+
+      const visitChild = async (child) => {
+        if (child && typeof child === 'object') {
+          // crude check: Prism nodes have a `location` field
+          if (child.location || child.type || child.constructor?.name?.endsWith('Node')) {
+            await traverseNode(child, nodeVisitor, ancestors);
+          }
+        }
+      };
+
+      if (Array.isArray(val)) {
+        for (const c of val) {
+          await visitChild(c);
+        }
+      } else {
+        await visitChild(val);
+      }
+    }
   }
 
   ancestors.pop();

@@ -9,4 +9,4 @@ const mixpanel: any = {
 // Event that should be detected via constant reference
 mixpanel.track(TELEMETRY_EVENTS.VIEWED_PAGE, {
   foo: 'bar'
-}); 
+});

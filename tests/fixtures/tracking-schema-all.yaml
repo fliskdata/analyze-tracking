@@ -624,6 +624,19 @@ events:
         type: string
       from_module:
         type: boolean
+  BecameLead:
+    implementations:
+      - path: ruby/registration_module.rb
+        line: 9
+        function: CustomModule.track
+        destination: custom
+    properties:
+      userId:
+        type: any
+      leadType:
+        type: string
+      nonInteraction:
+        type: number
   order_completed:
     implementations:
       - path: typescript/main.ts
@@ -1144,3 +1157,113 @@ events:
     properties:
       foo:
         type: string
+  UnlessEvent:
+    implementations:
+      - path: ruby/node_types.rb
+        line: 6
+        function: CustomModule.track
+        destination: custom
+    properties:
+      userId:
+        type: string
+      a:
+        type: number
+  WhileEvent:
+    implementations:
+      - path: ruby/node_types.rb
+        line: 13
+        function: CustomModule.track
+        destination: custom
+    properties:
+      userId:
+        type: string
+      b:
+        type: number
+  ForEvent:
+    implementations:
+      - path: ruby/node_types.rb
+        line: 20
+        function: CustomModule.track
+        destination: custom
+    properties:
+      userId:
+        type: string
+      c:
+        type: number
+  RescueEvent:
+    implementations:
+      - path: ruby/node_types.rb
+        line: 26
+        function: CustomModule.track
+        destination: custom
+    properties:
+      userId:
+        type: string
+      d:
+        type: number
+  EnsureEvent:
+    implementations:
+      - path: ruby/node_types.rb
+        line: 28
+        function: CustomModule.track
+        destination: custom
+    properties:
+      userId:
+        type: string
+      e:
+        type: number
+  LambdaEvent:
+    implementations:
+      - path: ruby/node_types.rb
+        line: 32
+        function: CustomModule.track
+        destination: custom
+    properties:
+      userId:
+        type: string
+      f:
+        type: number
+  ArrayEvent:
+    implementations:
+      - path: ruby/node_types.rb
+        line: 35
+        function: CustomModule.track
+        destination: custom
+    properties:
+      userId:
+        type: string
+      g:
+        type: number
+  AndEvent:
+    implementations:
+      - path: ruby/node_types.rb
+        line: 37
+        function: CustomModule.track
+        destination: custom
+    properties:
+      userId:
+        type: string
+      h:
+        type: number
+  OrEvent:
+    implementations:
+      - path: ruby/node_types.rb
+        line: 38
+        function: CustomModule.track
+        destination: custom
+    properties:
+      userId:
+        type: string
+      i:
+        type: number
+  InterpolationEvent:
+    implementations:
+      - path: ruby/node_types.rb
+        line: 40
+        function: CustomModule.track
+        destination: custom
+    properties:
+      userId:
+        type: string
+      j:
+        type: number
