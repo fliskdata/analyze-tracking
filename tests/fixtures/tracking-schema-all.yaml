@@ -1258,6 +1258,10 @@ events:
         type: number
   InterpolationEvent:
     implementations:
+      - path: ruby/infinite_recursion_test.rb
+        line: 59
+        function: CustomModule.track
+        destination: custom
       - path: ruby/node_types.rb
         line: 40
         function: CustomModule.track
@@ -1265,6 +1269,10 @@ events:
     properties:
       userId:
         type: string
+      result_type:
+        type: any
+      timestamp:
+        type: any
       j:
         type: number
   _FinishedSection:
@@ -1285,3 +1293,47 @@ events:
     properties:
       userId:
         type: number
+  DeepNestedEvent:
+    implementations:
+      - path: ruby/infinite_recursion_test.rb
+        line: 16
+        function: CustomModule.track
+        destination: custom
+    properties:
+      userId:
+        type: string
+      level:
+        type: string
+      iteration:
+        type: any
+  PatternMatchEvent:
+    implementations:
+      - path: ruby/infinite_recursion_test.rb
+        line: 76
+        function: CustomModule.track
+        destination: custom
+    properties:
+      userId:
+        type: any
+  BulkEvent:
+    implementations:
+      - path: ruby/infinite_recursion_test.rb
+        line: 79
+        function: CustomModule.track
+        destination: custom
+    properties:
+      userId:
+        type: any
+      item:
+        type: any
+  FallbackEvent:
+    implementations:
+      - path: ruby/infinite_recursion_test.rb
+        line: 82
+        function: CustomModule.track
+        destination: custom
+    properties:
+      userId:
+        type: string
+      data:
+        type: any

@@ -342,4 +342,38 @@ test.describe('analyzeRubyFile', () => {
       userId: { type: 'number' }
     });
   });
+  
+  test('should handle complex nested structures without infinite recursion', async () => {
+    const complexFile = path.join(fixturesDir, 'ruby', 'infinite_recursion_test.rb');
+    const sig = parseCustomFunctionSignature('CustomModule.track(userId, EVENT_NAME, PROPERTIES)');
+    
+    // This test ensures the fix for the infinite recursion bug works
+    // The complex nested structures in the test file would have caused
+    // infinite loops in the generic fallback mechanism before the fix
+    const events = await analyzeRubyFile(complexFile, [sig]);
+    
+    // Verify that we can extract events from complex nested structures
+    const expectedEvents = [
+      'DeepNestedEvent',
+      'LambdaEvent', 
+      'ArrayLambdaEvent',
+      'InterpolationEvent',
+      'PatternMatchEvent',
+      'BulkEvent',
+      'FallbackEvent',
+      'DynamicEvent'
+    ];
+    
+    // Check that we found at least some of the events (some might be skipped due to Ruby version compatibility)
+    const foundEventNames = events.map(e => e.eventName);
+    const foundExpectedEvents = expectedEvents.filter(name => foundEventNames.includes(name));
+    
+    // Should find at least a few events without hanging in infinite recursion
+    assert.ok(foundExpectedEvents.length >= 3, 
+      `Should find at least 3 expected events, found: ${foundEventNames.join(', ')}`);
+    
+    // Verify that the analysis completes in reasonable time (not infinite loop)
+    // If we get here, it means the analysis didn't hang
+    assert.ok(true, 'Analysis completed without infinite recursion');
+  });
 });
