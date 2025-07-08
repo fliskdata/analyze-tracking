@@ -3,6 +3,10 @@
  * @module analyze/ruby/traversal
  */
 
+
+// Prevent infinite recursion in AST traversal
+const MAX_RECURSION_DEPTH = 20;
+
 /**
  * Finds the wrapping function for a given node
  * @param {Object} node - The current AST node
@@ -33,8 +37,9 @@ async function findWrappingFunction(node, ancestors) {
  * @param {Object} node - The current AST node
  * @param {Function} nodeVisitor - Function to call for each node
  * @param {Array} ancestors - The ancestor nodes stack
+ * @param {number} depth - Current recursion depth to prevent infinite loops
  */
-async function traverseNode(node, nodeVisitor, ancestors = []) {
+async function traverseNode(node, nodeVisitor, ancestors = [], depth = 0) {
   const { 
     ProgramNode, 
     StatementsNode, 
@@ -53,6 +58,16 @@ async function traverseNode(node, nodeVisitor, ancestors = []) {
 
   if (!node) return;
 
+  // Prevent infinite recursion with depth limit
+  if (depth > MAX_RECURSION_DEPTH) {
+    return;
+  }
+
+  // Check for circular references - if this node is already in ancestors, skip it
+  if (ancestors.includes(node)) {
+    return;
+  }
+
   ancestors.push(node);
 
   // Call the visitor for this node
@@ -62,71 +77,71 @@ async function traverseNode(node, nodeVisitor, ancestors = []) {
 
   // Visit all child nodes based on node type
   if (node instanceof ProgramNode) {
-    await traverseNode(node.statements, nodeVisitor, ancestors);
+    await traverseNode(node.statements, nodeVisitor, ancestors, depth + 1);
   } else if (node instanceof StatementsNode) {
     for (const child of node.body) {
-      await traverseNode(child, nodeVisitor, ancestors);
+      await traverseNode(child, nodeVisitor, ancestors, depth + 1);
     }
   } else if (node instanceof ClassNode) {
     if (node.body) {
-      await traverseNode(node.body, nodeVisitor, ancestors);
+      await traverseNode(node.body, nodeVisitor, ancestors, depth + 1);
     }
   } else if (node instanceof ModuleNode) {
     if (node.body) {
-      await traverseNode(node.body, nodeVisitor, ancestors);
+      await traverseNode(node.body, nodeVisitor, ancestors, depth + 1);
     }
   } else if (node instanceof DefNode) {
     if (node.body) {
-      await traverseNode(node.body, nodeVisitor, ancestors);
+      await traverseNode(node.body, nodeVisitor, ancestors, depth + 1);
     }
   } else if (node instanceof IfNode) {
     if (node.statements) {
-      await traverseNode(node.statements, nodeVisitor, ancestors);
+      await traverseNode(node.statements, nodeVisitor, ancestors, depth + 1);
     }
     if (node.subsequent) {
-      await traverseNode(node.subsequent, nodeVisitor, ancestors);
+      await traverseNode(node.subsequent, nodeVisitor, ancestors, depth + 1);
     }
   } else if (node instanceof BlockNode) {
     if (node.body) {
-      await traverseNode(node.body, nodeVisitor, ancestors);
+      await traverseNode(node.body, nodeVisitor, ancestors, depth + 1);
     }
   } else if (node instanceof ArgumentsNode) {
     const argsList = node.arguments || [];
     for (const arg of argsList) {
-      await traverseNode(arg, nodeVisitor, ancestors);
+      await traverseNode(arg, nodeVisitor, ancestors, depth + 1);
     }
   } else if (node instanceof HashNode) {
     for (const element of node.elements) {
-      await traverseNode(element, nodeVisitor, ancestors);
+      await traverseNode(element, nodeVisitor, ancestors, depth + 1);
     }
   } else if (node instanceof AssocNode) {
-    await traverseNode(node.key, nodeVisitor, ancestors);
-    await traverseNode(node.value, nodeVisitor, ancestors);
+    await traverseNode(node.key, nodeVisitor, ancestors, depth + 1);
+    await traverseNode(node.value, nodeVisitor, ancestors, depth + 1);
   } else if (node instanceof CaseNode) {
     // Traverse through each 'when' clause and the optional else clause
     const whenClauses = node.whens || node.conditions || node.when_bodies || [];
     for (const when of whenClauses) {
-      await traverseNode(when, nodeVisitor, ancestors);
+      await traverseNode(when, nodeVisitor, ancestors, depth + 1);
     }
     if (node.else_) {
-      await traverseNode(node.else_, nodeVisitor, ancestors);
+      await traverseNode(node.else_, nodeVisitor, ancestors, depth + 1);
     } else if (node.elseBody) {
-      await traverseNode(node.elseBody, nodeVisitor, ancestors);
+      await traverseNode(node.elseBody, nodeVisitor, ancestors, depth + 1);
     }
   } else if (node instanceof WhenNode) {
     // Handle a single when clause: traverse its condition(s) and body
     if (Array.isArray(node.conditions)) {
       for (const cond of node.conditions) {
-        await traverseNode(cond, nodeVisitor, ancestors);
+        await traverseNode(cond, nodeVisitor, ancestors, depth + 1);
       }
     } else if (node.conditions) {
-      await traverseNode(node.conditions, nodeVisitor, ancestors);
+      await traverseNode(node.conditions, nodeVisitor, ancestors, depth + 1);
     }
     if (node.statements) {
-      await traverseNode(node.statements, nodeVisitor, ancestors);
+      await traverseNode(node.statements, nodeVisitor, ancestors, depth + 1);
     }
     if (node.next) {
-      await traverseNode(node.next, nodeVisitor, ancestors);
+      await traverseNode(node.next, nodeVisitor, ancestors, depth + 1);
     }
   } else {
     // Generic fallback: iterate over enumerable properties to find nested nodes
@@ -136,9 +151,16 @@ async function traverseNode(node, nodeVisitor, ancestors = []) {
 
       const visitChild = async (child) => {
         if (child && typeof child === 'object') {
-          // crude check: Prism nodes have a `location` field
-          if (child.location || child.type || child.constructor?.name?.endsWith('Node')) {
-            await traverseNode(child, nodeVisitor, ancestors);
+          // More restrictive check: ensure it's actually a Prism AST node
+          // Check for specific Prism node indicators and avoid circular references
+          if (
+            child.location && 
+            child.constructor && 
+            child.constructor.name && 
+            child.constructor.name.endsWith('Node') &&
+            !ancestors.includes(child)
+          ) {
+            await traverseNode(child, nodeVisitor, ancestors, depth + 1);
           }
         }
       };
