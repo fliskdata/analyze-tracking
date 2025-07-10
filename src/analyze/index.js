@@ -51,7 +51,8 @@ function addEventToCollection(allEvents, event, baseDir) {
  * @param {Array} customFunctionSignatures - Custom function signatures to detect
  */
 async function processFiles(files, allEvents, baseDir, customFunctionSignatures) {
-  for (const file of files) {
+  // Analyze all files in parallel for faster execution
+  const analysisPromises = files.map(async (file) => {
     let events = [];
 
     const isJsFile = /\.(jsx?)$/.test(file);
@@ -67,10 +68,15 @@ async function processFiles(files, allEvents, baseDir, customFunctionSignatures)
       events = await analyzeRubyFile(file, customFunctionSignatures);
     } else if (isGoFile) {
       events = await analyzeGoFile(file, customFunctionSignatures);
-    } else {
-      continue; // Skip unsupported file types
     }
 
+    return events;
+  });
+
+  const results = await Promise.all(analysisPromises);
+
+  for (const events of results) {
+    if (!events) continue;
     events.forEach(event => addEventToCollection(allEvents, event, baseDir));
   }
 }
