@@ -33,6 +33,103 @@ class SourceFileError extends Error {
 }
 
 /**
+ * Default TypeScript compiler options for analysis
+ */
+const DEFAULT_COMPILER_OPTIONS = {
+  target: ts.ScriptTarget.Latest,
+  module: ts.ModuleKind.CommonJS,
+  allowJs: true,
+  checkJs: false,
+  noEmit: true,
+  jsx: ts.JsxEmit.Preserve,
+  moduleResolution: ts.ModuleResolutionKind.NodeJs,
+  allowSyntheticDefaultImports: true,
+  esModuleInterop: true,
+  skipLibCheck: true
+};
+
+/**
+ * Maximum number of files to include in TypeScript program for performance
+ */
+const MAX_FILES_THRESHOLD = 10000;
+
+/**
+ * Attempts to parse tsconfig.json and extract compiler options and file names
+ * @param {string} configPath - Path to tsconfig.json
+ * @returns {Object|null} Parsed config with options and fileNames, or null if failed
+ */
+function parseTsConfig(configPath) {
+  try {
+    const readResult = ts.readConfigFile(configPath, ts.sys.readFile);
+    if (readResult.error || !readResult.config) {
+      return null;
+    }
+
+    const parseResult = ts.parseJsonConfigFileContent(
+      readResult.config,
+      ts.sys,
+      path.dirname(configPath)
+    );
+
+    if (parseResult.errors && parseResult.errors.length > 0) {
+      return null;
+    }
+
+    return {
+      options: parseResult.options,
+      fileNames: parseResult.fileNames
+    };
+  } catch (error) {
+    console.warn(`Failed to parse tsconfig.json at ${configPath}. Error: ${error.message}`);
+    return null;
+  }
+}
+
+/**
+ * Determines the appropriate files to include in the TypeScript program
+ * @param {string} filePath - Target file path
+ * @param {string|null} configPath - Path to tsconfig.json if found
+ * @returns {Object} Configuration with compilerOptions and rootNames
+ */
+function getProgramConfiguration(filePath, configPath) {
+  let compilerOptions = { ...DEFAULT_COMPILER_OPTIONS };
+  let rootNames = [filePath];
+
+  if (!configPath) {
+    return { compilerOptions, rootNames };
+  }
+
+  const config = parseTsConfig(configPath);
+  if (!config) {
+    console.warn(`Failed to parse tsconfig.json at ${configPath}. Analyzing ${filePath} in isolation.`);
+    return { compilerOptions, rootNames };
+  }
+
+  // Inherit compiler options from tsconfig
+  compilerOptions = { ...compilerOptions, ...config.options };
+
+  // Determine file inclusion strategy based on project size
+  const projectFileCount = config.fileNames.length;
+
+  if (projectFileCount > 0 && projectFileCount <= MAX_FILES_THRESHOLD) {
+    // Small to medium project: include all files for better type checking
+    rootNames = [...config.fileNames];
+    if (!rootNames.includes(filePath)) {
+      rootNames.push(filePath);
+    }
+  } else if (projectFileCount > MAX_FILES_THRESHOLD) {
+    // Large project: only include the target file to avoid performance issues
+    console.warn(
+      `Large TypeScript project detected (${projectFileCount} files). ` +
+      `Analyzing ${filePath} in isolation for performance.`
+    );
+    rootNames = [filePath];
+  }
+
+  return { compilerOptions, rootNames };
+}
+
+/**
  * Gets or creates a TypeScript program for analysis
  * @param {string} filePath - Path to the TypeScript file
  * @param {Object} [existingProgram] - Existing TypeScript program to reuse
@@ -45,38 +142,15 @@ function getProgram(filePath, existingProgram) {
   }
 
   try {
-    // Try to locate a tsconfig.json nearest to the file to inherit compiler options (important for path aliases)
+    // Find the nearest tsconfig.json
     const searchPath = path.dirname(filePath);
     const configPath = ts.findConfigFile(searchPath, ts.sys.fileExists, 'tsconfig.json');
 
-    let compilerOptions = {
-      target: ts.ScriptTarget.Latest,
-      module: ts.ModuleKind.CommonJS,
-      allowJs: true,
-      checkJs: false,
-      noEmit: true,
-      jsx: ts.JsxEmit.Preserve
-    };
-    let rootNames = [filePath];
+    // Get program configuration
+    const { compilerOptions, rootNames } = getProgramConfiguration(filePath, configPath);
 
-    if (configPath) {
-      // Read and parse the tsconfig.json
-      const readResult = ts.readConfigFile(configPath, ts.sys.readFile);
-      if (!readResult.error && readResult.config) {
-        const parseResult = ts.parseJsonConfigFileContent(
-          readResult.config,
-          ts.sys,
-          path.dirname(configPath)
-        );
-        if (!parseResult.errors || parseResult.errors.length === 0) {
-          compilerOptions = { ...compilerOptions, ...parseResult.options };
-          rootNames = parseResult.fileNames.length > 0 ? parseResult.fileNames : rootNames;
-        }
-      }
-    }
-
-    const program = ts.createProgram(rootNames, compilerOptions);
-    return program;
+    // Create and return the TypeScript program
+    return ts.createProgram(rootNames, compilerOptions);
   } catch (error) {
     throw new ProgramError(filePath, error);
   }
@@ -94,27 +168,37 @@ function findTrackingEvents(sourceFile, checker, filePath, customConfigs = []) {
   const events = [];
 
   /**
-   * Helper to test if a CallExpression matches a custom function name.
-   * We simply rely on node.expression.getText() which preserves the fully qualified name.
+   * Tests if a CallExpression matches a custom function name
+   * @param {Object} callNode - The call expression node
+   * @param {string} functionName - Function name to match
+   * @returns {boolean} True if matches
    */
-  const matchesCustomFn = (callNode, fnName) => {
-    if (!fnName) return false;
+  function matchesCustomFunction(callNode, functionName) {
+    if (!functionName || !callNode.expression) {
+      return false;
+    }
+    
     try {
-      return callNode.expression && callNode.expression.getText() === fnName;
+      return callNode.expression.getText() === functionName;
     } catch {
       return false;
     }
-  };
+  }
 
+  /**
+   * Recursively visits AST nodes to find tracking calls
+   * @param {Object} node - Current AST node
+   */
   function visit(node) {
     try {
       if (ts.isCallExpression(node)) {
-        let matchedCustom = null;
+        let matchedCustomConfig = null;
 
+        // Check for custom function matches
         if (Array.isArray(customConfigs) && customConfigs.length > 0) {
-          for (const cfg of customConfigs) {
-            if (cfg && matchesCustomFn(node, cfg.functionName)) {
-              matchedCustom = cfg;
+          for (const config of customConfigs) {
+            if (config && matchesCustomFunction(node, config.functionName)) {
+              matchedCustomConfig = config;
               break;
             }
           }
@@ -125,9 +209,12 @@ function findTrackingEvents(sourceFile, checker, filePath, customConfigs = []) {
           sourceFile,
           checker,
           filePath,
-          matchedCustom /* may be null */
+          matchedCustomConfig
         );
-        if (event) events.push(event);
+        
+        if (event) {
+          events.push(event);
+        }
       }
 
       ts.forEachChild(node, visit);
@@ -137,7 +224,6 @@ function findTrackingEvents(sourceFile, checker, filePath, customConfigs = []) {
   }
 
   ts.forEachChild(sourceFile, visit);
-
   return events;
 }
 
@@ -172,5 +258,6 @@ module.exports = {
   getProgram,
   findTrackingEvents,
   ProgramError,
-  SourceFileError
+  SourceFileError,
+  DEFAULT_COMPILER_OPTIONS
 };
