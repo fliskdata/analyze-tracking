@@ -56,6 +56,24 @@ function compareYAMLFiles(actualPath, expectedPath) {
   assert.ok(actual.source);
   assert.ok(actual.source.repository);
   
+  // Helper to sort implementations deterministically
+  const sortImpls = (impls = []) =>
+    impls.slice().sort((a, b) => {
+      if (a.path !== b.path) return a.path.localeCompare(b.path);
+      if (a.line !== b.line) return a.line - b.line;
+      if ((a.destination || '') !== (b.destination || '')) return (a.destination || '').localeCompare(b.destination || '');
+      return (a.function || '').localeCompare(b.function || '');
+    });
+
+  // Normalise events so that order of implementations does not matter
+  const normaliseEvent = (evt) => {
+    if (!evt) return evt;
+    return {
+      ...evt,
+      implementations: sortImpls(evt.implementations)
+    };
+  };
+
   // Compare events using deep equality (order-insensitive)
   const diff = {};
   for (const eventName in expected.events) {
@@ -64,14 +82,17 @@ function compareYAMLFiles(actualPath, expectedPath) {
       continue;
     }
     
-    const actualEvent = actual.events[eventName];
-    const expectedEvent = expected.events[eventName];
+    const actualEvent = normaliseEvent(actual.events[eventName]);
+    const expectedEvent = normaliseEvent(expected.events[eventName]);
     
     if (!_.isEqual(actualEvent, expectedEvent)) {
       diff[eventName] = {
         properties: {
           missing: Object.keys(expectedEvent.properties || {}).filter(p => !actualEvent.properties?.[p]),
-          unexpected: Object.keys(actualEvent.properties || {}).filter(p => !expectedEvent.properties?.[p])
+          unexpected: Object.keys(actualEvent.properties || {}).filter(p => !expectedEvent.properties?.[p]),
+          changed: Object.keys(expectedEvent.properties || {}).filter(p =>
+            actualEvent.properties?.[p] && !_.isEqual(actualEvent.properties[p], expectedEvent.properties[p])
+          )
         },
         implementations: {
           missing: (expectedEvent.implementations || []).filter(impl => 

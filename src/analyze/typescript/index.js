@@ -16,7 +16,9 @@ const path = require('path');
 function createStandaloneProgram(filePath) {
   const compilerOptions = {
     ...DEFAULT_COMPILER_OPTIONS,
-    noResolve: true, // Don't try to resolve imports - just analyze the file content
+    // We intentionally allow module resolution here so that imported constants
+    // (e.g. event name strings defined in a sibling file) can be followed by the
+    // TypeScript compiler.
     isolatedModules: true
   };
   
@@ -76,22 +78,28 @@ function tryStandaloneAnalysis(filePath, customFunctionSignatures) {
  * @returns {Object} TypeScript program
  */
 function getCachedTsProgram(filePath, programCache) {
-  // Find the nearest tsconfig.json
+  // Locate nearest tsconfig.json (may be undefined)
   const searchPath = path.dirname(filePath);
   const configPath = ts.findConfigFile(searchPath, ts.sys.fileExists, 'tsconfig.json');
-  
-  // Use config path as cache key, or 'standalone' if no config found
-  const cacheKey = configPath || 'standalone';
-  
-  // Return cached program if available
-  if (programCache.has(cacheKey)) {
+
+  // We only cache when a tsconfig.json exists because the resulting program
+  // represents an entire project.  If no config is present we build a
+  // stand-alone program that should not be reused for other files – otherwise
+  // later files would be missing from the program (which is precisely what
+  // caused the regression we are fixing).
+  const shouldCache = Boolean(configPath);
+  const cacheKey = configPath; // undefined when shouldCache is false
+
+  if (shouldCache && programCache.has(cacheKey)) {
     return programCache.get(cacheKey);
   }
-  
-  // Create new program and cache it
+
   const program = getProgram(filePath, null);
-  programCache.set(cacheKey, program);
-  
+
+  if (shouldCache) {
+    programCache.set(cacheKey, program);
+  }
+
   return program;
 }
 

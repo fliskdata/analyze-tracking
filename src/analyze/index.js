@@ -44,13 +44,13 @@ function addEventToCollection(allEvents, event, baseDir) {
 }
 
 /**
- * Processes non-TypeScript files
+ * Processes all files that are not TypeScript files
  * @param {Array<string>} files - Array of file paths
  * @param {Object} allEvents - Collection to add events to
  * @param {string} baseDir - Base directory for relative paths
  * @param {Array} customFunctionSignatures - Custom function signatures to detect
  */
-async function processOtherFiles(files, allEvents, baseDir, customFunctionSignatures) {
+async function processFiles(files, allEvents, baseDir, customFunctionSignatures) {
   for (const file of files) {
     let events = [];
 
@@ -97,14 +97,14 @@ async function analyzeDirectory(dirPath, customFunctions) {
     }
   }
 
+  // First process non-TypeScript files
+  await processFiles(otherFiles, allEvents, dirPath, customFunctionSignatures);
+
   // Process TypeScript files with optimized batch processing
   if (tsFiles.length > 0) {
     const tsEvents = analyzeTsFiles(tsFiles, customFunctionSignatures);
     tsEvents.forEach(event => addEventToCollection(allEvents, event, dirPath));
   }
-
-  // Process remaining file types
-  await processOtherFiles(otherFiles, allEvents, dirPath, customFunctionSignatures);
 
   return allEvents;
 }

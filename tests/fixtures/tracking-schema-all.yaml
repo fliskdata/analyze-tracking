@@ -989,7 +989,7 @@ events:
         destination: segment
     properties:
       documentId:
-        type: any
+        type: number
       documentType:
         type: string
   cart_viewed:
