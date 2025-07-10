@@ -186,26 +186,25 @@ function extractDefaultEvent(node, checker, sourceFile) {
 function processEventData(eventData, source, filePath, line, functionName, checker, sourceFile, customConfig) {
   const { eventName, propertiesNode } = eventData;
 
-  if (!eventName || !propertiesNode) {
+  // Require an event name – properties are optional.
+  if (!eventName) {
     return null;
   }
 
-  let properties = null;
+  let properties = {};
 
-  // Check if properties is an object literal
-  if (ts.isObjectLiteralExpression(propertiesNode)) {
-    properties = extractProperties(checker, propertiesNode);
-  }
-  // Check if properties is an identifier (variable reference)
-  else if (ts.isIdentifier(propertiesNode)) {
-    const resolvedNode = resolveIdentifierToInitializer(checker, propertiesNode, sourceFile);
-    if (resolvedNode && ts.isObjectLiteralExpression(resolvedNode)) {
-      properties = extractProperties(checker, resolvedNode);
+  if (propertiesNode) {
+    // Check if properties is an object literal
+    if (ts.isObjectLiteralExpression(propertiesNode)) {
+      properties = extractProperties(checker, propertiesNode);
     }
-  }
-
-  if (!properties) {
-    return null;
+    // Check if properties is an identifier (variable reference)
+    else if (ts.isIdentifier(propertiesNode)) {
+      const resolvedNode = resolveIdentifierToInitializer(checker, propertiesNode, sourceFile);
+      if (resolvedNode && ts.isObjectLiteralExpression(resolvedNode)) {
+        properties = extractProperties(checker, resolvedNode);
+      }
+    }
   }
 
   // Special handling for Snowplow: remove 'action' from properties

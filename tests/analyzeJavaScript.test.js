@@ -393,4 +393,20 @@ test.describe('analyzeJsFile', () => {
     const builtInProvidersCount = events.filter(e => e.source !== 'custom').length;
     assert.ok(builtInProvidersCount >= 10, 'Should still include built-in events');
   });
+
+  test('should detect events with no properties for custom function', () => {
+    const eventOnlyFile = path.join(fixturesDir, 'javascript', 'event-only.js');
+    const customFunctionSignatures = [parseCustomFunctionSignature('trackUserEvent(EVENT_NAME)')];
+    const events = analyzeJsFile(eventOnlyFile, customFunctionSignatures);
+
+    assert.strictEqual(events.length, 2);
+
+    const literalEvent = events.find(e => e.eventName === 'ViewedEligibilityResults');
+    assert.ok(literalEvent);
+    assert.deepStrictEqual(literalEvent.properties, {});
+
+    const constantEvent = events.find(e => e.eventName === 'ViewedPostShipDashboard');
+    assert.ok(constantEvent);
+    assert.deepStrictEqual(constantEvent.properties, {});
+  });
 });
