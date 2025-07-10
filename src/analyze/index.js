@@ -4,6 +4,7 @@
  */
 
 const path = require('path');
+const { execSync } = require('child_process');
 
 const { parseCustomFunctionSignature } = require('./utils/customFunctionParser');
 const { getAllFiles } = require('../utils/fileProcessor');
@@ -14,7 +15,25 @@ const { analyzeRubyFile } = require('./ruby');
 const { analyzeGoFile } = require('./go');
 
 /**
+ * Analyzes a single file for analytics tracking calls
+ * 
+ * Note: typescript files are handled separately by analyzeTsFiles, which is a batch processor
+ * 
+ * @param {string} file - Path to the file to analyze
+ * @param {Array<string>} customFunctionSignatures - Custom function signatures to detect
+ * @returns {Promise<Array<Object>>} Array of events found in the file
+ */
+async function analyzeFile(file, customFunctionSignatures) {
+  if (/\.jsx?$/.test(file)) return analyzeJsFile(file, customFunctionSignatures)
+  if (/\.py$/.test(file))   return analyzePythonFile(file, customFunctionSignatures)
+  if (/\.rb$/.test(file))   return analyzeRubyFile(file, customFunctionSignatures)
+  if (/\.go$/.test(file))   return analyzeGoFile(file, customFunctionSignatures)
+  return []
+}
+
+/**
  * Adds an event to the events collection, merging properties if event already exists
+ * 
  * @param {Object} allEvents - Collection of all events
  * @param {Object} event - Event to add
  * @param {string} baseDir - Base directory for relative path calculation
@@ -44,43 +63,72 @@ function addEventToCollection(allEvents, event, baseDir) {
 }
 
 /**
- * Processes all files that are not TypeScript files
+ * Processes all files that are not TypeScript files in parallel
+ * 
+ * Checks the system's file descriptor limit and uses 80% of it to avoid running out of file descriptors
+ * Creates a promise pool and launches one analysis for each file in parallel
+ * When a slot frees up, the next file is launched
+ * Waits for the remaining work to complete
+ * 
  * @param {Array<string>} files - Array of file paths
  * @param {Object} allEvents - Collection to add events to
  * @param {string} baseDir - Base directory for relative paths
  * @param {Array} customFunctionSignatures - Custom function signatures to detect
  */
 async function processFiles(files, allEvents, baseDir, customFunctionSignatures) {
-  // Analyze all files in parallel for faster execution
-  const analysisPromises = files.map(async (file) => {
-    let events = [];
+  // Default concurrency limit
+  let concurrencyLimit = 64;
 
-    const isJsFile = /\.(jsx?)$/.test(file);
-    const isPythonFile = /\.(py)$/.test(file);
-    const isRubyFile = /\.(rb)$/.test(file);
-    const isGoFile = /\.(go)$/.test(file);
-
-    if (isJsFile) {
-      events = analyzeJsFile(file, customFunctionSignatures);
-    } else if (isPythonFile) {
-      events = await analyzePythonFile(file, customFunctionSignatures);
-    } else if (isRubyFile) {
-      events = await analyzeRubyFile(file, customFunctionSignatures);
-    } else if (isGoFile) {
-      events = await analyzeGoFile(file, customFunctionSignatures);
+  // Detect soft file descriptor limit from the system using `ulimit -n` (POSIX shells)
+  try {
+    const stdout = execSync('sh -c "ulimit -n"', { encoding: 'utf8' }).trim();
+    if (stdout !== 'unlimited') {
+      const limit = parseInt(stdout, 10);
+      if (!Number.isNaN(limit) && limit > 0) {
+        // Use 80% of the limit to keep head-room for other descriptors
+        concurrencyLimit = Math.max(4, Math.floor(limit * 0.8));
+      }
     }
+  } catch (_) {}
 
-    return events;
-  });
+  let next = 0;                   // index of the next file to start
+  const inFlight = new Set();     // promises currently running
 
-  const results = await Promise.all(analysisPromises);
-
-  for (const events of results) {
-    if (!events) continue;
-    events.forEach(event => addEventToCollection(allEvents, event, baseDir));
+  // helper: launch one analysis and wire bookkeeping
+  const launch = (file) => {
+    const p = analyzeFile(file, customFunctionSignatures)
+      .then((events) => {
+        if (events) events.forEach(e => addEventToCollection(allEvents, e, baseDir))
+      })
+      .finally(() => inFlight.delete(p));
+    inFlight.add(p);
   }
+
+  // prime the pool
+  while (next < Math.min(concurrencyLimit, files.length)) {
+    launch(files[next++]);
+  }
+
+  // whenever a slot frees up, start the next file
+  while (next < files.length) {
+    await Promise.race(inFlight); // wait for one to finish
+    launch(files[next++]);        // and immediately fill the slot
+  }
+
+  // wait for the remaining work
+  await Promise.all(inFlight);
 }
 
+/**
+ * Analyze a directory recursively for analytics tracking calls
+ * 
+ * This function scans all supported files in a directory tree and identifies analytics tracking calls,
+ * handling different file types appropriately.
+ * 
+ * @param {string} dirPath - Path to the directory to analyze
+ * @param {Array<string>} [customFunctions=null] - Array of custom tracking function signatures to detect
+ * @returns {Promise<Object>} Object mapping event names to their tracking implementations
+ */
 async function analyzeDirectory(dirPath, customFunctions) {
   const allEvents = {};
 

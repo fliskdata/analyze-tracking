@@ -78,9 +78,9 @@ events:
       login_type:
         type: string
       plan:
-        type: any
+        type: string
       is_free_trial:
-        type: any
+        type: boolean
       method:
         type: string
       distinct_id:
@@ -550,7 +550,7 @@ events:
       is_free_trial:
         type: boolean
       plan:
-        type: any
+        type: string
   Purchase Completed:
     implementations:
       - path: python/main.py
@@ -563,9 +563,9 @@ events:
         destination: mixpanel
     properties:
       distinct_id:
-        type: any
+        type: string
       plan:
-        type: any
+        type: string
       price:
         type: number
       items:
