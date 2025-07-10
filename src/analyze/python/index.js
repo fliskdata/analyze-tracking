@@ -8,6 +8,19 @@ const path = require('path');
 
 // Singleton instance of Pyodide
 let pyodide = null;
+// Cache indicator to ensure we load pythonTrackingAnalyzer.py only once per process
+let pythonAnalyzerLoaded = false;
+
+// Simple mutex to ensure calls into the single Pyodide interpreter are serialized
+let pyodideLock = Promise.resolve();
+
+async function withPyodide(callback) {
+  // Chain the callback onto the existing lock promise
+  const resultPromise = pyodideLock.then(callback, callback);
+  // Replace lock with a promise that resolves when current callback finishes
+  pyodideLock = resultPromise.then(() => {}, () => {});
+  return resultPromise;
+}
 
 /**
  * Initialize Pyodide runtime lazily
@@ -69,36 +82,42 @@ async function analyzePythonFile(filePath, customFunctionSignatures = null) {
     // Read the Python file only once
     const code = fs.readFileSync(filePath, 'utf8');
 
-    // Initialize Pyodide if not already done
-    const py = await initPyodide();
+    // All interaction with Pyodide must be serialized to avoid race conditions
+    const events = await withPyodide(async () => {
+      // Initialize Pyodide if not already done
+      const py = await initPyodide();
 
-    // Load the Python analyzer code (idempotent – redefining functions is fine)
-    const analyzerPath = path.join(__dirname, 'pythonTrackingAnalyzer.py');
-    if (!fs.existsSync(analyzerPath)) {
-      throw new Error(`Python analyzer not found at: ${analyzerPath}`);
-    }
-    const analyzerCode = fs.readFileSync(analyzerPath, 'utf8');
-    // Prevent the analyzer from executing any __main__ blocks that expect CLI usage
-    py.globals.set('__name__', null);
-    py.runPython(analyzerCode);
+      // Load the analyzer definitions into the Pyodide runtime once
+      if (!pythonAnalyzerLoaded) {
+        const analyzerPath = path.join(__dirname, 'pythonTrackingAnalyzer.py');
+        if (!fs.existsSync(analyzerPath)) {
+          throw new Error(`Python analyzer not found at: ${analyzerPath}`);
+        }
+        const analyzerCode = fs.readFileSync(analyzerPath, 'utf8');
+        // Prevent the analyzer from executing any __main__ blocks that expect CLI usage
+        py.globals.set('__name__', null);
+        py.runPython(analyzerCode);
+        pythonAnalyzerLoaded = true;
+      }
 
-    // Helper to run analysis with a given custom config (can be null)
-    const runAnalysis = (customConfig) => {
-      py.globals.set('code', code);
-      py.globals.set('filepath', filePath);
-      py.globals.set('custom_config_json', customConfig ? JSON.stringify(customConfig) : null);
-      py.runPython('import json');
-      py.runPython('custom_config = None if custom_config_json == None else json.loads(custom_config_json)');
-      const result = py.runPython('analyze_python_code(code, filepath, custom_config)');
-      return JSON.parse(result);
-    };
+      // Helper to run analysis with a given custom config (can be null)
+      const runAnalysis = (customConfig) => {
+        py.globals.set('code', code);
+        py.globals.set('filepath', filePath);
+        py.globals.set('custom_config_json', customConfig ? JSON.stringify(customConfig) : null);
+        py.runPython('import json');
+        py.runPython('custom_config = None if custom_config_json == None else json.loads(custom_config_json)');
+        const result = py.runPython('analyze_python_code(code, filepath, custom_config)');
+        return JSON.parse(result);
+      };
 
-    // Prepare config argument (array or null)
-    const configArg = Array.isArray(customFunctionSignatures) && customFunctionSignatures.length > 0
-      ? customFunctionSignatures
-      : null;
+      // Prepare config argument (array or null)
+      const configArg = Array.isArray(customFunctionSignatures) && customFunctionSignatures.length > 0
+        ? customFunctionSignatures
+        : null;
 
-    const events = runAnalysis(configArg);
+      return runAnalysis(configArg);
+    });
 
     return events;
   } catch (error) {
