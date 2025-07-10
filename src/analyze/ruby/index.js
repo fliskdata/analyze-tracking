@@ -7,6 +7,9 @@ const fs = require('fs');
 const path = require('path');
 const TrackingVisitor = require('./visitor');
 
+// New: cache constant maps so we don't rebuild for every file in the same directory
+const constantMapCache = {};
+
 // Lazy-loaded parse function from Ruby Prism
 let parse = null;
 
@@ -143,6 +146,11 @@ async function buildConstantMapForDirectory(directory) {
 
   if (!fs.existsSync(directory)) return constantMap;
 
+  // Return cached version if we've already built the map for this directory
+  if (constantMapCache[directory]) {
+    return constantMapCache[directory];
+  }
+
   const files = fs.readdirSync(directory).filter(f => f.endsWith('.rb'));
 
   for (const file of files) {
@@ -157,6 +165,8 @@ async function buildConstantMapForDirectory(directory) {
     }
   }
 
+  // Cache the result before returning so subsequent look-ups are instantaneous
+  constantMapCache[directory] = constantMap;
   return constantMap;
 }
 
