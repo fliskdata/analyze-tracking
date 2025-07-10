@@ -1121,6 +1121,10 @@ events:
         line: 361
         function: global
         destination: custom
+      - path: typescript/main.ts
+        line: 417
+        function: trackFailedPayment
+        destination: custom
     properties:
       containerSection:
         type: string

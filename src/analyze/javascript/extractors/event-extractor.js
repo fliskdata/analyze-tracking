@@ -161,11 +161,18 @@ function extractCustomEvent(node, constantMap, customConfig) {
 function processEventData(eventData, source, filePath, line, functionName, customConfig) {
   const { eventName, propertiesNode } = eventData;
 
-  if (!eventName || !propertiesNode || propertiesNode.type !== NODE_TYPES.OBJECT_EXPRESSION) {
+  // Must at least have an event name – properties are optional.
+  if (!eventName) {
     return null;
   }
 
-  let properties = extractProperties(propertiesNode);
+  // Default to empty properties when none are supplied.
+  let properties = {};
+
+  // Only attempt extraction when we have a literal object expression.
+  if (propertiesNode && propertiesNode.type === NODE_TYPES.OBJECT_EXPRESSION) {
+    properties = extractProperties(propertiesNode);
+  }
 
   // Handle custom extra params
   if (source === 'custom' && customConfig && eventData.extraArgs) {

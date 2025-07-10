@@ -37,7 +37,7 @@ test.describe('analyzeTsFile', () => {
     // Sort events by line number for consistent ordering
     events.sort((a, b) => a.line - b.line);
 
-    assert.strictEqual(events.length, 19);
+    assert.strictEqual(events.length, 20);
 
     // Test Google Analytics event
     const gaEvent = events.find(e => e.eventName === 'order_completed' && e.source === 'googleanalytics');
@@ -985,5 +985,22 @@ test.describe('analyzeTsFile', () => {
     assert.deepStrictEqual(evt.properties, {
       foo: { type: 'string' }
     });
+  });
+
+  test('should detect events with no properties for custom function', () => {
+    const eventOnlyFile = path.join(fixturesDir, 'typescript', 'event-only.ts');
+    const program = createProgram(eventOnlyFile);
+    const customFunctionSignatures = [parseCustomFunctionSignature('trackUserEvent(EVENT_NAME)')];
+    const events = analyzeTsFile(eventOnlyFile, program, customFunctionSignatures);
+
+    assert.strictEqual(events.length, 2);
+
+    const literalEvent = events.find(e => e.eventName === 'ViewedEligibilityResults');
+    assert.ok(literalEvent);
+    assert.deepStrictEqual(literalEvent.properties, {});
+
+    const constantEvent = events.find(e => e.eventName === 'ViewedPostShipDashboard');
+    assert.ok(constantEvent);
+    assert.deepStrictEqual(constantEvent.properties, {});
   });
 });
