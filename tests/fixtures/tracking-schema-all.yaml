@@ -996,7 +996,7 @@ events:
     implementations:
       - path: typescript-react/main.tsx
         line: 89
-        function: useEffect()
+        function: ShoppingCart.useEffect
         destination: posthog
     properties:
       item_count:
@@ -1007,7 +1007,7 @@ events:
     implementations:
       - path: typescript-react/main.tsx
         line: 101
-        function: useCallback(handleAddToCart)
+        function: ShoppingCart.useCallback(handleAddToCart)
         destination: segment
     properties:
       product_id:
@@ -1020,7 +1020,7 @@ events:
     implementations:
       - path: typescript-react/main.tsx
         line: 108
-        function: useCallback(handleAddToCart)
+        function: ShoppingCart.useCallback(handleAddToCart)
         destination: amplitude
     properties:
       item_details:

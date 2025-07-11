@@ -409,4 +409,15 @@ test.describe('analyzeJsFile', () => {
     assert.ok(constantEvent);
     assert.deepStrictEqual(constantEvent.properties, {});
   });
+
+  test('should include component name for React hook functions', () => {
+    const hookFile = path.join(fixturesDir, 'javascript', 'react-hook.js');
+    const customFunctionSignatures = [parseCustomFunctionSignature('trackUserEvent(EVENT_NAME)')];
+    const events = analyzeJsFile(hookFile, customFunctionSignatures);
+
+    assert.strictEqual(events.length, 1);
+    const evt = events[0];
+    assert.strictEqual(evt.eventName, 'ViewedEligibilityResults');
+    assert.strictEqual(evt.functionName, 'PrePaymentDashboard.useEffect');
+  });
 });
