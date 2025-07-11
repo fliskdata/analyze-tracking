@@ -105,7 +105,7 @@ async function extractEventName(node, source, customConfig = null, constantMap =
  * @param {Object} customConfig - Custom configuration for custom functions
  * @returns {Object|null} - The extracted properties or null
  */
-async function extractProperties(node, source, customConfig = null) {
+async function extractProperties(node, source, customConfig = null, variableMap = null) {
   const { HashNode, ArrayNode } = await prismPromise;
 
   if (source === 'segment' || source === 'rudderstack') {
@@ -248,6 +248,20 @@ async function extractProperties(node, source, customConfig = null) {
     if (propsArg instanceof HashNode) {
       const hashProps = await extractHashProperties(propsArg);
       Object.assign(properties, hashProps);
+    } else {
+      // Attempt to resolve variable references (e.g., a local variable containing a hash)
+      const prism = await prismPromise;
+      const LocalVariableReadNode = prism.LocalVariableReadNode;
+
+      if (variableMap && LocalVariableReadNode && propsArg instanceof LocalVariableReadNode) {
+        const varName = propsArg.name;
+        if (variableMap[varName]) {
+          Object.assign(properties, variableMap[varName]);
+        }
+      } else if (variableMap && propsArg && typeof propsArg.name === 'string' && variableMap[propsArg.name]) {
+        // Fallback: match by variable name when node type isn't LocalVariableReadNode
+        Object.assign(properties, variableMap[propsArg.name]);
+      }
     }
 
     return Object.keys(properties).length > 0 ? properties : null;

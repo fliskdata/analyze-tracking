@@ -11,7 +11,7 @@ const { getAllFiles } = require('../utils/fileProcessor');
 const { analyzeJsFile } = require('./javascript');
 const { analyzeTsFiles } = require('./typescript');
 const { analyzePythonFile } = require('./python');
-const { analyzeRubyFile } = require('./ruby');
+const { analyzeRubyFile, prebuildConstantMaps } = require('./ruby');
 const { analyzeGoFile } = require('./go');
 
 /**
@@ -140,19 +140,28 @@ async function analyzeDirectory(dirPath, customFunctions) {
   
   // Separate TypeScript files from others for optimized processing
   const tsFiles = [];
-  const otherFiles = [];
+  const nonTsFiles = [];
+  const rubyFiles = [];
   
   for (const file of files) {
     const isTsFile = /\.(tsx?)$/.test(file);
     if (isTsFile) {
       tsFiles.push(file);
     } else {
-      otherFiles.push(file);
+      nonTsFiles.push(file);
+      if (/\.rb$/.test(file)) {
+        rubyFiles.push(file);
+      }
     }
   }
 
+  // Prebuild constant maps for all Ruby directories to ensure constant resolution across files
+  if (rubyFiles.length > 0) {
+    await prebuildConstantMaps(rubyFiles);
+  }
+
   // First process non-TypeScript files
-  await processFiles(otherFiles, allEvents, dirPath, customFunctionSignatures);
+  await processFiles(nonTsFiles, allEvents, dirPath, customFunctionSignatures);
 
   // Process TypeScript files with optimized batch processing
   if (tsFiles.length > 0) {

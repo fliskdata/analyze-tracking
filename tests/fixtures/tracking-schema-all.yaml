@@ -1288,6 +1288,8 @@ events:
     properties:
       userId:
         type: any
+      foo:
+        type: string
   _ExternalSection:
     implementations:
       - path: ruby/external_constant_use.rb
@@ -1341,3 +1343,22 @@ events:
         type: string
       data:
         type: any
+  AnsweredQuestion:
+    implementations:
+      - path: ruby/models/test_module.rb
+        line: 11
+        function: CustomModule.track
+        destination: custom
+    properties:
+      userId:
+        type: any
+      sectionName:
+        type: any
+      questionnaireName:
+        type: string
+      registered:
+        type: any
+      eligible:
+        type: any
+      nonInteraction:
+        type: number

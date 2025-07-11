@@ -157,6 +157,10 @@ async function buildConstantMapForDirectory(directory) {
     const fullPath = path.join(directory, file);
     try {
       const content = fs.readFileSync(fullPath, 'utf8');
+      if (!parse) {
+        const { loadPrism } = await import('@ruby/prism');
+        parse = await loadPrism();
+      }
       const ast = await parse(content);
       await collectConstants(ast.value, [], constantMap);
     } catch (err) {
@@ -192,6 +196,13 @@ async function analyzeRubyFile(filePath, customFunctionSignatures = null) {
     const currentDir = path.dirname(filePath);
     const constantMap = await buildConstantMapForDirectory(currentDir);
 
+    // Merge constants from all cached maps (to allow cross-directory resolution)
+    for (const dir in constantMapCache) {
+      if (dir !== currentDir) {
+        Object.assign(constantMap, constantMapCache[dir]);
+      }
+    }
+
     // Parse the Ruby code into an AST once
     let ast;
     try {
@@ -201,8 +212,14 @@ async function analyzeRubyFile(filePath, customFunctionSignatures = null) {
       return [];
     }
 
-    // Single visitor pass covering all custom configs, with constant map for resolution
-    const visitor = new TrackingVisitor(code, filePath, customFunctionSignatures || [], constantMap);
+    // Collect variable assignments to hash literals within the file
+    const variableMap = {};
+    try {
+      await collectVariableAssignments(ast.value, variableMap);
+    } catch (_) {}
+
+    // Single visitor pass covering all custom configs, with constant map and variable map for resolution
+    const visitor = new TrackingVisitor(code, filePath, customFunctionSignatures || [], constantMap, variableMap);
     const events = await visitor.analyze(ast);
 
     // Deduplicate events
@@ -220,4 +237,60 @@ async function analyzeRubyFile(filePath, customFunctionSignatures = null) {
   }
 }
 
-module.exports = { analyzeRubyFile };
+// New utility: collect local variable assignments that point to hash literals
+async function collectVariableAssignments(node, variableMap) {
+  if (!node) return;
+
+  const prism = await import('@ruby/prism');
+  const LocalVariableWriteNode = prism.LocalVariableWriteNode;
+  const HashNode = prism.HashNode;
+
+  if (LocalVariableWriteNode && node instanceof LocalVariableWriteNode) {
+    if (node.value instanceof HashNode) {
+      const varName = node.name;
+      // Reuse existing extractor to turn HashNode into properties object
+      const { extractHashProperties } = require('./extractors');
+      const props = await extractHashProperties(node.value);
+      variableMap[varName] = props;
+    }
+  }
+
+  // Recurse similarly to collectConstants generic traversal
+  const keys = Object.keys(node);
+  for (const key of keys) {
+    const val = node[key];
+    if (!val) continue;
+
+    const traverseChild = async (child) => {
+      if (child && typeof child === 'object' && (child.location || child.constructor?.name?.endsWith('Node'))) {
+        await collectVariableAssignments(child, variableMap);
+      }
+    };
+
+    if (Array.isArray(val)) {
+      for (const c of val) {
+        await traverseChild(c);
+      }
+    } else {
+      await traverseChild(val);
+    }
+  }
+}
+
+// Helper to prebuild constant maps for all discovered ruby directories in a project
+async function prebuildConstantMaps(rubyFiles) {
+  const dirs = new Set(rubyFiles.map(f => path.dirname(f)));
+  for (const dir of dirs) {
+    try {
+      await buildConstantMapForDirectory(dir);
+    } catch (_) {
+      // ignore
+    }
+  }
+}
+
+module.exports = { 
+  analyzeRubyFile,
+  buildConstantMapForDirectory,
+  prebuildConstantMaps
+};

@@ -328,7 +328,23 @@ test.describe('analyzeRubyFile', () => {
     const evt = events.find(e => e.eventName === '_FinishedSection');
     assert.ok(evt);
     assert.deepStrictEqual(evt.properties, {
-      userId: { type: 'any' }
+      userId: { type: 'any' },
+      foo: { type: 'string' }
+    });
+  });
+
+  test('should extract properties passed via local variable and resolve constants across files', async () => {
+    const dirRoot = path.join(fixturesDir, 'ruby');
+    const { analyzeDirectory } = require('../src/analyze');
+
+    const eventsMap = await analyzeDirectory(dirRoot, ['CustomModule.track(userId, EVENT_NAME, PROPERTIES)']);
+
+    const evt = eventsMap['AnsweredQuestion'];
+    assert.ok(evt, 'Should find AnsweredQuestion event');
+
+    const expectedProps = ['userId','sectionName','questionnaireName','registered','eligible','nonInteraction'];
+    expectedProps.forEach(p => {
+      assert.ok(evt.properties[p], `Expected property ${p}`);
     });
   });
   
