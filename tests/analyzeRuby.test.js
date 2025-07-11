@@ -207,8 +207,8 @@ test.describe('analyzeRubyFile', () => {
     const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
     const events = await analyzeRubyFile(testFilePath, customFunctionSignatures);
     
-    // Should find the CustomModule.track call
-    const customModuleEvent = events.find(e => e.source === 'custom' && e.functionName === 'CustomModule.track');
+    // Should find the CustomModule.track call (now reported under the enclosing method name)
+    const customModuleEvent = events.find(e => e.source === 'custom' && e.functionName === 'custom_track_module');
     assert.ok(customModuleEvent);
     assert.strictEqual(customModuleEvent.eventName, 'custom_event');
     assert.strictEqual(customModuleEvent.line, 98);
@@ -299,8 +299,8 @@ test.describe('analyzeRubyFile', () => {
     const evt = events[0];
     assert.strictEqual(evt.eventName, 'BecameLead');
     assert.strictEqual(evt.source, 'custom');
-    // function name should be CustomModule.track
-    assert.strictEqual(evt.functionName, 'CustomModule.track');
+    // function name should be the enclosing method name
+    assert.strictEqual(evt.functionName, 'post_registration');
     assert.deepStrictEqual(evt.properties, {
       userId: { type: 'any' },
       leadType: { type: 'string' },

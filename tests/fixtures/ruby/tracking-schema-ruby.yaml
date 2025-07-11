@@ -69,7 +69,7 @@ events:
         destination: custom
       - path: main.rb
         line: 98
-        function: CustomModule.track
+        function: custom_track_module
         destination: custom
     properties:
       userId:
@@ -113,7 +113,7 @@ events:
     implementations:
       - path: node_types.rb
         line: 6
-        function: CustomModule.track
+        function: unless_example
         destination: custom
     properties:
       userId:
@@ -124,7 +124,7 @@ events:
     implementations:
       - path: node_types.rb
         line: 13
-        function: CustomModule.track
+        function: while_example
         destination: custom
     properties:
       userId:
@@ -135,7 +135,7 @@ events:
     implementations:
       - path: node_types.rb
         line: 20
-        function: CustomModule.track
+        function: global
         destination: custom
     properties:
       userId:
@@ -146,7 +146,7 @@ events:
     implementations:
       - path: node_types.rb
         line: 26
-        function: CustomModule.track
+        function: global
         destination: custom
     properties:
       userId:
@@ -157,7 +157,7 @@ events:
     implementations:
       - path: node_types.rb
         line: 28
-        function: CustomModule.track
+        function: global
         destination: custom
     properties:
       userId:
@@ -168,7 +168,7 @@ events:
     implementations:
       - path: node_types.rb
         line: 32
-        function: CustomModule.track
+        function: block
         destination: custom
     properties:
       userId:
@@ -179,7 +179,7 @@ events:
     implementations:
       - path: node_types.rb
         line: 35
-        function: CustomModule.track
+        function: global
         destination: custom
     properties:
       userId:
@@ -190,7 +190,7 @@ events:
     implementations:
       - path: node_types.rb
         line: 37
-        function: CustomModule.track
+        function: global
         destination: custom
     properties:
       userId:
@@ -201,7 +201,7 @@ events:
     implementations:
       - path: node_types.rb
         line: 38
-        function: CustomModule.track
+        function: global
         destination: custom
     properties:
       userId:
@@ -212,11 +212,11 @@ events:
     implementations:
       - path: infinite_recursion_test.rb
         line: 59
-        function: CustomModule.track
+        function: complex_method
         destination: custom
       - path: node_types.rb
         line: 40
-        function: CustomModule.track
+        function: global
         destination: custom
     properties:
       userId:
@@ -231,7 +231,7 @@ events:
     implementations:
       - path: registration_module.rb
         line: 9
-        function: CustomModule.track
+        function: post_registration
         destination: custom
     properties:
       userId:
@@ -299,7 +299,7 @@ events:
     implementations:
       - path: constant_event.rb
         line: 8
-        function: CustomModule.track
+        function: send_event
         destination: custom
     properties:
       userId:
@@ -310,7 +310,7 @@ events:
     implementations:
       - path: external_constant_use.rb
         line: 3
-        function: CustomModule.track
+        function: trigger
         destination: custom
     properties:
       userId:
@@ -319,7 +319,7 @@ events:
     implementations:
       - path: infinite_recursion_test.rb
         line: 16
-        function: CustomModule.track
+        function: block
         destination: custom
     properties:
       userId:
@@ -332,7 +332,7 @@ events:
     implementations:
       - path: infinite_recursion_test.rb
         line: 76
-        function: CustomModule.track
+        function: pattern_matching_method
         destination: custom
     properties:
       userId:
@@ -341,7 +341,7 @@ events:
     implementations:
       - path: infinite_recursion_test.rb
         line: 79
-        function: CustomModule.track
+        function: block
         destination: custom
     properties:
       userId:
@@ -352,7 +352,7 @@ events:
     implementations:
       - path: infinite_recursion_test.rb
         line: 82
-        function: CustomModule.track
+        function: pattern_matching_method
         destination: custom
     properties:
       userId:
@@ -363,7 +363,7 @@ events:
     implementations:
       - path: models/test_module.rb
         line: 11
-        function: CustomModule.track
+        function: send_telemetry
         destination: custom
     properties:
       userId:
