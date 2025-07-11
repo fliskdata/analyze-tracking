@@ -49,14 +49,8 @@ class TrackingVisitor {
 
       const line = getLineNumber(this.code, node.location);
       
-      // For module-scoped custom functions, use the custom function name as the functionName
-      // For simple custom functions, use the wrapping function name
-      let functionName;
-      if (source === 'custom' && matchedConfig && matchedConfig.functionName.includes('.')) {
-        functionName = matchedConfig.functionName;
-      } else {
-        functionName = await findWrappingFunction(node, ancestors);
-      }
+      // Always use the enclosing method/block/global context for the function name
+      const functionName = await findWrappingFunction(node, ancestors);
       
       const properties = await extractProperties(node, source, matchedConfig, this.variableMap);
 
