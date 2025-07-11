@@ -392,4 +392,20 @@ test.describe('analyzeRubyFile', () => {
     // If we get here, it means the analysis didn't hang
     assert.ok(true, 'Analysis completed without infinite recursion');
   });
+
+  test('should extract properties from hash assigned via .compact', async () => {
+    const compactFile = path.join(fixturesDir, 'ruby', 'compact_event.rb');
+    const sig = parseCustomFunctionSignature('TrackingModule.track(userId, EVENT_NAME, PROPERTIES)');
+    const events = await analyzeRubyFile(compactFile, [sig]);
+    assert.strictEqual(events.length, 1);
+
+    const evt = events[0];
+    assert.strictEqual(evt.eventName, 'RegisteredUser');
+    assert.deepStrictEqual(evt.properties, {
+      userId: { type: 'number' },
+      createdByAdminEmail: { type: 'string' },
+      _email: { type: 'string' },
+      emailOptIn: { type: 'boolean' }
+    });
+  });
 });

@@ -244,6 +244,7 @@ async function collectVariableAssignments(node, variableMap) {
   const prism = await import('@ruby/prism');
   const LocalVariableWriteNode = prism.LocalVariableWriteNode;
   const HashNode = prism.HashNode;
+  const CallNode = prism.CallNode;
 
   if (LocalVariableWriteNode && node instanceof LocalVariableWriteNode) {
     if (node.value instanceof HashNode) {
@@ -252,6 +253,18 @@ async function collectVariableAssignments(node, variableMap) {
       const { extractHashProperties } = require('./extractors');
       const props = await extractHashProperties(node.value);
       variableMap[varName] = props;
+    } else if (node.value instanceof CallNode) {
+      // Handle patterns like { ... }.compact or { ... }.compact!
+      const callNode = node.value;
+      const methodName = callNode.name;
+
+      // Check if the call is a compact/compact! call with a Hash receiver
+      if ((methodName === 'compact' || methodName === 'compact!') && callNode.receiver instanceof HashNode) {
+        const varName = node.name;
+        const { extractHashProperties } = require('./extractors');
+        const props = await extractHashProperties(callNode.receiver);
+        variableMap[varName] = props;
+      }
     }
   }
 
