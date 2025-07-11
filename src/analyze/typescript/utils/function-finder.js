@@ -12,19 +12,61 @@ const { isReactHookCall } = require('./type-resolver');
  * @returns {string} The function name or 'global' if not in a function
  */
 function findWrappingFunction(node) {
+  // ts is already required at module scope
+  const REACT_HOOKS = new Set([
+    'useEffect',
+    'useLayoutEffect',
+    'useInsertionEffect',
+    'useCallback',
+    'useMemo',
+    'useReducer',
+    'useState',
+    'useImperativeHandle',
+    'useDeferredValue',
+    'useTransition'
+  ]);
+
   let current = node;
+  let hookSignature = null; // e.g. useEffect(), useCallback(handleFoo)
+  let componentName = null;
+  let firstNonHookFunction = null;
 
   while (current) {
-    const functionName = extractFunctionName(current);
+    const fnName = extractFunctionName(current);
 
-    if (functionName) {
-      return functionName;
+    if (fnName) {
+      const baseName = fnName.split('(')[0].replace(/\s+/g, '');
+      const isHookSig = REACT_HOOKS.has(baseName);
+
+      if (isHookSig && !hookSignature) {
+        hookSignature = fnName; // capture complete signature (may include params)
+        // Continue searching upward for component
+      } else if (!isHookSig && !componentName) {
+        componentName = fnName;
+        if (hookSignature) {
+          break; // we have both
+        }
+      }
+
+      if (!firstNonHookFunction) {
+        firstNonHookFunction = fnName;
+      }
     }
 
     current = current.parent;
   }
 
-  return 'global';
+  if (hookSignature && componentName) {
+    // Remove trailing () for useEffect etc
+    const formattedHook = hookSignature.endsWith('()') ? hookSignature.slice(0, -2) : hookSignature;
+    return `${componentName}.${formattedHook}`;
+  }
+
+  if (hookSignature) {
+    return hookSignature;
+  }
+
+  return firstNonHookFunction || 'global';
 }
 
 /**

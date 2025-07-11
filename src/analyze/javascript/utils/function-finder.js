@@ -12,16 +12,74 @@ const { NODE_TYPES } = require('../constants');
  * @returns {string} The function name or 'global' if not in a function
  */
 function findWrappingFunction(node, ancestors) {
+  const REACT_HOOKS = new Set([
+    'useEffect',
+    'useLayoutEffect',
+    'useInsertionEffect',
+    'useCallback',
+    'useMemo',
+    'useReducer',
+    'useState',
+    'useImperativeHandle',
+    'useDeferredValue',
+    'useTransition'
+  ]);
+
+  let hookName = null; // e.g. "useEffect" or "useCallback(handleFoo)"
+  let componentName = null;
+  let firstNonHookFunction = null;
+
   // Traverse ancestors from closest to furthest
   for (let i = ancestors.length - 1; i >= 0; i--) {
     const current = ancestors[i];
-    const functionName = extractFunctionName(current, node, ancestors[i - 1]);
-    
-    if (functionName) {
-      return functionName;
+
+    // Detect React hook call (CallExpression with Identifier callee)
+    if (!hookName && current.type === NODE_TYPES.CALL_EXPRESSION && current.callee && current.callee.type === NODE_TYPES.IDENTIFIER && REACT_HOOKS.has(current.callee.name)) {
+      hookName = current.callee.name; // store plain hook name; we'll format later if needed
+    }
+
+    // Existing logic to extract named function contexts
+    const fnName = extractFunctionName(current, node, ancestors[i - 1]);
+    if (fnName) {
+      if (REACT_HOOKS.has(stripParens(fnName.split('.')[0]))) {
+        // fnName itself is a hook signature like "useCallback(handleFoo)" or "useEffect()"
+        if (!hookName) hookName = fnName;
+        continue;
+      }
+
+      // First non-hook function up the tree is treated as component/container name
+      if (!componentName) {
+        componentName = fnName;
+      }
+
+      // Early exit when we already have both pieces
+      if (hookName && componentName) {
+        break;
+      }
+
+      // Save first non-hook function for fallback when no hook detected
+      if (!firstNonHookFunction) {
+        firstNonHookFunction = fnName;
+      }
     }
   }
-  
+
+  // If we detected hook + component, compose them
+  if (hookName && componentName) {
+    const formattedHook = typeof hookName === 'string' && hookName.endsWith('()') ? hookName.slice(0, -2) : hookName;
+    return `${componentName}.${formattedHook}`;
+  }
+
+  // If only hook signature found (no component) – return the hook signature itself
+  if (hookName) {
+    return hookName;
+  }
+
+  // Fallbacks to previous behaviour
+  if (firstNonHookFunction) {
+    return firstNonHookFunction;
+  }
+
   return 'global';
 }
 
@@ -116,6 +174,13 @@ function isFunctionNode(node) {
     node.type === NODE_TYPES.FUNCTION_EXPRESSION ||
     node.type === NODE_TYPES.FUNCTION_DECLARATION
   );
+}
+
+/**
+ * Utility to strip trailing parens from simple hook signatures
+ */
+function stripParens(name) {
+  return name.endsWith('()') ? name.slice(0, -2) : name;
 }
 
 module.exports = {
