@@ -49,6 +49,20 @@ declare const heap: {
   track(eventName: string, properties: Record<string, any>): void;
 };
 
+declare const datadogRum: {
+  addAction(eventName: string, properties: Record<string, any>): void;
+};
+
+declare const DD_RUM: {
+  addAction(eventName: string, properties: Record<string, any>): void;
+};
+
+declare const window: {
+  DD_RUM: {
+    addAction(eventName: string, properties: Record<string, any>): void;
+  };
+};
+
 declare const tracker: {
   track(event: unknown): void;
 };
@@ -228,6 +242,27 @@ export function checkout3(): void {
     roles: ['admin', 'editor'],
   };
   heap.track('user_login', heapData);
+
+  // Datadog tracking examples - all three patterns
+  datadogRum.addAction('checkout_completed', {
+    total: 500,
+    orderId: 'ABC123',
+    currency: 'USD',
+    items: itemsList.length
+  });
+
+  window.DD_RUM.addAction('user_registration', {
+    user_id: 'user123',
+    method: 'email',
+    success: true,
+    referrer: 'organic'
+  });
+
+  DD_RUM.addAction('error_occurred', {
+    error_type: 'validation',
+    field: 'email',
+    page: '/checkout'
+  });
 }
 
 // -----------------------------------------------------------------------------

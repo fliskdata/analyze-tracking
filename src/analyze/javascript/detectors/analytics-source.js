@@ -131,8 +131,17 @@ function detectMemberBasedProvider(node) {
     return 'unknown';
   }
 
-  const objectName = node.callee.object.name;
   const methodName = node.callee.property.name;
+  let objectName = node.callee.object.name;
+
+  // Handle nested member expressions like window.DD_RUM.addAction
+  if (!objectName && node.callee.object.type === NODE_TYPES.MEMBER_EXPRESSION) {
+    // For window.DD_RUM.addAction, we want to check if it matches DD_RUM.addAction pattern
+    const nestedObjectName = node.callee.object.property.name;
+    if (nestedObjectName) {
+      objectName = nestedObjectName;
+    }
+  }
 
   if (!objectName || !methodName) {
     return 'unknown';

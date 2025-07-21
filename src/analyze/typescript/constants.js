@@ -75,6 +75,12 @@ const ANALYTICS_PROVIDERS = {
     name: 'googleanalytics',
     functionName: 'gtag',
     type: 'function'
+  },
+  DATADOG_RUM: {
+    name: 'datadog',
+    objectNames: ['datadogRum', 'DD_RUM'],
+    methodName: 'addAction',
+    type: 'member'
   }
 };
 

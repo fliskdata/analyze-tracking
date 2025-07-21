@@ -168,7 +168,7 @@ events:
         function: main
         destination: custom
       - path: javascript/main.js
-        line: 162
+        line: 181
         function: global
         destination: custom
       - path: python/main.py
@@ -180,7 +180,7 @@ events:
         function: global
         destination: custom
       - path: typescript/main.ts
-        line: 306
+        line: 341
         function: global
         destination: custom
     properties:
@@ -193,7 +193,7 @@ events:
         function: main
         destination: custom
       - path: javascript/main.js
-        line: 163
+        line: 182
         function: global
         destination: custom
       - path: python/main.py
@@ -205,7 +205,7 @@ events:
         function: global
         destination: custom
       - path: typescript/main.ts
-        line: 307
+        line: 342
         function: global
         destination: custom
     properties:
@@ -218,7 +218,7 @@ events:
         function: main
         destination: custom
       - path: javascript/main.js
-        line: 164
+        line: 183
         function: global
         destination: custom
       - path: python/main.py
@@ -230,7 +230,7 @@ events:
         function: global
         destination: custom
       - path: typescript/main.ts
-        line: 308
+        line: 343
         function: global
         destination: custom
     properties:
@@ -245,7 +245,7 @@ events:
         function: main
         destination: custom
       - path: javascript/main.js
-        line: 165
+        line: 184
         function: global
         destination: custom
       - path: python/main.py
@@ -257,7 +257,7 @@ events:
         function: global
         destination: custom
       - path: typescript/main.ts
-        line: 309
+        line: 344
         function: global
         destination: custom
     properties:
@@ -272,7 +272,7 @@ events:
         function: main
         destination: custom
       - path: javascript/main.js
-        line: 166
+        line: 185
         function: global
         destination: custom
       - path: python/main.py
@@ -284,7 +284,7 @@ events:
         function: global
         destination: custom
       - path: typescript/main.ts
-        line: 310
+        line: 345
         function: global
         destination: custom
     properties:
@@ -349,13 +349,17 @@ events:
         line: 44
         function: checkout
         destination: amplitude
+      - path: javascript/main.js
+        line: 131
+        function: checkout3
+        destination: datadog
     properties:
       order_id:
-        type: any
+        type: string
       products:
         type: any
       total:
-        type: any
+        type: number
       address:
         type: object
         properties:
@@ -363,6 +367,8 @@ events:
             type: string
           state:
             type: string
+      currency:
+        type: string
   Order Completed:
     implementations:
       - path: javascript/main.js
@@ -463,7 +469,7 @@ events:
   someevent:
     implementations:
       - path: javascript/main.js
-        line: 138
+        line: 157
         function: trackSnowplow
         destination: snowplow
     properties:
@@ -478,7 +484,7 @@ events:
   customEvent:
     implementations:
       - path: javascript/main.js
-        line: 152
+        line: 171
         function: global
         destination: custom
     properties:
@@ -495,7 +501,7 @@ events:
   custom_module_event:
     implementations:
       - path: javascript/main.js
-        line: 178
+        line: 197
         function: global
         destination: custom
       - path: python/main.py
@@ -503,7 +509,7 @@ events:
         function: main
         destination: custom
       - path: typescript/main.ts
-        line: 322
+        line: 357
         function: global
         destination: custom
     properties:
@@ -513,14 +519,27 @@ events:
         type: string
       userId:
         type: string
+  page_view:
+    implementations:
+      - path: javascript/main.js
+        line: 143
+        function: checkout3
+        destination: datadog
+    properties:
+      page:
+        type: string
+      section:
+        type: string
+      user_type:
+        type: string
   ecommerce_purchase_frozen:
     implementations:
       - path: javascript/main.js
-        line: 190
+        line: 209
         function: global
         destination: mixpanel
       - path: typescript/main.ts
-        line: 292
+        line: 327
         function: global
         destination: mixpanel
     properties:
@@ -529,6 +548,31 @@ events:
       total:
         type: number
       items:
+        type: array
+        items:
+          type: string
+  user_login:
+    implementations:
+      - path: javascript/main.js
+        line: 137
+        function: checkout3
+        destination: datadog
+      - path: typescript/main.ts
+        line: 244
+        function: checkout3
+        destination: heap
+    properties:
+      user_id:
+        type: string
+      method:
+        type: string
+      success:
+        type: boolean
+      email:
+        type: string
+      name:
+        type: string
+      roles:
         type: array
         items:
           type: string
@@ -640,7 +684,7 @@ events:
   order_completed:
     implementations:
       - path: typescript/main.ts
-        line: 105
+        line: 119
         function: trackOrderCompletedGA
         destination: googleanalytics
     properties:
@@ -675,7 +719,7 @@ events:
   user_checkout:
     implementations:
       - path: typescript/main.ts
-        line: 121
+        line: 135
         function: checkout
         destination: segment
     properties:
@@ -688,7 +732,7 @@ events:
   purchase_confirmed:
     implementations:
       - path: typescript/main.ts
-        line: 130
+        line: 144
         function: confirmPurchaseMixpanel
         destination: mixpanel
     properties:
@@ -712,7 +756,7 @@ events:
   checkout_initiated:
     implementations:
       - path: typescript/main.ts
-        line: 135
+        line: 149
         function: checkout
         destination: amplitude
     properties:
@@ -747,7 +791,7 @@ events:
   order_finalized:
     implementations:
       - path: typescript/main.ts
-        line: 150
+        line: 164
         function: checkout
         destination: rudderstack
     properties:
@@ -780,7 +824,7 @@ events:
   BuyNow:
     implementations:
       - path: typescript/main.ts
-        line: 176
+        line: 190
         function: checkout2
         destination: mparticle
     properties:
@@ -813,7 +857,7 @@ events:
   user_action:
     implementations:
       - path: typescript/main.ts
-        line: 195
+        line: 209
         function: checkout2
         destination: posthog
     properties:
@@ -848,7 +892,7 @@ events:
   customer_checkout:
     implementations:
       - path: typescript/main.ts
-        line: 216
+        line: 230
         function: checkout3
         destination: pendo
     properties:
@@ -878,27 +922,10 @@ events:
             type: string
           postalCode:
             type: string
-  user_login:
-    implementations:
-      - path: typescript/main.ts
-        line: 230
-        function: checkout3
-        destination: heap
-    properties:
-      user_id:
-        type: string
-      email:
-        type: string
-      name:
-        type: string
-      roles:
-        type: array
-        items:
-          type: string
   item_view:
     implementations:
       - path: typescript/main.ts
-        line: 247
+        line: 282
         function: trackSnowplow
         destination: snowplow
     properties:
@@ -913,7 +940,7 @@ events:
   button_click:
     implementations:
       - path: typescript/main.ts
-        line: 251
+        line: 286
         function: trackSnowplow2
         destination: snowplow
     properties:
@@ -928,7 +955,7 @@ events:
   custom_event_v2:
     implementations:
       - path: typescript/main.ts
-        line: 280
+        line: 315
         function: global
         destination: custom
     properties:
@@ -952,7 +979,7 @@ events:
   ecommerce_purchase:
     implementations:
       - path: typescript/main.ts
-        line: 291
+        line: 326
         function: global
         destination: custom
     properties:
@@ -969,7 +996,7 @@ events:
   ecommerce_purchase_v2:
     implementations:
       - path: typescript/main.ts
-        line: 293
+        line: 328
         function: global
         destination: segment
     properties:
@@ -1118,11 +1145,11 @@ events:
   FailedPayment:
     implementations:
       - path: typescript/main.ts
-        line: 361
+        line: 396
         function: global
         destination: custom
       - path: typescript/main.ts
-        line: 417
+        line: 452
         function: trackFailedPayment
         destination: custom
     properties:
@@ -1133,11 +1160,11 @@ events:
   InitiatedPayment:
     implementations:
       - path: typescript/main.ts
-        line: 349
+        line: 384
         function: global
         destination: custom
       - path: typescript/main.ts
-        line: 422
+        line: 457
         function: trackInitiatedPayment
         destination: custom
     properties:
@@ -1148,7 +1175,7 @@ events:
   ViewedAttorneyAgreement:
     implementations:
       - path: typescript/main.ts
-        line: 375
+        line: 410
         function: handleView
         destination: custom
     properties: {}
@@ -1160,6 +1187,49 @@ events:
         destination: mixpanel
     properties:
       foo:
+        type: string
+  checkout_completed:
+    implementations:
+      - path: typescript/main.ts
+        line: 247
+        function: checkout3
+        destination: datadog
+    properties:
+      total:
+        type: number
+      orderId:
+        type: string
+      currency:
+        type: string
+      items:
+        type: number
+  user_registration:
+    implementations:
+      - path: typescript/main.ts
+        line: 254
+        function: checkout3
+        destination: datadog
+    properties:
+      user_id:
+        type: string
+      method:
+        type: string
+      success:
+        type: boolean
+      referrer:
+        type: string
+  error_occurred:
+    implementations:
+      - path: typescript/main.ts
+        line: 261
+        function: checkout3
+        destination: datadog
+    properties:
+      error_type:
+        type: string
+      field:
+        type: string
+      page:
         type: string
   UnlessEvent:
     implementations:

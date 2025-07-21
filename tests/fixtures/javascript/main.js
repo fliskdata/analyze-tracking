@@ -126,6 +126,25 @@ export const checkout3 = function() {
     email: 'user123@example.com',
     name: 'John Doe'
   });
+
+  // datadog tracking examples - all three patterns
+  datadogRum.addAction('checkout', {
+    total: 500,
+    order_id: 'ABC123',
+    currency: 'USD'
+  });
+
+  window.DD_RUM.addAction('user_login', {
+    user_id: 'user123',
+    method: 'email',
+    success: true
+  });
+
+  DD_RUM.addAction('page_view', {
+    page: '/checkout',
+    section: 'payment',
+    user_type: 'premium'
+  });
 }
 
 class MyClass {

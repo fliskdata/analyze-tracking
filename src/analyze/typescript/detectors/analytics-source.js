@@ -87,8 +87,17 @@ function detectMemberBasedProvider(node) {
     return 'unknown';
   }
 
-  const objectName = node.expression.expression?.escapedText;
   const methodName = node.expression.name?.escapedText;
+  let objectName = node.expression.expression?.escapedText;
+
+  // Handle nested member expressions like window.DD_RUM.addAction
+  if (!objectName && ts.isPropertyAccessExpression(node.expression.expression)) {
+    // For window.DD_RUM.addAction, we want to check if it matches DD_RUM.addAction pattern
+    const nestedObjectName = node.expression.expression.name?.escapedText;
+    if (nestedObjectName) {
+      objectName = nestedObjectName;
+    }
+  }
 
   if (!objectName || !methodName) {
     return 'unknown';
