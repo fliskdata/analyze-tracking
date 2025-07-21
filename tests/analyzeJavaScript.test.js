@@ -16,7 +16,7 @@ test.describe('analyzeJsFile', () => {
     // Sort events by line number for consistent ordering
     events.sort((a, b) => a.line - b.line);
     
-    assert.strictEqual(events.length, 12);
+    assert.strictEqual(events.length, 15);
     
     // Test Google Analytics event
     const gaEvent = events.find(e => e.eventName === 'purchase' && e.source === 'googleanalytics');
@@ -176,7 +176,7 @@ test.describe('analyzeJsFile', () => {
     assert.ok(snowplowEvent);
     assert.strictEqual(snowplowEvent.source, 'snowplow');
     assert.strictEqual(snowplowEvent.functionName, 'trackSnowplow');
-    assert.strictEqual(snowplowEvent.line, 138);
+    assert.strictEqual(snowplowEvent.line, 157);
     assert.deepStrictEqual(snowplowEvent.properties, {
       category: { type: 'string' },
       label: { type: 'string' },
@@ -189,7 +189,7 @@ test.describe('analyzeJsFile', () => {
     assert.ok(customEvent);
     assert.strictEqual(customEvent.source, 'custom');
     assert.strictEqual(customEvent.functionName, 'global');
-    assert.strictEqual(customEvent.line, 152);
+    assert.strictEqual(customEvent.line, 171);
     assert.deepStrictEqual(customEvent.properties, {
       userId: { type: 'string' },
       order_id: { type: 'string' },
@@ -232,7 +232,7 @@ test.describe('analyzeJsFile', () => {
     const events = analyzeJsFile(testFilePath, null);
     
     // Should find all events except the custom one
-    assert.strictEqual(events.length, 11);
+    assert.strictEqual(events.length, 14);
     assert.strictEqual(events.find(e => e.source === 'custom'), undefined);
   });
   

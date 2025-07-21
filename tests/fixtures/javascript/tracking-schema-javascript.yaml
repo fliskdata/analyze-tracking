@@ -55,13 +55,17 @@ events:
         line: 44
         function: checkout
         destination: amplitude
+      - path: main.js
+        line: 131
+        function: checkout3
+        destination: datadog
     properties:
       order_id:
-        type: any
+        type: string
       products:
         type: any
       total:
-        type: any
+        type: number
       address:
         type: object
         properties:
@@ -69,6 +73,8 @@ events:
             type: string
           state:
             type: string
+      currency:
+        type: string
   Order Completed:
     implementations:
       - path: main.js
@@ -169,7 +175,7 @@ events:
   someevent:
     implementations:
       - path: main.js
-        line: 138
+        line: 157
         function: trackSnowplow
         destination: snowplow
     properties:
@@ -184,7 +190,7 @@ events:
   customEvent:
     implementations:
       - path: main.js
-        line: 152
+        line: 171
         function: global
         destination: custom
     properties:
@@ -201,7 +207,7 @@ events:
   custom_event0:
     implementations:
       - path: main.js
-        line: 162
+        line: 181
         function: global
         destination: custom
     properties:
@@ -210,7 +216,7 @@ events:
   custom_event1:
     implementations:
       - path: main.js
-        line: 163
+        line: 182
         function: global
         destination: custom
     properties:
@@ -219,7 +225,7 @@ events:
   custom_event2:
     implementations:
       - path: main.js
-        line: 164
+        line: 183
         function: global
         destination: custom
     properties:
@@ -230,7 +236,7 @@ events:
   custom_event3:
     implementations:
       - path: main.js
-        line: 165
+        line: 184
         function: global
         destination: custom
     properties:
@@ -241,7 +247,7 @@ events:
   custom_event4:
     implementations:
       - path: main.js
-        line: 166
+        line: 185
         function: global
         destination: custom
     properties:
@@ -259,7 +265,7 @@ events:
   custom_module_event:
     implementations:
       - path: main.js
-        line: 178
+        line: 197
         function: global
         destination: custom
     properties:
@@ -269,10 +275,23 @@ events:
         type: string
       userId:
         type: string
+  page_view:
+    implementations:
+      - path: main.js
+        line: 143
+        function: checkout3
+        destination: datadog
+    properties:
+      page:
+        type: string
+      section:
+        type: string
+      user_type:
+        type: string
   ecommerce_purchase_frozen:
     implementations:
       - path: main.js
-        line: 190
+        line: 209
         function: global
         destination: mixpanel
     properties:
@@ -284,3 +303,16 @@ events:
         type: array
         items:
           type: string
+  user_login:
+    implementations:
+      - path: main.js
+        line: 137
+        function: checkout3
+        destination: datadog
+    properties:
+      user_id:
+        type: string
+      method:
+        type: string
+      success:
+        type: boolean

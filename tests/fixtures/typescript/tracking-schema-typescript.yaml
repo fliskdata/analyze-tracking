@@ -8,7 +8,7 @@ events:
   order_completed:
     implementations:
       - path: main.ts
-        line: 105
+        line: 119
         function: trackOrderCompletedGA
         destination: googleanalytics
     properties:
@@ -43,7 +43,7 @@ events:
   user_checkout:
     implementations:
       - path: main.ts
-        line: 121
+        line: 135
         function: checkout
         destination: segment
     properties:
@@ -56,7 +56,7 @@ events:
   purchase_confirmed:
     implementations:
       - path: main.ts
-        line: 130
+        line: 144
         function: confirmPurchaseMixpanel
         destination: mixpanel
     properties:
@@ -80,7 +80,7 @@ events:
   checkout_initiated:
     implementations:
       - path: main.ts
-        line: 135
+        line: 149
         function: checkout
         destination: amplitude
     properties:
@@ -115,7 +115,7 @@ events:
   order_finalized:
     implementations:
       - path: main.ts
-        line: 150
+        line: 164
         function: checkout
         destination: rudderstack
     properties:
@@ -148,7 +148,7 @@ events:
   BuyNow:
     implementations:
       - path: main.ts
-        line: 176
+        line: 190
         function: checkout2
         destination: mparticle
     properties:
@@ -181,7 +181,7 @@ events:
   user_action:
     implementations:
       - path: main.ts
-        line: 195
+        line: 209
         function: checkout2
         destination: posthog
     properties:
@@ -216,7 +216,7 @@ events:
   customer_checkout:
     implementations:
       - path: main.ts
-        line: 216
+        line: 230
         function: checkout3
         destination: pendo
     properties:
@@ -249,7 +249,7 @@ events:
   user_login:
     implementations:
       - path: main.ts
-        line: 230
+        line: 244
         function: checkout3
         destination: heap
     properties:
@@ -266,7 +266,7 @@ events:
   item_view:
     implementations:
       - path: main.ts
-        line: 247
+        line: 282
         function: trackSnowplow
         destination: snowplow
     properties:
@@ -281,7 +281,7 @@ events:
   button_click:
     implementations:
       - path: main.ts
-        line: 251
+        line: 286
         function: trackSnowplow2
         destination: snowplow
     properties:
@@ -296,7 +296,7 @@ events:
   custom_event_v2:
     implementations:
       - path: main.ts
-        line: 280
+        line: 315
         function: global
         destination: custom
     properties:
@@ -320,7 +320,7 @@ events:
   ecommerce_purchase:
     implementations:
       - path: main.ts
-        line: 291
+        line: 326
         function: global
         destination: custom
     properties:
@@ -337,7 +337,7 @@ events:
   ecommerce_purchase_frozen:
     implementations:
       - path: main.ts
-        line: 292
+        line: 327
         function: global
         destination: mixpanel
     properties:
@@ -352,7 +352,7 @@ events:
   ecommerce_purchase_v2:
     implementations:
       - path: main.ts
-        line: 293
+        line: 328
         function: global
         destination: segment
     properties:
@@ -367,7 +367,7 @@ events:
   custom_event0:
     implementations:
       - path: main.ts
-        line: 306
+        line: 341
         function: global
         destination: custom
     properties:
@@ -376,7 +376,7 @@ events:
   custom_event1:
     implementations:
       - path: main.ts
-        line: 307
+        line: 342
         function: global
         destination: custom
     properties:
@@ -385,7 +385,7 @@ events:
   custom_event2:
     implementations:
       - path: main.ts
-        line: 308
+        line: 343
         function: global
         destination: custom
     properties:
@@ -396,7 +396,7 @@ events:
   custom_event3:
     implementations:
       - path: main.ts
-        line: 309
+        line: 344
         function: global
         destination: custom
     properties:
@@ -407,7 +407,7 @@ events:
   custom_event4:
     implementations:
       - path: main.ts
-        line: 310
+        line: 345
         function: global
         destination: custom
     properties:
@@ -425,7 +425,7 @@ events:
   custom_module_event:
     implementations:
       - path: main.ts
-        line: 322
+        line: 357
         function: global
         destination: custom
     properties:
@@ -438,11 +438,11 @@ events:
   FailedPayment:
     implementations:
       - path: main.ts
-        line: 361
+        line: 396
         function: global
         destination: custom
       - path: main.ts
-        line: 417
+        line: 452
         function: trackFailedPayment
         destination: custom
     properties:
@@ -453,11 +453,11 @@ events:
   InitiatedPayment:
     implementations:
       - path: main.ts
-        line: 349
+        line: 384
         function: global
         destination: custom
       - path: main.ts
-        line: 422
+        line: 457
         function: trackInitiatedPayment
         destination: custom
     properties:
@@ -468,7 +468,50 @@ events:
   ViewedAttorneyAgreement:
     implementations:
       - path: main.ts
-        line: 375
+        line: 410
         function: handleView
         destination: custom
     properties: {}
+  checkout_completed:
+    implementations:
+      - path: main.ts
+        line: 247
+        function: checkout3
+        destination: datadog
+    properties:
+      total:
+        type: number
+      orderId:
+        type: string
+      currency:
+        type: string
+      items:
+        type: number
+  user_registration:
+    implementations:
+      - path: main.ts
+        line: 254
+        function: checkout3
+        destination: datadog
+    properties:
+      user_id:
+        type: string
+      method:
+        type: string
+      success:
+        type: boolean
+      referrer:
+        type: string
+  error_occurred:
+    implementations:
+      - path: main.ts
+        line: 261
+        function: checkout3
+        destination: datadog
+    properties:
+      error_type:
+        type: string
+      field:
+        type: string
+      page:
+        type: string

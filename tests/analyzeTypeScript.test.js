@@ -37,14 +37,14 @@ test.describe('analyzeTsFile', () => {
     // Sort events by line number for consistent ordering
     events.sort((a, b) => a.line - b.line);
 
-    assert.strictEqual(events.length, 20);
+    assert.strictEqual(events.length, 23);
 
     // Test Google Analytics event
     const gaEvent = events.find(e => e.eventName === 'order_completed' && e.source === 'googleanalytics');
     assert.ok(gaEvent);
     assert.strictEqual(gaEvent.source, 'googleanalytics');
     assert.strictEqual(gaEvent.functionName, 'trackOrderCompletedGA');
-    assert.strictEqual(gaEvent.line, 105);
+    assert.strictEqual(gaEvent.line, 119);
     assert.deepStrictEqual(gaEvent.properties, {
       order_id: { type: 'string' },
       products: {
@@ -76,7 +76,7 @@ test.describe('analyzeTsFile', () => {
     assert.ok(segmentEvent);
     assert.strictEqual(segmentEvent.source, 'segment');
     assert.strictEqual(segmentEvent.functionName, 'checkout');
-    assert.strictEqual(segmentEvent.line, 121);
+    assert.strictEqual(segmentEvent.line, 135);
     assert.deepStrictEqual(segmentEvent.properties, {
       stage: { type: 'string' },
       method: { type: 'string' },
@@ -88,7 +88,7 @@ test.describe('analyzeTsFile', () => {
     assert.ok(mixpanelEvent);
     assert.strictEqual(mixpanelEvent.source, 'mixpanel');
     assert.strictEqual(mixpanelEvent.functionName, 'confirmPurchaseMixpanel');
-    assert.strictEqual(mixpanelEvent.line, 130);
+    assert.strictEqual(mixpanelEvent.line, 144);
     assert.deepStrictEqual(mixpanelEvent.properties, {
       order_id: { type: 'string' },
       items: {
@@ -111,7 +111,7 @@ test.describe('analyzeTsFile', () => {
     assert.ok(amplitudeEvent);
     assert.strictEqual(amplitudeEvent.source, 'amplitude');
     assert.strictEqual(amplitudeEvent.functionName, 'checkout');
-    assert.strictEqual(amplitudeEvent.line, 135);
+    assert.strictEqual(amplitudeEvent.line, 149);
     assert.deepStrictEqual(amplitudeEvent.properties, {
       order_id: { type: 'string' },
       items: {
@@ -143,7 +143,7 @@ test.describe('analyzeTsFile', () => {
     assert.ok(rudderstackEvent);
     assert.strictEqual(rudderstackEvent.source, 'rudderstack');
     assert.strictEqual(rudderstackEvent.functionName, 'checkout');
-    assert.strictEqual(rudderstackEvent.line, 150);
+    assert.strictEqual(rudderstackEvent.line, 164);
     assert.deepStrictEqual(rudderstackEvent.properties, {
       order_id: { type: 'string' },
       items: {
@@ -174,7 +174,7 @@ test.describe('analyzeTsFile', () => {
     assert.ok(mparticleEvent);
     assert.strictEqual(mparticleEvent.source, 'mparticle');
     assert.strictEqual(mparticleEvent.functionName, 'checkout2');
-    assert.strictEqual(mparticleEvent.line, 176);
+    assert.strictEqual(mparticleEvent.line, 190);
     assert.deepStrictEqual(mparticleEvent.properties, {
       order_id: { type: 'string' },
       items: {
@@ -205,7 +205,7 @@ test.describe('analyzeTsFile', () => {
     assert.ok(posthogEvent);
     assert.strictEqual(posthogEvent.source, 'posthog');
     assert.strictEqual(posthogEvent.functionName, 'checkout2');
-    assert.strictEqual(posthogEvent.line, 195);
+    assert.strictEqual(posthogEvent.line, 209);
     assert.deepStrictEqual(posthogEvent.properties, {
       order_id: { type: 'string' },
       retry: { type: 'number' },
@@ -237,7 +237,7 @@ test.describe('analyzeTsFile', () => {
     assert.ok(pendoEvent);
     assert.strictEqual(pendoEvent.source, 'pendo');
     assert.strictEqual(pendoEvent.functionName, 'checkout3');
-    assert.strictEqual(pendoEvent.line, 216);
+    assert.strictEqual(pendoEvent.line, 230);
     assert.deepStrictEqual(pendoEvent.properties, {
       order_id: { type: 'string' },
       products: {
@@ -268,7 +268,7 @@ test.describe('analyzeTsFile', () => {
     assert.ok(heapEvent);
     assert.strictEqual(heapEvent.source, 'heap');
     assert.strictEqual(heapEvent.functionName, 'checkout3');
-    assert.strictEqual(heapEvent.line, 230);
+    assert.strictEqual(heapEvent.line, 244);
     assert.deepStrictEqual(heapEvent.properties, {
       user_id: { type: 'string' },
       email: { type: 'string' },
@@ -284,7 +284,7 @@ test.describe('analyzeTsFile', () => {
     assert.ok(snowplowEvent1);
     assert.strictEqual(snowplowEvent1.source, 'snowplow');
     assert.strictEqual(snowplowEvent1.functionName, 'trackSnowplow');
-    assert.strictEqual(snowplowEvent1.line, 247);
+    assert.strictEqual(snowplowEvent1.line, 282);
     assert.deepStrictEqual(snowplowEvent1.properties, {
       category: { type: 'string' },
       label: { type: 'string' },
@@ -296,14 +296,14 @@ test.describe('analyzeTsFile', () => {
     assert.ok(snowplowEvent2);
     assert.strictEqual(snowplowEvent2.source, 'snowplow');
     assert.strictEqual(snowplowEvent2.functionName, 'trackSnowplow2');
-    assert.strictEqual(snowplowEvent2.line, 251);
+    assert.strictEqual(snowplowEvent2.line, 286);
 
     // Test custom function event
     const customEvent = events.find(e => e.eventName === 'custom_event_v2');
     assert.ok(customEvent);
     assert.strictEqual(customEvent.source, 'custom');
     assert.strictEqual(customEvent.functionName, 'global');
-    assert.strictEqual(customEvent.line, 280);
+    assert.strictEqual(customEvent.line, 315);
     assert.deepStrictEqual(customEvent.properties, {
       userId: { type: 'string' },
       order_id: { type: 'string' },
@@ -326,7 +326,7 @@ test.describe('analyzeTsFile', () => {
     assert.ok(constantEvent);
     assert.strictEqual(constantEvent.source, 'custom');
     assert.strictEqual(constantEvent.functionName, 'global');
-    assert.strictEqual(constantEvent.line, 291);
+    assert.strictEqual(constantEvent.line, 326);
     assert.deepStrictEqual(constantEvent.properties, {
       userId: { type: 'string' },
       orderId: { type: 'string' },
@@ -342,7 +342,7 @@ test.describe('analyzeTsFile', () => {
     assert.ok(importedConstantEvent);
     assert.strictEqual(importedConstantEvent.source, 'segment');
     assert.strictEqual(importedConstantEvent.functionName, 'global');
-    assert.strictEqual(importedConstantEvent.line, 293);
+    assert.strictEqual(importedConstantEvent.line, 328);
     assert.deepStrictEqual(importedConstantEvent.properties, {
       orderId: { type: 'string' },
       total: { type: 'number' },
@@ -357,7 +357,7 @@ test.describe('analyzeTsFile', () => {
     assert.ok(frozenConstantEvent);
     assert.strictEqual(frozenConstantEvent.source, 'mixpanel');
     assert.strictEqual(frozenConstantEvent.functionName, 'global');
-    assert.strictEqual(frozenConstantEvent.line, 292);
+    assert.strictEqual(frozenConstantEvent.line, 327);
     assert.deepStrictEqual(frozenConstantEvent.properties, {
       orderId: { type: 'string' },
       total: { type: 'number' },
@@ -405,7 +405,7 @@ test.describe('analyzeTsFile', () => {
     const events = analyzeTsFile(testFilePath, program, null);
 
     // Should find all events except the custom ones
-    assert.strictEqual(events.length, 13);
+    assert.strictEqual(events.length, 16);
     assert.strictEqual(events.find(e => e.source === 'custom'), undefined);
   });
 

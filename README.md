@@ -111,6 +111,7 @@ See [schema.json](schema.json) for a JSON Schema of the output.
 | Pendo             | ✅ | ❌ | ❌ | ❌ |
 | Heap              | ✅ | ❌ | ❌ | ❌ |
 | Snowplow          | ✅ | ✅ | ✅ | ✅ |
+| Datadog RUM       | ✅ | ❌ | ❌ | ❌ |
 | Custom Function   | ✅ | ✅ | ✅ | ✅ |
 
 ✳️ Rudderstack's SDKs often use the same format as Segment, so Rudderstack events may be detected as Segment events.
@@ -373,6 +374,27 @@ See [schema.json](schema.json) for a JSON Schema of the output.
   ```
 
 
+</details>
+
+<details>
+  <summary>Datadog RUM</summary>
+
+  **JavaScript/TypeScript**
+  ```js
+  datadogRum.addAction('<event_name>', {
+    '<property_name>': '<property_value>'
+  });
+  
+  // Or via window
+  window.DD_RUM.addAction('<event_name>', {
+    '<property_name>': '<property_value>'
+  });
+
+  // Or via global DD_RUM
+  DD_RUM.addAction('<event_name>', {
+    '<property_name>': '<property_value>'
+  });
+  ```
 </details>
 
 <details>
