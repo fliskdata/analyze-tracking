@@ -178,7 +178,7 @@ test.describe('Schema Validation Tests', () => {
     const validDestinations = [
       'googleanalytics', 'segment', 'mixpanel', 'amplitude', 
       'rudderstack', 'mparticle', 'posthog', 'pendo', 
-      'heap', 'snowplow', 'datadog', 'custom', 'unknown',
+      'heap', 'snowplow', 'datadog', 'gtm', 'custom', 'unknown',
     ];
     
     // Check that all destinations are valid

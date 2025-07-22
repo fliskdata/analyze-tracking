@@ -81,6 +81,12 @@ const ANALYTICS_PROVIDERS = {
     objectNames: ['datadogRum', 'DD_RUM'],
     methodName: 'addAction',
     type: 'member'
+  },
+  GOOGLE_TAG_MANAGER: {
+    name: 'gtm',
+    objectNames: ['dataLayer'],
+    methodName: 'push',
+    type: 'member'
   }
 };
 

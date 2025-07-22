@@ -462,3 +462,99 @@ function mapDispatchToActions(dispatch: Function, ownProps: ExplicitPropsRedux &
     ),
   };
 }
+
+// -----------------------------------------------------------------------------
+// Google Tag Manager (GTM) tracking examples
+// -----------------------------------------------------------------------------
+
+// Extend existing window declaration to include dataLayer
+interface GTMWindow extends Window {
+  dataLayer: any[];
+}
+
+declare const dataLayer: any[];
+
+// GTM example 1: window.dataLayer.push with explicit types
+interface GTMEvent {
+  event: string;
+  [key: string]: any;
+}
+
+(window as any).dataLayer.push({
+  'event': 'formSubmission',
+  'formId': 'contactForm',
+  'formLocation': 'footer',
+  'timestamp': Date.now()
+} as GTMEvent);
+
+// GTM example 2: dataLayer.push (without window) with typed interface  
+interface UserRegistrationEvent {
+  event: 'userRegistration';
+  userId: string;
+  source: string;
+  plan: string;
+}
+
+const gtmRegistrationEvent: UserRegistrationEvent = {
+  event: 'userRegistration',
+  userId: 'user123',
+  source: 'organic',
+  plan: 'premium'
+};
+dataLayer.push(gtmRegistrationEvent);
+
+// GTM example 3: complex ecommerce tracking
+interface GTMEcommerceItem {
+  item_id: string;
+  item_name: string;
+  price: number;
+}
+
+interface GTMEcommercePurchaseEvent {
+  event: 'ecommerce_purchase';
+  transactionId: string;
+  value: number;
+  currency: string;
+  items: GTMEcommerceItem[];
+}
+
+const gtmPurchaseEvent: GTMEcommercePurchaseEvent = {
+  event: 'ecommerce_purchase',
+  transactionId: 'txn_123',
+  value: 99.99,
+  currency: 'USD',
+  items: [
+    {
+      item_id: 'sku_001',
+      item_name: 'Product A',
+      price: 49.99
+    },
+    {
+      item_id: 'sku_002',
+      item_name: 'Product B', 
+      price: 50.00
+    }
+  ]
+};
+(window as any).dataLayer.push(gtmPurchaseEvent);
+
+// GTM example 4: inside a function
+function gtmTestFunction(): void {
+  dataLayer.push({
+    'event': 'buttonClick',
+    'buttonText': 'Subscribe Now',
+    'location': 'header',
+    'timestamp': new Date().toISOString()
+  });
+}
+
+// GTM example 5: with variable reference
+const GTM_EVENTS = {
+  VIDEO_PLAY: 'video_play'
+} as const;
+
+(window as any).dataLayer.push({
+  'event': GTM_EVENTS.VIDEO_PLAY,
+  'videoTitle': 'Product Demo',
+  'videoDuration': 120
+});

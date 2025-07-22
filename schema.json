@@ -68,6 +68,7 @@
                       "heap",
                       "snowplow",
                       "datadog",
+                      "gtm",
                       "custom",
                       "unknown"
                     ],

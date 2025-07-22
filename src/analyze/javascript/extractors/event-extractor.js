@@ -20,6 +20,7 @@ const EXTRACTION_STRATEGIES = {
   googleanalytics: extractGoogleAnalyticsEvent,
   snowplow: extractSnowplowEvent,
   mparticle: extractMparticleEvent,
+  gtm: extractGTMEvent,
   custom: extractCustomEvent,
   default: extractDefaultEvent
 };
@@ -103,6 +104,43 @@ function extractMparticleEvent(node, constantMap) {
   const propertiesNode = node.arguments[2];
 
   return { eventName, propertiesNode };
+}
+
+/**
+ * Extracts Google Tag Manager event data
+ * @param {Object} node - CallExpression node
+ * @param {Object} constantMap - Collected constant map
+ * @returns {EventData}
+ */
+function extractGTMEvent(node, constantMap) {
+  if (!node.arguments || node.arguments.length === 0) {
+    return { eventName: null, propertiesNode: null };
+  }
+
+  // dataLayer.push({ event: 'event_name', property1: 'value1', property2: 'value2' })
+  const firstArg = node.arguments[0];
+  
+  if (firstArg.type !== NODE_TYPES.OBJECT_EXPRESSION) {
+    return { eventName: null, propertiesNode: null };
+  }
+
+  // Find the 'event' property
+  const eventProperty = findPropertyByKey(firstArg, 'event');
+  if (!eventProperty) {
+    return { eventName: null, propertiesNode: null };
+  }
+
+  const eventName = getStringValue(eventProperty.value, constantMap);
+  
+  // Create a modified properties node without the 'event' property
+  const modifiedPropertiesNode = {
+    ...firstArg,
+    properties: firstArg.properties.filter(prop => 
+      prop.key && (prop.key.name !== 'event' && prop.key.value !== 'event')
+    )
+  };
+
+  return { eventName, propertiesNode: modifiedPropertiesNode };
 }
 
 /**

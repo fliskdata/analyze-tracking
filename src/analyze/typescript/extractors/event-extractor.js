@@ -21,6 +21,7 @@ const EXTRACTION_STRATEGIES = {
   googleanalytics: extractGoogleAnalyticsEvent,
   snowplow: extractSnowplowEvent,
   mparticle: extractMparticleEvent,
+  gtm: extractGTMEvent,
   custom: extractCustomEvent,
   default: extractDefaultEvent
 };
@@ -124,6 +125,60 @@ function extractMparticleEvent(node, checker, sourceFile) {
   const propertiesNode = node.arguments[2];
 
   return { eventName, propertiesNode };
+}
+
+/**
+ * Extracts Google Tag Manager event data
+ * @param {Object} node - CallExpression node
+ * @param {Object} checker - TypeScript type checker
+ * @param {Object} sourceFile - TypeScript source file
+ * @returns {EventData}
+ */
+function extractGTMEvent(node, checker, sourceFile) {
+  if (!node.arguments || node.arguments.length === 0) {
+    return { eventName: null, propertiesNode: null };
+  }
+
+  // dataLayer.push({ event: 'event_name', property1: 'value1', property2: 'value2' })
+  const firstArg = node.arguments[0];
+  
+  if (!ts.isObjectLiteralExpression(firstArg)) {
+    return { eventName: null, propertiesNode: null };
+  }
+
+  // Find the 'event' property
+  const eventProperty = findPropertyByKey(firstArg, 'event');
+  if (!eventProperty) {
+    return { eventName: null, propertiesNode: null };
+  }
+
+  const eventName = getStringValue(eventProperty.initializer, checker, sourceFile);
+  
+  // Create a modified properties node without the 'event' property
+  const modifiedProperties = firstArg.properties.filter(prop => {
+    if (ts.isPropertyAssignment(prop) && prop.name) {
+      if (ts.isIdentifier(prop.name)) {
+        return prop.name.escapedText !== 'event';
+      }
+      if (ts.isStringLiteral(prop.name)) {
+        return prop.name.text !== 'event';
+      }
+    }
+    return true;
+  });
+
+  // Create a synthetic object literal with the filtered properties
+  const modifiedPropertiesNode = ts.factory.createObjectLiteralExpression(modifiedProperties);
+  
+  // Copy source positions for proper analysis
+  if (firstArg.pos !== undefined) {
+    modifiedPropertiesNode.pos = firstArg.pos;
+  }
+  if (firstArg.end !== undefined) {
+    modifiedPropertiesNode.end = firstArg.end;
+  }
+
+  return { eventName, propertiesNode: modifiedPropertiesNode };
 }
 
 /**

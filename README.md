@@ -101,18 +101,19 @@ See [schema.json](schema.json) for a JSON Schema of the output.
 
 | Library | JavaScript/TypeScript | Python | Ruby | Go |
 |---------|:---------------------:|:------:|:----:|:--:|
-| Google Analytics  | ✅ | ❌ | ❌ | ❌ |
-| Segment           | ✅ | ✅ | ✅ | ✅ |
-| Mixpanel          | ✅ | ✅ | ✅ | ✅ |
-| Amplitude         | ✅ | ✅ | ❌ | ✅ |
-| Rudderstack       | ✅ | ✅ | ✳️ | ✳️ |
-| mParticle         | ✅ | ❌ | ❌ | ❌ |
-| PostHog           | ✅ | ✅ | ✅ | ✅ |
-| Pendo             | ✅ | ❌ | ❌ | ❌ |
-| Heap              | ✅ | ❌ | ❌ | ❌ |
-| Snowplow          | ✅ | ✅ | ✅ | ✅ |
-| Datadog RUM       | ✅ | ❌ | ❌ | ❌ |
-| Custom Function   | ✅ | ✅ | ✅ | ✅ |
+| Google Analytics   | ✅ | ❌ | ❌ | ❌ |
+| Google Tag Manager | ✅ | ❌ | ❌ | ❌ |
+| Segment            | ✅ | ✅ | ✅ | ✅ |
+| Mixpanel           | ✅ | ✅ | ✅ | ✅ |
+| Amplitude          | ✅ | ✅ | ❌ | ✅ |
+| Rudderstack        | ✅ | ✅ | ✳️ | ✳️ |
+| mParticle          | ✅ | ❌ | ❌ | ❌ |
+| PostHog            | ✅ | ✅ | ✅ | ✅ |
+| Pendo              | ✅ | ❌ | ❌ | ❌ |
+| Heap               | ✅ | ❌ | ❌ | ❌ |
+| Snowplow           | ✅ | ✅ | ✅ | ✅ |
+| Datadog RUM        | ✅ | ❌ | ❌ | ❌ |
+| Custom Function    | ✅ | ✅ | ✅ | ✅ |
 
 ✳️ Rudderstack's SDKs often use the same format as Segment, so Rudderstack events may be detected as Segment events.
 
@@ -125,6 +126,24 @@ See [schema.json](schema.json) for a JSON Schema of the output.
   **JavaScript/TypeScript**
   ```js
   gtag('event', '<event_name>', {
+    '<property_name>': '<property_value>'
+  });
+  ```
+</details>
+
+<details>
+  <summary>Google Tag Manager</summary>
+
+  **JavaScript/TypeScript**
+  ```js
+  dataLayer.push({
+    event: '<event_name>',
+    '<property_name>': '<property_value>'
+  });
+
+  // Or via window
+  window.dataLayer.push({
+    event: '<event_name>',
     '<property_name>': '<property_value>'
   });
   ```

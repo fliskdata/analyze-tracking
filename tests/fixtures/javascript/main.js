@@ -211,3 +211,51 @@ mixpanel.track(TRACKING_EVENTS_FROZEN.ECOMMERCE_PURCHASE, {
   total: 99.99,
   items: ['sku_1', 'sku_2']
 });
+
+// -----------------------------------------------------------------------------
+// Google Tag Manager (GTM) tracking examples
+// -----------------------------------------------------------------------------
+
+// GTM example 1: window.dataLayer.push
+window.dataLayer.push({
+  'event': 'formSubmission',
+  'formId': 'contactForm',
+  'formLocation': 'footer'
+});
+
+// GTM example 2: dataLayer.push (without window)
+dataLayer.push({
+  'event': 'userRegistration',
+  'userId': 'user123',
+  'source': 'organic',
+  'plan': 'premium'
+});
+
+// GTM example 3: complex properties
+window.dataLayer.push({
+  'event': 'ecommerce_purchase',
+  'transactionId': 'txn_123',
+  'value': 99.99,
+  'currency': 'USD',
+  'items': [
+    {
+      'item_id': 'sku_001',
+      'item_name': 'Product A',
+      'price': 49.99
+    },
+    {
+      'item_id': 'sku_002', 
+      'item_name': 'Product B',
+      'price': 50.00
+    }
+  ]
+});
+
+function gtmTestFunction() {
+  // GTM example 4: inside a function
+  dataLayer.push({
+    'event': 'buttonClick',
+    'buttonText': 'Subscribe Now',
+    'location': 'header'
+  });
+}
