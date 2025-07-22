@@ -1,0 +1,270 @@
+version: 1
+source:
+  repository: ''
+  commit: ''
+  timestamp: ''
+events:
+  User Signed Up:
+    implementations:
+      - path: main.swift
+        line: 25
+        function: trackSegmentEvent
+        destination: segment
+    properties:
+      plan:
+        type: string
+      is_free_trial:
+        type: boolean
+      user_id:
+        type: string
+  Purchase_Completed:
+    implementations:
+      - path: main.swift
+        line: 34
+        function: trackMixpanelEvent
+        destination: mixpanel
+    properties:
+      product:
+        type: string
+      price:
+        type: number
+      currency:
+        type: string
+      is_first_purchase:
+        type: boolean
+  Button_Clicked:
+    implementations:
+      - path: main.swift
+        line: 45
+        function: trackAmplitudeEvent
+        destination: amplitude
+    properties:
+      button_name:
+        type: string
+      screen:
+        type: string
+      user_tier:
+        type: string
+  Page_Viewed:
+    implementations:
+      - path: main.swift
+        line: 54
+        function: trackRudderStackEvent
+        destination: rudderstack
+    properties:
+      page_name:
+        type: string
+      category:
+        type: string
+      user_agent:
+        type: string
+  Product_Added_To_Cart:
+    implementations:
+      - path: main.swift
+        line: 62
+        function: trackMParticleEvent
+        destination: mparticle
+    properties:
+      product_id:
+        type: string
+      product_name:
+        type: string
+      quantity:
+        type: number
+      price:
+        type: number
+  Feature_Used:
+    implementations:
+      - path: main.swift
+        line: 73
+        function: trackPostHogEvent
+        destination: posthog
+    properties:
+      feature_name:
+        type: string
+      enabled:
+        type: boolean
+      user_preference:
+        type: string
+  Guide_Completed:
+    implementations:
+      - path: main.swift
+        line: 81
+        function: trackPendoEvent
+        destination: pendo
+    properties:
+      guide_id:
+        type: string
+      completion_time:
+        type: number
+      success:
+        type: boolean
+  User_Engagement:
+    implementations:
+      - path: main.swift
+        line: 89
+        function: trackHeapEvent
+        destination: heap
+    properties:
+      session_duration:
+        type: number
+      pages_viewed:
+        type: number
+      actions_taken:
+        type: number
+  Button_Click:
+    implementations:
+      - path: main.swift
+        line: 98
+        function: trackSnowplowEvent
+        destination: snowplow
+    properties:
+      category:
+        type: string
+      action:
+        type: string
+      label:
+        type: string
+      property:
+        type: string
+      value:
+        type: number
+  user_purchase:
+    implementations:
+      - path: main.swift
+        line: 104
+        function: trackFirebaseEvent
+        destination: firebase
+    properties:
+      item_id:
+        type: string
+      item_name:
+        type: string
+      item_category:
+        type: string
+      quantity:
+        type: number
+      price:
+        type: number
+      currency:
+        type: string
+  Dynamic_Event:
+    implementations:
+      - path: main.swift
+        line: 120
+        function: trackWithVariables
+        destination: segment
+    properties:
+      user_tier:
+        type: string
+      is_active:
+        type: boolean
+      item_count:
+        type: number
+      metadata:
+        type: object
+        properties:
+          registration_date:
+            type: string
+          preferred_language:
+            type: string
+  custom_event:
+    implementations:
+      - path: main.swift
+        line: 140
+        function: useCustomTracking
+        destination: custom
+    properties:
+      foo:
+        type: string
+      baz:
+        type: number
+      list:
+        type: array
+      obj:
+        type: object
+        properties:
+          a:
+            type: number
+          b:
+            type: number
+          c:
+            type: string
+  custom_event0:
+    implementations:
+      - path: main.swift
+        line: 147
+        function: useCustomTracking
+        destination: custom
+    properties:
+      foo:
+        type: string
+  custom_event1:
+    implementations:
+      - path: main.swift
+        line: 148
+        function: useCustomTracking
+        destination: custom
+    properties:
+      foo:
+        type: string
+  custom_event2:
+    implementations:
+      - path: main.swift
+        line: 149
+        function: useCustomTracking
+        destination: custom
+    properties:
+      foo:
+        type: string
+  custom_event3:
+    implementations:
+      - path: main.swift
+        line: 150
+        function: useCustomTracking
+        destination: custom
+    properties:
+      foo:
+        type: string
+  custom_event4:
+    implementations:
+      - path: main.swift
+        line: 151
+        function: useCustomTracking
+        destination: custom
+    properties:
+      foo:
+        type: string
+  Nested_Call:
+    implementations:
+      - path: main.swift
+        line: 157
+        function: trackComplexScenarios
+        destination: segment
+    properties:
+      computed_value:
+        type: any
+      timestamp:
+        type: any
+  Conditional_Event:
+    implementations:
+      - path: main.swift
+        line: 163
+        function: trackComplexScenarios
+        destination: mixpanel
+    properties:
+      condition_met:
+        type: boolean
+  Extended_Properties:
+    implementations:
+      - path: main.swift
+        line: 171
+        function: trackComplexScenarios
+        destination: posthog
+    properties:
+      source:
+        type: string
+      version:
+        type: string
+      user_action:
+        type: string

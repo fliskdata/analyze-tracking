@@ -13,6 +13,7 @@ const { analyzeTsFiles } = require('./typescript');
 const { analyzePythonFile } = require('./python');
 const { analyzeRubyFile, prebuildConstantMaps } = require('./ruby');
 const { analyzeGoFile } = require('./go');
+const { analyzeSwiftFile } = require('./swift');
 
 /**
  * Analyzes a single file for analytics tracking calls
@@ -28,6 +29,7 @@ async function analyzeFile(file, customFunctionSignatures) {
   if (/\.py$/.test(file))   return analyzePythonFile(file, customFunctionSignatures)
   if (/\.rb$/.test(file))   return analyzeRubyFile(file, customFunctionSignatures)
   if (/\.go$/.test(file))   return analyzeGoFile(file, customFunctionSignatures)
+  if (/\.swift$/.test(file)) return analyzeSwiftFile(file, customFunctionSignatures)
   return []
 }
 

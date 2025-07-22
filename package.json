@@ -13,6 +13,7 @@
     "test:python": "node --experimental-vm-modules --test tests/analyzePython.test.js",
     "test:ruby": "node --experimental-vm-modules --test tests/analyzeRuby.test.js",
     "test:go": "node --test tests/analyzeGo.test.js",
+    "test:swift": "node --experimental-vm-modules --test tests/analyzeSwift.test.js",
     "test:cli": "node --test tests/cli.test.js",
     "test:schema": "node --test tests/schema.test.js",
     "test:generateDescriptions": "node --test tests/generateDescriptions.test.js",
