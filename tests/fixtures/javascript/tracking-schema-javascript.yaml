@@ -316,3 +316,55 @@ events:
         type: string
       success:
         type: boolean
+  formSubmission:
+    implementations:
+      - path: main.js
+        line: 220
+        function: global
+        destination: gtm
+    properties:
+      formId:
+        type: string
+      formLocation:
+        type: string
+  userRegistration:
+    implementations:
+      - path: main.js
+        line: 227
+        function: global
+        destination: gtm
+    properties:
+      userId:
+        type: string
+      source:
+        type: string
+      plan:
+        type: string
+  ecommerce_purchase:
+    implementations:
+      - path: main.js
+        line: 235
+        function: global
+        destination: gtm
+    properties:
+      transactionId:
+        type: string
+      value:
+        type: number
+      currency:
+        type: string
+      items:
+        type: array
+        items:
+          type: object
+  buttonClick:
+    implementations:
+      - path: main.js
+        line: 256
+        function: gtmTestFunction
+        destination: gtm
+    properties:
+      buttonText:
+        type: string
+      location:
+        type: string

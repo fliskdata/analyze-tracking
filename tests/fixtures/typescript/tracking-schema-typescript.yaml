@@ -515,3 +515,27 @@ events:
         type: string
       page:
         type: string
+  buttonClick:
+    implementations:
+      - path: main.ts
+        line: 543
+        function: gtmTestFunction
+        destination: gtm
+    properties:
+      buttonText:
+        type: string
+      location:
+        type: string
+      timestamp:
+        type: string
+  video_play:
+    implementations:
+      - path: main.ts
+        line: 556
+        function: global
+        destination: gtm
+    properties:
+      videoTitle:
+        type: string
+      videoDuration:
+        type: number

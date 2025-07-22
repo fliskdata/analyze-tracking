@@ -982,6 +982,10 @@ events:
         line: 326
         function: global
         destination: custom
+      - path: javascript/main.js
+        line: 235
+        function: global
+        destination: gtm
     properties:
       orderId:
         type: string
@@ -992,6 +996,12 @@ events:
         items:
           type: string
       userId:
+        type: string
+      transactionId:
+        type: string
+      value:
+        type: number
+      currency:
         type: string
   ecommerce_purchase_v2:
     implementations:
@@ -1431,4 +1441,56 @@ events:
       eligible:
         type: any
       nonInteraction:
+        type: number
+  formSubmission:
+    implementations:
+      - path: javascript/main.js
+        line: 220
+        function: global
+        destination: gtm
+    properties:
+      formId:
+        type: string
+      formLocation:
+        type: string
+  userRegistration:
+    implementations:
+      - path: javascript/main.js
+        line: 227
+        function: global
+        destination: gtm
+    properties:
+      userId:
+        type: string
+      source:
+        type: string
+      plan:
+        type: string
+  buttonClick:
+    implementations:
+      - path: javascript/main.js
+        line: 256
+        function: gtmTestFunction
+        destination: gtm
+      - path: typescript/main.ts
+        line: 543
+        function: gtmTestFunction
+        destination: gtm
+    properties:
+      buttonText:
+        type: string
+      location:
+        type: string
+      timestamp:
+        type: string
+  video_play:
+    implementations:
+      - path: typescript/main.ts
+        line: 556
+        function: global
+        destination: gtm
+    properties:
+      videoTitle:
+        type: string
+      videoDuration:
         type: number

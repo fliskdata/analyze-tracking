@@ -16,7 +16,7 @@ test.describe('analyzeJsFile', () => {
     // Sort events by line number for consistent ordering
     events.sort((a, b) => a.line - b.line);
     
-    assert.strictEqual(events.length, 15);
+    assert.strictEqual(events.length, 19);
     
     // Test Google Analytics event
     const gaEvent = events.find(e => e.eventName === 'purchase' && e.source === 'googleanalytics');
@@ -232,7 +232,7 @@ test.describe('analyzeJsFile', () => {
     const events = analyzeJsFile(testFilePath, null);
     
     // Should find all events except the custom one
-    assert.strictEqual(events.length, 14);
+    assert.strictEqual(events.length, 18);
     assert.strictEqual(events.find(e => e.source === 'custom'), undefined);
   });
   
