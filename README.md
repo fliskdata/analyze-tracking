@@ -464,6 +464,133 @@ See [schema.json](schema.json) for a JSON Schema of the output.
   ```
 </details>
 
+## Parsing Swift files with SwiftSyntax via WebAssembly (WASI)
+
+If your project includes Swift code, you can parse it with full-fidelity **SwiftSyntax** instead of brittle regular expressions. Thanks to the official Swift WASI SDK this works completely inside a Node.js environment—no native Swift toolchain is required at runtime.
+
+Below is a minimal, end-to-end recipe you can drop into your build docs or copy-paste into a README. It turns a tiny SwiftSyntax-based CLI into a `.wasm` module and shows how to execute it from JavaScript.
+
+---
+
+### 1. Set up a Swift toolchain that can target WASM
+
+1. Install the latest Swift **development snapshot** *and* the matching **Swift SDK for WASI** (one-liner provided on the [Swift downloads page](https://www.swift.org/download/)).
+2. Verify the SDK ID:
+
+   ```sh
+   swift sdk list      # e.g. swift-6.2-20250720_wasm
+   ```
+3. Whenever you build, pass `--swift-sdk <id>` (or `--triple wasm32-unknown-wasi` if you prefer). The [official guide](https://www.swift.org/getting-started) shows the exact commands.
+
+---
+
+### 2. Create a tiny SwiftSyntax wrapper
+
+```sh
+mkdir SwiftSyntaxWasm && cd SwiftSyntaxWasm
+swift package init --type executable
+```
+
+`Package.swift` (only the interesting bits):
+
+```swift
+// swift-tools-version: 6.0
+import PackageDescription
+
+let package = Package(
+  name: "SwiftSyntaxWasm",
+  dependencies: [
+    .package(url: "https://github.com/apple/swift-syntax.git", from: "602.0.0")
+  ],
+  targets: [
+    .executableTarget(
+      name: "SwiftSyntaxWasm",
+      dependencies: [
+        .product(name: "SwiftParser", package: "swift-syntax")
+      ])
+  ]
+)
+```
+
+`Sources/SwiftSyntaxWasm/main.swift`:
+
+```swift
+import Foundation
+import SwiftParser      // Light-weight entry point
+import SwiftSyntax
+
+@main
+struct CLI {
+  static func main() throws {
+    guard CommandLine.arguments.count > 1 else {
+      fputs("usage: <tool> file.swift\n", stderr)
+      exit(1)
+    }
+    let url = URL(fileURLWithPath: CommandLine.arguments[1])
+    let source = try String(contentsOf: url)
+    let tree = Parser.parse(source: source)
+    // TODO: Replace with a custom visitor that emits compact JSON.
+    print(tree.description)
+  }
+}
+```
+
+---
+
+### 3. Compile to WASM
+
+```sh
+swift build -c release --swift-sdk swift-6.2-20250720_wasm
+# result: .build/wasm32-unknown-wasi/release/SwiftSyntaxWasm.wasm
+```
+
+The binary will be large (15-25 MB). If size matters, rebuild with the *Embedded Swift* SDK variant or post-process with `wasm-opt -Oz`.
+
+---
+
+### 4. Call the module from Node
+
+Add a tiny launcher—`runner.js`:
+
+```js
+import { readFile } from "node:fs/promises";
+import { WASI } from "node:wasi";
+import { argv, env } from "node:process";
+
+const wasi = new WASI({
+  args: ["SwiftSyntaxWasm.wasm", argv[2]],   // pass path to .swift file
+  env,
+  preopens: { "/": process.cwd() }           // expose CWD to WASI FS
+});
+
+const wasmBytes = await readFile("./SwiftSyntaxWasm.wasm");
+const module = await WebAssembly.compile(wasmBytes);
+const instance = await WebAssembly.instantiate(module, wasi.getImportObject());
+
+wasi.start(instance);                         // prints AST (or your JSON) to stdout
+```
+
+Run it:
+
+```sh
+node runner.js ./Example.swift > ast.json
+```
+
+---
+
+### 5. Consume from your NPM package
+
+Wrap the call above in a helper (e.g. `parseSwift(sourcePath)`), capture `stdout`, and feed the JSON into your existing JS analysis pipeline—exactly like we already do with Pyodide or the Ruby/Python/Go WASM binaries.
+
+---
+
+#### Why this works
+* **SwiftSyntax** itself is pure Swift → the Swift WASI SDK compiles it without native Apple frameworks.
+* **WASI** provides a portable POSIX-ish layer, so the wasm module runs unchanged on Node, Wasmer, or Wasmtime.
+* The approach keeps Swift-side parsing isolated and lets your JS orchestrate everything else.
+
+> **TL;DR** Install the Swift WASI SDK, write a ~30-line SwiftSyntax CLI, `swift build --swift-sdk …`, then load the resulting `.wasm` through Node’s `wasi` API and capture its output.
+
 
 ## Contribute
 We're actively improving this package. Found a bug? Have a feature request? Open an issue or submit a pull request!
