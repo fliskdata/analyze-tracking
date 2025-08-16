@@ -28,7 +28,8 @@ test.describe('analyzeTsFile', () => {
       'customTrackFunction5',
       'customTrackFunction6(EVENT_NAME, PROPERTIES)',
       'customTrackFunction7(EVENT_NAME, PROPERTIES)',
-      'this.props.customTrackFunction6(EVENT_NAME, PROPERTIES)'
+      'this.props.customTrackFunction6(EVENT_NAME, PROPERTIES)',
+      'getTrackingService().track(EVENT_NAME, PROPERTIES)'
     ];
     const customFunctionSignatures = customFunctions.map(parseCustomFunctionSignature);
     const program = createProgram(testFilePath);
@@ -37,7 +38,7 @@ test.describe('analyzeTsFile', () => {
     // Sort events by line number for consistent ordering
     events.sort((a, b) => a.line - b.line);
 
-    assert.strictEqual(events.length, 25);
+    assert.strictEqual(events.length, 26);
 
     // Test Google Analytics event
     const gaEvent = events.find(e => e.eventName === 'order_completed' && e.source === 'googleanalytics');
@@ -365,6 +366,15 @@ test.describe('analyzeTsFile', () => {
         type: 'array',
         items: { type: 'string' }
       }
+    });
+
+    // Test chained custom function event (getTrackingService().track)
+    const tsChained = events.find(e => e.eventName === 'tsChainedEvent' && e.source === 'custom');
+    assert.ok(tsChained);
+    assert.strictEqual(tsChained.functionName, 'dispatchEventTs');
+    assert.deepStrictEqual(tsChained.properties, {
+      foo: { type: 'string' },
+      count: { type: 'number' }
     });
 
     // Test InitiatedPayment custom event (nested dispatch)

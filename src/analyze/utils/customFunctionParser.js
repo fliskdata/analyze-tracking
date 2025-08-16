@@ -4,15 +4,27 @@ function parseCustomFunctionSignature(signature) {
     return null;
   }
 
-  // Match function name and optional parameter list
-  // Supports names with module prefix like Module.func
-  const match = signature.match(/^\s*([A-Za-z0-9_.]+)\s*(?:\(([^)]*)\))?\s*$/);
-  if (!match) {
-    return null;
-  }
+  const trimmed = signature.trim();
 
-  const functionName = match[1].trim();
-  const paramsPart = match[2];
+  // Two cases:
+  // 1) Full signature with params at the end (e.g., Module.track(EVENT_NAME, PROPERTIES)) → parse params
+  // 2) Name-only (including chains with internal calls, e.g., getService().track) → no params
+  let functionName;
+  let paramsPart = null;
+
+  if (/\)\s*$/.test(trimmed)) {
+    // Looks like it ends with a parameter list – extract the final (...) only
+    const lastOpenIdx = trimmed.lastIndexOf('(');
+    const lastCloseIdx = trimmed.lastIndexOf(')');
+    if (lastOpenIdx === -1 || lastCloseIdx < lastOpenIdx) {
+      return null;
+    }
+    functionName = trimmed.slice(0, lastOpenIdx).trim();
+    paramsPart = trimmed.slice(lastOpenIdx + 1, lastCloseIdx);
+  } else {
+    // No trailing params – treat the whole string as the function name
+    functionName = trimmed;
+  }
 
   // Default legacy behaviour: EVENT_NAME, PROPERTIES
   if (!paramsPart) {

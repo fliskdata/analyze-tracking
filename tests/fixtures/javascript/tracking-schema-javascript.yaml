@@ -368,3 +368,14 @@ events:
         type: string
       location:
         type: string
+  myChainedEvent:
+    implementations:
+      - path: main.js
+        line: 264
+        function: dispatchEvent
+        destination: custom
+    properties:
+      foo:
+        type: string
+      baz:
+        type: string

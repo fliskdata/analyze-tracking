@@ -1494,3 +1494,25 @@ events:
         type: string
       videoDuration:
         type: number
+  myChainedEvent:
+    implementations:
+      - path: javascript/main.js
+        line: 264
+        function: dispatchEvent
+        destination: custom
+    properties:
+      foo:
+        type: string
+      baz:
+        type: string
+  tsChainedEvent:
+    implementations:
+      - path: typescript/main.ts
+        line: 569
+        function: dispatchEventTs
+        destination: custom
+    properties:
+      foo:
+        type: string
+      count:
+        type: number

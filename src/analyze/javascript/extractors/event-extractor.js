@@ -257,7 +257,11 @@ function getStringValue(node, constantMap = {}) {
     return node.value;
   }
   if (node.type === NODE_TYPES.MEMBER_EXPRESSION) {
-    return resolveMemberExpressionToString(node, constantMap);
+    const resolved = resolveMemberExpressionToString(node, constantMap);
+    if (resolved) return resolved;
+    // Fallback: return a dotted path for member expressions when we cannot
+    // resolve to a literal (e.g., imported constants like TELEMETRY_EVENTS.X)
+    return memberExpressionToPath(node);
   }
   return null;
 }
@@ -313,6 +317,25 @@ function resolveMemberExpressionToString(node, constantMap) {
     return constantMap[objName][propName];
   }
   return null;
+}
+
+// Build a dotted path string for a MemberExpression (e.g., OBJ.KEY.SUBKEY)
+function memberExpressionToPath(node) {
+  if (!node || node.type !== NODE_TYPES.MEMBER_EXPRESSION) return null;
+  const parts = [];
+  let current = node;
+  while (current && current.type === NODE_TYPES.MEMBER_EXPRESSION && !current.computed) {
+    if (current.property && current.property.type === NODE_TYPES.IDENTIFIER) {
+      parts.unshift(current.property.name);
+    } else if (current.property && current.property.type === NODE_TYPES.LITERAL) {
+      parts.unshift(String(current.property.value));
+    }
+    current = current.object;
+  }
+  if (current && current.type === NODE_TYPES.IDENTIFIER) {
+    parts.unshift(current.name);
+  }
+  return parts.length ? parts.join('.') : null;
 }
 
 module.exports = {

@@ -558,3 +558,16 @@ const GTM_EVENTS = {
   'videoTitle': 'Product Demo',
   'videoDuration': 120
 });
+
+// -----------------------------------------------------------------------------
+// Chained custom function example for testing: getTrackingService().track(...)
+// -----------------------------------------------------------------------------
+
+declare function getTrackingService(): { track: (eventName: string, properties: Record<string, any>) => void };
+
+function dispatchEventTs(): void {
+  getTrackingService().track('tsChainedEvent', {
+    foo: 'bar',
+    count: 7
+  });
+}

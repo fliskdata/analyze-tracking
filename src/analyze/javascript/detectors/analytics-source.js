@@ -45,20 +45,23 @@ function detectAnalyticsSource(node, customFunction) {
 function isCustomFunction(node, customFunction) {
   if (!customFunction) return false;
 
-  // Support dot-separated names like "CustomModule.track"
-  const parts = customFunction.split('.');
+  // Support dot-separated names like "CustomModule.track" and chained calls like "getTrackingService().track"
+  // Normalize each segment by stripping trailing parentheses
+  const parts = customFunction.split('.').map(p => p.replace(/\(\s*\)$/, ''));
 
   // Simple identifier (no dot)
   if (parts.length === 1) {
-    return node.callee.type === NODE_TYPES.IDENTIFIER && node.callee.name === customFunction;
+    return node.callee.type === NODE_TYPES.IDENTIFIER && node.callee.name === parts[0];
   }
 
-  // For dot-separated names, the callee should be a MemberExpression chain.
-  if (node.callee.type !== NODE_TYPES.MEMBER_EXPRESSION) {
+  // For dot-separated names, the callee should be a MemberExpression chain,
+  // but we also allow CallExpression in the chain (e.g., getService().track)
+  const callee = node.callee;
+  if (callee.type !== NODE_TYPES.MEMBER_EXPRESSION && callee.type !== NODE_TYPES.CALL_EXPRESSION) {
     return false;
   }
 
-  return matchesMemberChain(node.callee, parts);
+  return matchesMemberChain(callee, parts);
 }
 
 /**
@@ -75,9 +78,8 @@ function matchesMemberChain(memberExpr, parts) {
   while (currentNode && idx >= 0) {
     const expectedPart = parts[idx];
 
-    // property should match current expectedPart
     if (currentNode.type === NODE_TYPES.MEMBER_EXPRESSION) {
-      // Ensure property is Identifier and matches
+      // Ensure property is Identifier and matches the expected part
       if (
         currentNode.property.type !== NODE_TYPES.IDENTIFIER ||
         currentNode.property.name !== expectedPart
@@ -85,16 +87,25 @@ function matchesMemberChain(memberExpr, parts) {
         return false;
       }
 
-      // Move to the object of the MemberExpression
+      // Move to the object (which could itself be a MemberExpression, Identifier, or CallExpression)
       currentNode = currentNode.object;
       idx -= 1;
-    } else if (currentNode.type === NODE_TYPES.IDENTIFIER) {
-      // We reached the leftmost Identifier; it should match the first part
-      return idx === 0 && currentNode.name === expectedPart;
-    } else {
-      // Unexpected node type (e.g., ThisExpression, CallExpression, etc.)
-      return false;
+      continue;
     }
+
+    // If we encounter a CallExpression in the chain (e.g., getService().track),
+    // step into its callee without consuming an expected part.
+    if (currentNode.type === NODE_TYPES.CALL_EXPRESSION) {
+      currentNode = currentNode.callee;
+      continue;
+    }
+
+    if (currentNode.type === NODE_TYPES.IDENTIFIER) {
+      return idx === 0 && currentNode.name === expectedPart;
+    }
+
+    // Unexpected node type (e.g., ThisExpression, Literal, etc.)
+    return false;
   }
 
   return false;

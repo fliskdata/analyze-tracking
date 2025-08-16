@@ -539,3 +539,14 @@ events:
         type: string
       videoDuration:
         type: number
+  tsChainedEvent:
+    implementations:
+      - path: main.ts
+        line: 569
+        function: dispatchEventTs
+        destination: custom
+    properties:
+      foo:
+        type: string
+      count:
+        type: number
