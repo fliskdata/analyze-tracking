@@ -12,6 +12,7 @@ const { PARSER_OPTIONS, NODE_TYPES } = require('./constants');
 const { detectAnalyticsSource } = require('./detectors');
 const { extractEventData, processEventData } = require('./extractors');
 const { findWrappingFunction } = require('./utils/function-finder');
+const { collectImportedConstantStringMap } = require('./utils/import-resolver');
 
 // Extend walker to support JSX
 extend(walk.base);
@@ -82,19 +83,15 @@ function parseFile(filePath) {
 function nodeMatchesCustomFunction(node, fnName) {
   if (!fnName || !node.callee) return false;
 
-  const parts = fnName.split('.');
+  // Support chained calls in function name by stripping trailing parens from each segment
+  const parts = fnName.split('.').map(p => p.replace(/\(\s*\)$/, ''));
 
   // Simple identifier case
   if (parts.length === 1) {
-    return node.callee.type === NODE_TYPES.IDENTIFIER && node.callee.name === fnName;
+    return node.callee.type === NODE_TYPES.IDENTIFIER && node.callee.name === parts[0];
   }
 
-  // Member expression chain case
-  if (node.callee.type !== NODE_TYPES.MEMBER_EXPRESSION) {
-    return false;
-  }
-
-  // Walk the chain from the right-most property to the leftmost object
+  // Allow MemberExpression and CallExpression within the chain (e.g., getService().track)
   let currentNode = node.callee;
   let idx = parts.length - 1;
 
@@ -108,13 +105,23 @@ function nodeMatchesCustomFunction(node, fnName) {
       ) {
         return false;
       }
+      // step to the object; do not decrement idx for call expressions yet
       currentNode = currentNode.object;
       idx -= 1;
-    } else if (currentNode.type === NODE_TYPES.IDENTIFIER) {
-      return idx === 0 && currentNode.name === expected;
-    } else {
-      return false;
+      continue;
     }
+
+    if (currentNode.type === NODE_TYPES.CALL_EXPRESSION) {
+      // descend into the callee of the call without consuming a part
+      currentNode = currentNode.callee;
+      continue;
+    }
+
+    if (currentNode.type === NODE_TYPES.IDENTIFIER) {
+      return idx === 0 && currentNode.name === expected;
+    }
+
+    return false;
   }
 
   return false;
@@ -183,8 +190,11 @@ function collectConstantStringMap(ast) {
 function findTrackingEvents(ast, filePath, customConfigs = []) {
   const events = [];
 
-  // Collect constant mappings once per file
-  const constantMap = collectConstantStringMap(ast);
+  // Collect constant mappings once per file (locals + imported)
+  const constantMap = {
+    ...collectConstantStringMap(ast),
+    ...collectImportedConstantStringMap(filePath, ast)
+  };
 
   walk.ancestor(ast, {
     [NODE_TYPES.CALL_EXPRESSION]: (node, ancestors) => {

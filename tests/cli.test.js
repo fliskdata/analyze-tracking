@@ -21,6 +21,7 @@ const customFunctionSignatures = [
   'customTrackFunction6(EVENT_NAME, PROPERTIES)',
   'this.props.customTrackFunction6(EVENT_NAME, PROPERTIES)',
   'customTrackFunction7(EVENT_NAME, PROPERTIES)',
+  'getTrackingService().track(EVENT_NAME, PROPERTIES)',
 ];
 
 // Helper function to run CLI and capture output

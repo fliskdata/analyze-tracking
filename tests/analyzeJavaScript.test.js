@@ -349,6 +349,7 @@ test.describe('analyzeJsFile', () => {
       { sig: 'customTrackFunction3(EVENT_NAME, PROPERTIES, userEmail)', event: 'custom_event3' },
       { sig: 'customTrackFunction4(userId, EVENT_NAME, userAddress, PROPERTIES, userEmail)', event: 'custom_event4' },
       { sig: 'CustomModule.track(userId, EVENT_NAME, PROPERTIES)', event: 'custom_module_event' },
+      { sig: 'getTrackingService().track(EVENT_NAME, PROPERTIES)', event: 'myChainedEvent' },
     ];
 
     variants.forEach(({ sig, event }) => {
@@ -367,7 +368,8 @@ test.describe('analyzeJsFile', () => {
       'customTrackFunction2(userId, EVENT_NAME, PROPERTIES)',
       'customTrackFunction3(EVENT_NAME, PROPERTIES, userEmail)',
       'customTrackFunction4(userId, EVENT_NAME, userAddress, PROPERTIES, userEmail)',
-      'CustomModule.track(userId, EVENT_NAME, PROPERTIES)'
+      'CustomModule.track(userId, EVENT_NAME, PROPERTIES)',
+      'getTrackingService().track(EVENT_NAME, PROPERTIES)'
     ];
 
     const customFunctionSignatures = variants.map(parseCustomFunctionSignature);
@@ -381,7 +383,8 @@ test.describe('analyzeJsFile', () => {
       'custom_event2',
       'custom_event3',
       'custom_event4',
-      'custom_module_event'
+      'custom_module_event',
+      'myChainedEvent'
     ];
 
     expectedEventNames.forEach(eventName => {
@@ -419,5 +422,29 @@ test.describe('analyzeJsFile', () => {
     const evt = events[0];
     assert.strictEqual(evt.eventName, 'ViewedEligibilityResults');
     assert.strictEqual(evt.functionName, 'PrePaymentDashboard.useEffect');
+  });
+
+  test('should resolve imported constant event names from TS file in parent directory (cross-file JS import)', () => {
+    const crossDir = path.join(fixturesDir, 'javascript-cross', 'app');
+    const filePath = path.join(crossDir, 'middleware', 'telemetry_middleware.js');
+
+    const customFunction = 'getTelemetryService().track(EVENT_NAME, PROPERTIES)';
+    const events = analyzeJsFile(filePath, [parseCustomFunctionSignature(customFunction)]);
+
+    // We expect literal event names resolved from constants.ts
+    const viewed = events.find(e => e.eventName === 'ViewedQuestion');
+    const finished = events.find(e => e.eventName === 'FinishedSection');
+
+    assert.ok(viewed, 'Should resolve TELEMETRY_EVENTS.VIEWED_QUESTION to ViewedQuestion');
+    assert.ok(finished, 'Should resolve TELEMETRY_EVENTS.FINISHED_SECTION to FinishedSection');
+
+    // Basic property extraction sanity
+    assert.deepStrictEqual(viewed.properties, {
+      QuestionName: { type: 'any' },
+      SectionName: { type: 'any' }
+    });
+    assert.deepStrictEqual(finished.properties, {
+      SectionName: { type: 'any' }
+    });
   });
 });

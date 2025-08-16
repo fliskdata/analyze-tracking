@@ -259,3 +259,10 @@ function gtmTestFunction() {
     'location': 'header'
   });
 }
+
+function dispatchEvent() {
+  getTrackingService().track('myChainedEvent', {
+    foo: 'bar',
+    baz: 'qux'
+  });
+}

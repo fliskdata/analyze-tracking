@@ -44,16 +44,53 @@ function detectAnalyticsSource(node, customFunction) {
  * @returns {boolean}
  */
 function isCustomFunction(node, customFunction) {
-  const canBeCustomFunction = ts.isIdentifier(node.expression) ||
-    ts.isPropertyAccessExpression(node.expression) ||
-    ts.isCallExpression(node.expression) || // For chained calls like getTracker().track()
-    ts.isElementAccessExpression(node.expression) || // For array/object access like trackers['analytics'].track()
-    (node.expression?.expression && 
-     ts.isPropertyAccessExpression(node.expression.expression) && 
-     node.expression.expression.expression && 
-     ts.isThisExpression(node.expression.expression.expression)); // For class methods like this.analytics.track()
+  if (!customFunction || !node || !node.expression) return false;
 
-  return canBeCustomFunction && node.expression.getText() === customFunction;
+  // Normalize signature parts by stripping trailing parentheses from each part
+  const parts = customFunction.split('.').map(p => p.replace(/\(\s*\)$/, ''));
+
+  return matchesExpressionChain(node.expression, parts);
+}
+
+/**
+ * Recursively verify that a CallExpression/PropertyAccessExpression chain matches the expected parts.
+ * Supports patterns like getTracker().track, this.props.customTrackFunction6, tracker.track
+ */
+function matchesExpressionChain(expr, parts) {
+  let current = expr;
+  let idx = parts.length - 1;
+
+  while (current && idx >= 0) {
+    const expected = parts[idx];
+
+    if (ts.isPropertyAccessExpression(current)) {
+      const name = current.name?.escapedText;
+      if (name !== expected) return false;
+      current = current.expression;
+      idx -= 1;
+      continue;
+    }
+
+    if (ts.isCallExpression(current)) {
+      // Step into the callee (e.g., getTracker() -> getTracker)
+      current = current.expression;
+      continue;
+    }
+
+    if (ts.isIdentifier(current)) {
+      return idx === 0 && current.escapedText === expected;
+    }
+
+    // Handle `this` without relying on ts.isThisExpression for compatibility across TS versions
+    if (current.kind === ts.SyntaxKind.ThisKeyword || current.kind === ts.SyntaxKind.ThisExpression) {
+      return idx === 0 && expected === 'this';
+    }
+
+    // Unsupported expression kind for our matcher
+    return false;
+  }
+
+  return false;
 }
 
 /**
