@@ -2,316 +2,34 @@
 version: 1
 source:
   repository: git@github.com:fliskdata/analyze-tracking.git
-  commit: c5cb9b287b787da97c8d3d41b229ed14a8650ac9
-  timestamp: '2025-06-26T04:25:24Z'
+  commit: 81b56a5242d3dd7e5b4a4713aaa39cc446695307
+  timestamp: '2025-09-30T17:25:06Z'
 events:
-  Signed Up:
-    implementations:
-      - path: go/main.go
-        line: 29
-        function: segmentTrack
-        destination: segment
-    properties:
-      UserId:
-        type: string
-      plan:
-        type: string
-      is_free_trial:
-        type: boolean
-  some_event:
-    implementations:
-      - path: go/main.go
-        line: 41
-        function: mixpanelTrack
-        destination: mixpanel
-    properties:
-      DistinctId:
-        type: string
-      plan:
-        type: string
-      price:
-        type: number
-  Button Clicked:
-    implementations:
-      - path: go/main.go
-        line: 52
-        function: amplitudeTrack
-        destination: amplitude
-      - path: python/main.py
-        line: 100
-        function: amplitude_track
-        destination: amplitude
-    properties:
-      UserID:
-        type: string
-      name:
-        type: string
-      a property:
-        type: string
-      is_free_trial:
-        type: boolean
-      Price:
-        type: number
-      user_id:
-        type: string
-      color:
-        type: string
-      size:
-        type: number
-  user_signed_up:
-    implementations:
-      - path: go/main.go
-        line: 72
-        function: posthogTrack
-        destination: posthog
-      - path: python/main.py
-        line: 127
-        function: posthog_capture
-        destination: posthog
-      - path: ruby/main.rb
-        line: 66
-        function: posthog_track
-        destination: posthog
-    properties:
-      DistinctId:
-        type: string
-      login_type:
-        type: string
-      plan:
-        type: string
-      is_free_trial:
-        type: boolean
-      method:
-        type: string
-      distinct_id:
-        type: string
-  add-to-basket:
-    implementations:
-      - path: go/main.go
-        line: 89
-        function: snowplowTrack
-        destination: snowplow
-      - path: python/main.py
-        line: 143
-        function: snowplow_track_events
-        destination: snowplow
-      - path: ruby/main.rb
-        line: 109
-        function: snowplow_track
-        destination: snowplow
-    properties:
-      Category:
-        type: string
-      Property:
-        type: string
-      Value:
-        type: number
-      category:
-        type: string
-      label:
-        type: string
-      property:
-        type: string
-      value:
-        type: number
-  custom_event:
-    implementations:
-      - path: go/main.go
-        line: 113
-        function: main
-        destination: custom
-      - path: python/main.py
-        line: 158
-        function: main
-        destination: custom
-      - path: ruby/main.rb
-        line: 79
-        function: custom_track_event
-        destination: custom
-      - path: ruby/main.rb
-        line: 98
-        function: custom_track_module
-        destination: custom
-    properties:
-      userId:
-        type: string
-      foo:
-        type: string
-      baz:
-        type: number
-      list:
-        type: array
-        items:
-          type: string
-      obj:
-        type: object
-        properties:
-          a:
-            type: number
-          b:
-            type: number
-          c:
-            type: string
-      key:
-        type: string
-      nested:
-        type: object
-        properties:
-          a:
-            type: array
-            items:
-              type: number
-  custom_event0:
-    implementations:
-      - path: go/main.go
-        line: 121
-        function: main
-        destination: custom
-      - path: javascript/main.js
-        line: 181
-        function: global
-        destination: custom
-      - path: python/main.py
-        line: 161
-        function: main
-        destination: custom
-      - path: ruby/main.rb
-        line: 135
-        function: global
-        destination: custom
-      - path: typescript/main.ts
-        line: 341
-        function: global
-        destination: custom
-    properties:
-      foo:
-        type: string
-  custom_event1:
-    implementations:
-      - path: go/main.go
-        line: 122
-        function: main
-        destination: custom
-      - path: javascript/main.js
-        line: 182
-        function: global
-        destination: custom
-      - path: python/main.py
-        line: 162
-        function: main
-        destination: custom
-      - path: ruby/main.rb
-        line: 136
-        function: global
-        destination: custom
-      - path: typescript/main.ts
-        line: 342
-        function: global
-        destination: custom
-    properties:
-      foo:
-        type: string
-  custom_event2:
-    implementations:
-      - path: go/main.go
-        line: 123
-        function: main
-        destination: custom
-      - path: javascript/main.js
-        line: 183
-        function: global
-        destination: custom
-      - path: python/main.py
-        line: 163
-        function: main
-        destination: custom
-      - path: ruby/main.rb
-        line: 137
-        function: global
-        destination: custom
-      - path: typescript/main.ts
-        line: 343
-        function: global
-        destination: custom
-    properties:
-      userId:
-        type: string
-      foo:
-        type: string
-  custom_event3:
-    implementations:
-      - path: go/main.go
-        line: 124
-        function: main
-        destination: custom
-      - path: javascript/main.js
-        line: 184
-        function: global
-        destination: custom
-      - path: python/main.py
-        line: 164
-        function: main
-        destination: custom
-      - path: ruby/main.rb
-        line: 138
-        function: global
-        destination: custom
-      - path: typescript/main.ts
-        line: 344
-        function: global
-        destination: custom
-    properties:
-      userEmail:
-        type: string
-      foo:
-        type: string
-  custom_event4:
-    implementations:
-      - path: go/main.go
-        line: 125
-        function: main
-        destination: custom
-      - path: javascript/main.js
-        line: 185
-        function: global
-        destination: custom
-      - path: python/main.py
-        line: 165
-        function: main
-        destination: custom
-      - path: ruby/main.rb
-        line: 139
-        function: global
-        destination: custom
-      - path: typescript/main.ts
-        line: 345
-        function: global
-        destination: custom
-    properties:
-      userId:
-        type: string
-      userAddress:
-        type: object
-        properties:
-          city:
-            type: string
-      userEmail:
-        type: string
-      foo:
-        type: string
   purchase:
     implementations:
       - path: javascript/main.js
         line: 14
         function: trackGA4
         destination: googleanalytics
+      - path: swift/main.swift
+        line: 73
+        function: trackGA_Purchase
+        destination: googleanalytics
+      - path: swift/main.swift
+        line: 82
+        function: trackGA_NoProps
+        destination: googleanalytics
+      - path: swift/main.swift
+        line: 124
+        function: mixpanel_NoProps
+        destination: mixpanel
     properties:
       order_id:
-        type: any
+        type: string
       products:
         type: any
       total:
-        type: any
+        type: number
       address:
         type: object
         properties:
@@ -325,6 +43,10 @@ events:
         line: 27
         function: checkout
         destination: segment
+      - path: swift/main.swift
+        line: 98
+        function: segment_TrackLiteral
+        destination: segment
     properties:
       something:
         type: string
@@ -336,13 +58,17 @@ events:
         line: 34
         function: test12345678
         destination: mixpanel
+      - path: swift/main.swift
+        line: 116
+        function: mixpanel_OrderCompleted
+        destination: mixpanel
     properties:
       order_id:
-        type: any
+        type: string
       products:
         type: any
       total:
-        type: any
+        type: number
   checkout:
     implementations:
       - path: javascript/main.js
@@ -375,13 +101,17 @@ events:
         line: 57
         function: checkout
         destination: rudderstack
+      - path: swift/main.swift
+        line: 145
+        function: rudder_OrderCompleted
+        destination: rudderstack
     properties:
       order_id:
-        type: any
+        type: string
       products:
         type: any
       revenue:
-        type: any
+        type: number
       address:
         type: object
         properties:
@@ -395,13 +125,17 @@ events:
         line: 80
         function: checkout2
         destination: mparticle
+      - path: swift/main.swift
+        line: 166
+        function: mparticle_Transaction
+        destination: mparticle
     properties:
       order_id:
-        type: any
+        type: string
       products:
         type: any
       total:
-        type: any
+        type: number
       address:
         type: object
         properties:
@@ -466,6 +200,48 @@ events:
         type: string
       name:
         type: string
+  user_login:
+    implementations:
+      - path: javascript/main.js
+        line: 137
+        function: checkout3
+        destination: datadog
+      - path: swift/main.swift
+        line: 206
+        function: heap_UserLogin
+        destination: heap
+      - path: typescript/main.ts
+        line: 244
+        function: checkout3
+        destination: heap
+    properties:
+      user_id:
+        type: string
+      method:
+        type: string
+      success:
+        type: boolean
+      email:
+        type: string
+      name:
+        type: string
+      roles:
+        type: array
+        items:
+          type: string
+  page_view:
+    implementations:
+      - path: javascript/main.js
+        line: 143
+        function: checkout3
+        destination: datadog
+    properties:
+      page:
+        type: string
+      section:
+        type: string
+      user_type:
+        type: string
   someevent:
     implementations:
       - path: javascript/main.js
@@ -498,6 +274,144 @@ events:
           type: string
       userId:
         type: string
+  custom_event0:
+    implementations:
+      - path: javascript/main.js
+        line: 181
+        function: global
+        destination: custom
+      - path: go/main.go
+        line: 121
+        function: main
+        destination: custom
+      - path: ruby/main.rb
+        line: 135
+        function: global
+        destination: custom
+      - path: python/main.py
+        line: 161
+        function: main
+        destination: custom
+      - path: typescript/main.ts
+        line: 341
+        function: global
+        destination: custom
+    properties:
+      foo:
+        type: string
+  custom_event1:
+    implementations:
+      - path: javascript/main.js
+        line: 182
+        function: global
+        destination: custom
+      - path: go/main.go
+        line: 122
+        function: main
+        destination: custom
+      - path: ruby/main.rb
+        line: 136
+        function: global
+        destination: custom
+      - path: python/main.py
+        line: 162
+        function: main
+        destination: custom
+      - path: typescript/main.ts
+        line: 342
+        function: global
+        destination: custom
+    properties:
+      foo:
+        type: string
+  custom_event2:
+    implementations:
+      - path: javascript/main.js
+        line: 183
+        function: global
+        destination: custom
+      - path: go/main.go
+        line: 123
+        function: main
+        destination: custom
+      - path: ruby/main.rb
+        line: 137
+        function: global
+        destination: custom
+      - path: python/main.py
+        line: 163
+        function: main
+        destination: custom
+      - path: typescript/main.ts
+        line: 343
+        function: global
+        destination: custom
+    properties:
+      foo:
+        type: string
+      userId:
+        type: string
+  custom_event3:
+    implementations:
+      - path: javascript/main.js
+        line: 184
+        function: global
+        destination: custom
+      - path: go/main.go
+        line: 124
+        function: main
+        destination: custom
+      - path: ruby/main.rb
+        line: 138
+        function: global
+        destination: custom
+      - path: python/main.py
+        line: 164
+        function: main
+        destination: custom
+      - path: typescript/main.ts
+        line: 344
+        function: global
+        destination: custom
+    properties:
+      foo:
+        type: string
+      userEmail:
+        type: string
+  custom_event4:
+    implementations:
+      - path: javascript/main.js
+        line: 185
+        function: global
+        destination: custom
+      - path: go/main.go
+        line: 125
+        function: main
+        destination: custom
+      - path: ruby/main.rb
+        line: 139
+        function: global
+        destination: custom
+      - path: python/main.py
+        line: 165
+        function: main
+        destination: custom
+      - path: typescript/main.ts
+        line: 345
+        function: global
+        destination: custom
+    properties:
+      foo:
+        type: string
+      userId:
+        type: string
+      userAddress:
+        type: object
+        properties:
+          city:
+            type: string
+      userEmail:
+        type: string
   custom_module_event:
     implementations:
       - path: javascript/main.js
@@ -519,19 +433,6 @@ events:
         type: string
       userId:
         type: string
-  page_view:
-    implementations:
-      - path: javascript/main.js
-        line: 143
-        function: checkout3
-        destination: datadog
-    properties:
-      page:
-        type: string
-      section:
-        type: string
-      user_type:
-        type: string
   ecommerce_purchase_frozen:
     implementations:
       - path: javascript/main.js
@@ -551,39 +452,483 @@ events:
         type: array
         items:
           type: string
-  user_login:
+  formSubmission:
     implementations:
       - path: javascript/main.js
-        line: 137
-        function: checkout3
-        destination: datadog
-      - path: typescript/main.ts
-        line: 244
-        function: checkout3
-        destination: heap
+        line: 220
+        function: global
+        destination: gtm
+      - path: swift/main.swift
+        line: 88
+        function: pushGTM_Basic
+        destination: gtm
     properties:
-      user_id:
+      formId:
         type: string
-      method:
+      formLocation:
         type: string
-      success:
-        type: boolean
-      email:
+  userRegistration:
+    implementations:
+      - path: javascript/main.js
+        line: 227
+        function: global
+        destination: gtm
+    properties:
+      userId:
         type: string
-      name:
+      source:
         type: string
-      roles:
+      plan:
+        type: string
+  ecommerce_purchase:
+    implementations:
+      - path: javascript/main.js
+        line: 235
+        function: global
+        destination: gtm
+      - path: swift/main.swift
+        line: 92
+        function: pushGTM_ViaWindowStyle
+        destination: gtm
+      - path: typescript/main.ts
+        line: 326
+        function: global
+        destination: custom
+    properties:
+      transactionId:
+        type: string
+      value:
+        type: number
+      currency:
+        type: string
+      items:
         type: array
         items:
           type: string
+      total:
+        type: number
+      products:
+        type: any
+      orderId:
+        type: string
+      userId:
+        type: string
+  buttonClick:
+    implementations:
+      - path: javascript/main.js
+        line: 256
+        function: gtmTestFunction
+        destination: gtm
+      - path: typescript/main.ts
+        line: 543
+        function: gtmTestFunction
+        destination: gtm
+    properties:
+      buttonText:
+        type: string
+      location:
+        type: string
+      timestamp:
+        type: string
+  myChainedEvent:
+    implementations:
+      - path: javascript/main.js
+        line: 264
+        function: dispatchEvent
+        destination: custom
+    properties:
+      foo:
+        type: string
+      baz:
+        type: string
+  Signed Up:
+    implementations:
+      - path: go/main.go
+        line: 29
+        function: segmentTrack
+        destination: segment
+    properties:
+      UserId:
+        type: string
+      plan:
+        type: string
+      is_free_trial:
+        type: boolean
+  some_event:
+    implementations:
+      - path: go/main.go
+        line: 41
+        function: mixpanelTrack
+        destination: mixpanel
+    properties:
+      DistinctId:
+        type: string
+      plan:
+        type: string
+      price:
+        type: number
+  Button Clicked:
+    implementations:
+      - path: go/main.go
+        line: 52
+        function: amplitudeTrack
+        destination: amplitude
+      - path: python/main.py
+        line: 100
+        function: amplitude_track
+        destination: amplitude
+    properties:
+      UserID:
+        type: string
+      name:
+        type: string
+      a property:
+        type: string
+      is_free_trial:
+        type: boolean
+      Price:
+        type: number
+      user_id:
+        type: string
+      color:
+        type: string
+      size:
+        type: number
+  user_signed_up:
+    implementations:
+      - path: go/main.go
+        line: 72
+        function: posthogTrack
+        destination: posthog
+      - path: ruby/main.rb
+        line: 66
+        function: posthog_track
+        destination: posthog
+      - path: python/main.py
+        line: 127
+        function: posthog_capture
+        destination: posthog
+      - path: swift/main.swift
+        line: 177
+        function: posthog_UserAction
+        destination: posthog
+      - path: swift/main.swift
+        line: 313
+        function: customExamples
+        destination: custom
+    properties:
+      DistinctId:
+        type: string
+      login_type:
+        type: string
+      plan:
+        type: string
+      is_free_trial:
+        type: boolean
+      distinct_id:
+        type: string
+      method:
+        type: string
+      user_id:
+        type: string
+  add-to-basket:
+    implementations:
+      - path: go/main.go
+        line: 89
+        function: snowplowTrack
+        destination: snowplow
+      - path: ruby/main.rb
+        line: 109
+        function: snowplow_track
+        destination: snowplow
+      - path: python/main.py
+        line: 143
+        function: snowplow_track_events
+        destination: snowplow
+    properties:
+      Category:
+        type: string
+      Property:
+        type: string
+      Value:
+        type: number
+      category:
+        type: string
+      label:
+        type: string
+      property:
+        type: string
+      value:
+        type: number
+  custom_event:
+    implementations:
+      - path: go/main.go
+        line: 113
+        function: main
+        destination: custom
+      - path: ruby/main.rb
+        line: 79
+        function: custom_track_event
+        destination: custom
+      - path: ruby/main.rb
+        line: 98
+        function: custom_track_module
+        destination: custom
+      - path: python/main.py
+        line: 158
+        function: main
+        destination: custom
+    properties:
+      userId:
+        type: string
+      foo:
+        type: string
+      baz:
+        type: number
+      list:
+        type: array
+        items:
+          type: string
+      obj:
+        type: object
+        properties:
+          a:
+            type: number
+          b:
+            type: number
+          c:
+            type: string
+      key:
+        type: string
+      nested:
+        type: object
+        properties:
+          a:
+            type: array
+            items:
+              type: number
+  _ExternalSection:
+    implementations:
+      - path: ruby/external_constant_use.rb
+        line: 3
+        function: trigger
+        destination: custom
+    properties:
+      userId:
+        type: number
+  _FinishedSection:
+    implementations:
+      - path: ruby/constant_event.rb
+        line: 8
+        function: send_event
+        destination: custom
+    properties:
+      userId:
+        type: any
+      foo:
+        type: string
+  BecameLead:
+    implementations:
+      - path: ruby/registration_module.rb
+        line: 9
+        function: post_registration
+        destination: custom
+    properties:
+      userId:
+        type: any
+      leadType:
+        type: string
+      nonInteraction:
+        type: number
+  AnsweredQuestion:
+    implementations:
+      - path: ruby/models/test_module.rb
+        line: 11
+        function: send_telemetry
+        destination: custom
+    properties:
+      userId:
+        type: any
+      sectionName:
+        type: any
+      questionnaireName:
+        type: string
+      registered:
+        type: any
+      eligible:
+        type: any
+      nonInteraction:
+        type: number
+  UnlessEvent:
+    implementations:
+      - path: ruby/node_types.rb
+        line: 6
+        function: unless_example
+        destination: custom
+    properties:
+      userId:
+        type: string
+      a:
+        type: number
+  WhileEvent:
+    implementations:
+      - path: ruby/node_types.rb
+        line: 13
+        function: while_example
+        destination: custom
+    properties:
+      userId:
+        type: string
+      b:
+        type: number
+  ForEvent:
+    implementations:
+      - path: ruby/node_types.rb
+        line: 20
+        function: global
+        destination: custom
+    properties:
+      userId:
+        type: string
+      c:
+        type: number
+  RescueEvent:
+    implementations:
+      - path: ruby/node_types.rb
+        line: 26
+        function: global
+        destination: custom
+    properties:
+      userId:
+        type: string
+      d:
+        type: number
+  EnsureEvent:
+    implementations:
+      - path: ruby/node_types.rb
+        line: 28
+        function: global
+        destination: custom
+    properties:
+      userId:
+        type: string
+      e:
+        type: number
+  LambdaEvent:
+    implementations:
+      - path: ruby/node_types.rb
+        line: 32
+        function: block
+        destination: custom
+    properties:
+      userId:
+        type: string
+      f:
+        type: number
+  ArrayEvent:
+    implementations:
+      - path: ruby/node_types.rb
+        line: 35
+        function: global
+        destination: custom
+    properties:
+      userId:
+        type: string
+      g:
+        type: number
+  AndEvent:
+    implementations:
+      - path: ruby/node_types.rb
+        line: 37
+        function: global
+        destination: custom
+    properties:
+      userId:
+        type: string
+      h:
+        type: number
+  OrEvent:
+    implementations:
+      - path: ruby/node_types.rb
+        line: 38
+        function: global
+        destination: custom
+    properties:
+      userId:
+        type: string
+      i:
+        type: number
+  InterpolationEvent:
+    implementations:
+      - path: ruby/node_types.rb
+        line: 40
+        function: global
+        destination: custom
+      - path: ruby/infinite_recursion_test.rb
+        line: 59
+        function: complex_method
+        destination: custom
+    properties:
+      userId:
+        type: string
+      j:
+        type: number
+      result_type:
+        type: any
+      timestamp:
+        type: any
+  DeepNestedEvent:
+    implementations:
+      - path: ruby/infinite_recursion_test.rb
+        line: 16
+        function: block
+        destination: custom
+    properties:
+      userId:
+        type: string
+      level:
+        type: string
+      iteration:
+        type: any
+  PatternMatchEvent:
+    implementations:
+      - path: ruby/infinite_recursion_test.rb
+        line: 76
+        function: pattern_matching_method
+        destination: custom
+    properties:
+      userId:
+        type: any
+  BulkEvent:
+    implementations:
+      - path: ruby/infinite_recursion_test.rb
+        line: 79
+        function: block
+        destination: custom
+    properties:
+      userId:
+        type: any
+      item:
+        type: any
+  FallbackEvent:
+    implementations:
+      - path: ruby/infinite_recursion_test.rb
+        line: 82
+        function: pattern_matching_method
+        destination: custom
+    properties:
+      userId:
+        type: string
+      data:
+        type: any
   User Signed Up:
     implementations:
-      - path: python/main.py
-        line: 80
-        function: segment_track
-        destination: segment
       - path: ruby/main.rb
         line: 22
+        function: segment_track
+        destination: segment
+      - path: python/main.py
+        line: 80
         function: segment_track
         destination: segment
     properties:
@@ -597,12 +942,12 @@ events:
         type: string
   Purchase Completed:
     implementations:
-      - path: python/main.py
-        line: 90
-        function: mixpanel_track
-        destination: mixpanel
       - path: ruby/main.rb
         line: 36
+        function: mixpanel_track
+        destination: mixpanel
+      - path: python/main.py
+        line: 90
         function: mixpanel_track
         destination: mixpanel
     properties:
@@ -616,6 +961,30 @@ events:
         type: array
         items:
           type: string
+  Item Sold:
+    implementations:
+      - path: ruby/main.rb
+        line: 49
+        function: rudderstack_track
+        destination: rudderstack
+    properties:
+      user_id:
+        type: any
+      sku:
+        type: any
+      shipping:
+        type: string
+  Module Event:
+    implementations:
+      - path: ruby/main.rb
+        line: 121
+        function: track_something
+        destination: segment
+    properties:
+      anonymous_id:
+        type: string
+      from_module:
+        type: boolean
   User Logged In:
     implementations:
       - path: python/main.py
@@ -644,80 +1013,12 @@ events:
         type: boolean
       plan:
         type: string
-  Item Sold:
-    implementations:
-      - path: ruby/main.rb
-        line: 49
-        function: rudderstack_track
-        destination: rudderstack
-    properties:
-      user_id:
-        type: any
-      sku:
-        type: any
-      shipping:
-        type: string
-  Module Event:
-    implementations:
-      - path: ruby/main.rb
-        line: 121
-        function: track_something
-        destination: segment
-    properties:
-      anonymous_id:
-        type: string
-      from_module:
-        type: boolean
-  BecameLead:
-    implementations:
-      - path: ruby/registration_module.rb
-        line: 9
-        function: post_registration
-        destination: custom
-    properties:
-      userId:
-        type: any
-      leadType:
-        type: string
-      nonInteraction:
-        type: number
-  order_completed:
-    implementations:
-      - path: typescript/main.ts
-        line: 119
-        function: trackOrderCompletedGA
-        destination: googleanalytics
-    properties:
-      order_id:
-        type: string
-      products:
-        type: array
-        items:
-          type: object
-          properties:
-            id:
-              type: string
-            name:
-              type: string
-            price:
-              type: number
-            sku:
-              type: string
-      order_total:
-        type: number
-      location:
-        type: object
-        properties:
-          city:
-            type: string
-          state:
-            type: string
-          postalCode:
-            type: string
-      currency:
-        type: string
   user_checkout:
     implementations:
+      - path: swift/main.swift
+        line: 106
+        function: segment_TrackConstants
+        destination: segment
       - path: typescript/main.ts
         line: 135
         function: checkout
@@ -729,32 +1030,27 @@ events:
         type: string
       item_count:
         type: number
-  purchase_confirmed:
+  app_opened:
     implementations:
-      - path: typescript/main.ts
-        line: 144
-        function: confirmPurchaseMixpanel
-        destination: mixpanel
-    properties:
-      order_id:
-        type: string
-      items:
-        type: array
-        items:
-          type: object
-          properties:
-            id:
-              type: string
-            name:
-              type: string
-            price:
-              type: number
-            sku:
-              type: string
-      total_amount:
-        type: number
+      - path: swift/main.swift
+        line: 110
+        function: segment_TrackNoProps
+        destination: segment
+      - path: swift/main.swift
+        line: 185
+        function: posthog_NoProps
+        destination: posthog
+    properties: {}
   checkout_initiated:
     implementations:
+      - path: swift/main.swift
+        line: 130
+        function: amplitude_CheckoutInitiated
+        destination: amplitude
+      - path: swift/main.swift
+        line: 139
+        function: amplitude_Empty
+        destination: amplitude
       - path: typescript/main.ts
         line: 149
         function: checkout
@@ -762,6 +1058,17 @@ events:
     properties:
       order_id:
         type: string
+      products:
+        type: any
+      total:
+        type: number
+      address:
+        type: object
+        properties:
+          city:
+            type: string
+          state:
+            type: string
       items:
         type: array
         items:
@@ -788,6 +1095,284 @@ events:
             type: string
       coupon_code:
         type: 'null'
+  App Launched:
+    implementations:
+      - path: swift/main.swift
+        line: 153
+        function: rudder_NoProps
+        destination: rudderstack
+    properties: {}
+  Viewed Screen:
+    implementations:
+      - path: swift/main.swift
+        line: 171
+        function: mparticle_Minimal
+        destination: mparticle
+    properties: {}
+  customer_checkout:
+    implementations:
+      - path: swift/main.swift
+        line: 191
+        function: pendo_CustomerCheckout
+        destination: pendo
+      - path: typescript/main.ts
+        line: 230
+        function: checkout3
+        destination: pendo
+    properties:
+      order_id:
+        type: string
+      products:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            price:
+              type: number
+            sku:
+              type: string
+      subtotal:
+        type: number
+      address:
+        type: object
+        properties:
+          city:
+            type: string
+          state:
+            type: string
+          postalCode:
+            type: string
+  onboarding_step_viewed:
+    implementations:
+      - path: swift/main.swift
+        line: 200
+        function: pendo_NoProps
+        destination: pendo
+    properties: {}
+  heartbeat:
+    implementations:
+      - path: swift/main.swift
+        line: 214
+        function: heap_Minimal
+        destination: heap
+    properties: {}
+  order_completed:
+    implementations:
+      - path: swift/main.swift
+        line: 229
+        function: trackFromConstants
+        destination: googleanalytics
+      - path: swift/main.swift
+        line: 316
+        function: customExamples
+        destination: custom
+      - path: typescript/main.ts
+        line: 119
+        function: trackOrderCompletedGA
+        destination: googleanalytics
+    properties:
+      order_id:
+        type: string
+      products:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            price:
+              type: number
+            sku:
+              type: string
+      total:
+        type: number
+      order_total:
+        type: number
+      location:
+        type: object
+        properties:
+          city:
+            type: string
+          state:
+            type: string
+          postalCode:
+            type: string
+      currency:
+        type: string
+  ViewedAttorneyAgreementSwift:
+    implementations:
+      - path: swift/main.swift
+        line: 288
+        function: handleView
+        destination: custom
+    properties: {}
+  custom_event_swift:
+    implementations:
+      - path: swift/main.swift
+        line: 299
+        function: customExamples
+        destination: custom
+    properties:
+      order_id:
+        type: string
+      value:
+        type: number
+      list:
+        type: array
+        items:
+          type: string
+      userId:
+        type: string
+  custom_event0_swift:
+    implementations:
+      - path: swift/main.swift
+        line: 306
+        function: customExamples
+        destination: custom
+    properties:
+      foo:
+        type: string
+  custom_event1_swift:
+    implementations:
+      - path: swift/main.swift
+        line: 307
+        function: customExamples
+        destination: custom
+    properties:
+      foo:
+        type: string
+  custom_event2_swift:
+    implementations:
+      - path: swift/main.swift
+        line: 308
+        function: customExamples
+        destination: custom
+    properties:
+      foo:
+        type: string
+      userId:
+        type: string
+  custom_event3_swift:
+    implementations:
+      - path: swift/main.swift
+        line: 309
+        function: customExamples
+        destination: custom
+    properties:
+      foo:
+        type: string
+      userEmail:
+        type: string
+  custom_event4_swift:
+    implementations:
+      - path: swift/main.swift
+        line: 310
+        function: customExamples
+        destination: custom
+    properties:
+      foo:
+        type: string
+      userId:
+        type: string
+      userAddress:
+        type: object
+        properties:
+          city:
+            type: string
+      userEmail:
+        type: string
+  custom_module_event_swift:
+    implementations:
+      - path: swift/main.swift
+        line: 322
+        function: customExamples
+        destination: custom
+    properties:
+      order_id:
+        type: string
+      foo:
+        type: string
+      userId:
+        type: string
+  swiftChainedEvent:
+    implementations:
+      - path: swift/main.swift
+        line: 328
+        function: customExamples
+        destination: custom
+    properties:
+      foo:
+        type: string
+      count:
+        type: number
+  InitiatedPaymentSwift:
+    implementations:
+      - path: swift/main.swift
+        line: 334
+        function: customExamples
+        destination: custom
+    properties:
+      containerSection:
+        type: string
+      tierCartIntent:
+        type: string
+  FailedPaymentSwift:
+    implementations:
+      - path: swift/main.swift
+        line: 344
+        function: customExamples
+        destination: custom
+    properties:
+      containerSection:
+        type: string
+      amount:
+        type: number
+  JustEventSwift:
+    implementations:
+      - path: swift/main.swift
+        line: 347
+        function: customExamples
+        destination: custom
+    properties: {}
+  NestedEventSwift:
+    implementations:
+      - path: swift/main.swift
+        line: 354
+        function: nested
+        destination: custom
+    properties:
+      nested:
+        type: boolean
+  purchase_confirmed:
+    implementations:
+      - path: typescript/main.ts
+        line: 144
+        function: confirmPurchaseMixpanel
+        destination: mixpanel
+    properties:
+      order_id:
+        type: string
+      items:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            price:
+              type: number
+            sku:
+              type: string
+      total_amount:
+        type: number
   order_finalized:
     implementations:
       - path: typescript/main.ts
@@ -889,39 +1474,49 @@ events:
             type: string
           postalCode:
             type: string
-  customer_checkout:
+  checkout_completed:
     implementations:
       - path: typescript/main.ts
-        line: 230
+        line: 247
         function: checkout3
-        destination: pendo
+        destination: datadog
     properties:
-      order_id:
-        type: string
-      products:
-        type: array
-        items:
-          type: object
-          properties:
-            id:
-              type: string
-            name:
-              type: string
-            price:
-              type: number
-            sku:
-              type: string
-      subtotal:
+      total:
         type: number
-      address:
-        type: object
-        properties:
-          city:
-            type: string
-          state:
-            type: string
-          postalCode:
-            type: string
+      orderId:
+        type: string
+      currency:
+        type: string
+      items:
+        type: number
+  user_registration:
+    implementations:
+      - path: typescript/main.ts
+        line: 254
+        function: checkout3
+        destination: datadog
+    properties:
+      user_id:
+        type: string
+      method:
+        type: string
+      success:
+        type: boolean
+      referrer:
+        type: string
+  error_occurred:
+    implementations:
+      - path: typescript/main.ts
+        line: 261
+        function: checkout3
+        destination: datadog
+    properties:
+      error_type:
+        type: string
+      field:
+        type: string
+      page:
+        type: string
   item_view:
     implementations:
       - path: typescript/main.ts
@@ -976,33 +1571,6 @@ events:
             type: boolean
       userId:
         type: string
-  ecommerce_purchase:
-    implementations:
-      - path: typescript/main.ts
-        line: 326
-        function: global
-        destination: custom
-      - path: javascript/main.js
-        line: 235
-        function: global
-        destination: gtm
-    properties:
-      orderId:
-        type: string
-      total:
-        type: number
-      items:
-        type: array
-        items:
-          type: string
-      userId:
-        type: string
-      transactionId:
-        type: string
-      value:
-        type: number
-      currency:
-        type: string
   ecommerce_purchase_v2:
     implementations:
       - path: typescript/main.ts
@@ -1018,6 +1586,74 @@ events:
         type: array
         items:
           type: string
+  InitiatedPayment:
+    implementations:
+      - path: typescript/main.ts
+        line: 384
+        function: global
+        destination: custom
+      - path: typescript/main.ts
+        line: 457
+        function: trackInitiatedPayment
+        destination: custom
+    properties:
+      containerSection:
+        type: string
+      tierCartIntent:
+        type: string
+  FailedPayment:
+    implementations:
+      - path: typescript/main.ts
+        line: 396
+        function: global
+        destination: custom
+      - path: typescript/main.ts
+        line: 452
+        function: trackFailedPayment
+        destination: custom
+    properties:
+      containerSection:
+        type: string
+      amount:
+        type: number
+  ViewedAttorneyAgreement:
+    implementations:
+      - path: typescript/main.ts
+        line: 410
+        function: handleView
+        destination: custom
+    properties: {}
+  video_play:
+    implementations:
+      - path: typescript/main.ts
+        line: 556
+        function: global
+        destination: gtm
+    properties:
+      videoTitle:
+        type: string
+      videoDuration:
+        type: number
+  tsChainedEvent:
+    implementations:
+      - path: typescript/main.ts
+        line: 569
+        function: dispatchEventTs
+        destination: custom
+    properties:
+      foo:
+        type: string
+      count:
+        type: number
+  ViewedPage:
+    implementations:
+      - path: typescript-alias/app/components/main.ts
+        line: 10
+        function: global
+        destination: mixpanel
+    properties:
+      foo:
+        type: string
   document_upload_clicked:
     implementations:
       - path: typescript-react/main.tsx
@@ -1151,368 +1787,4 @@ events:
             sku:
               type: string
       checkout_step:
-        type: number
-  FailedPayment:
-    implementations:
-      - path: typescript/main.ts
-        line: 396
-        function: global
-        destination: custom
-      - path: typescript/main.ts
-        line: 452
-        function: trackFailedPayment
-        destination: custom
-    properties:
-      containerSection:
-        type: string
-      amount:
-        type: number
-  InitiatedPayment:
-    implementations:
-      - path: typescript/main.ts
-        line: 384
-        function: global
-        destination: custom
-      - path: typescript/main.ts
-        line: 457
-        function: trackInitiatedPayment
-        destination: custom
-    properties:
-      containerSection:
-        type: string
-      tierCartIntent:
-        type: string
-  ViewedAttorneyAgreement:
-    implementations:
-      - path: typescript/main.ts
-        line: 410
-        function: handleView
-        destination: custom
-    properties: {}
-  ViewedPage:
-    implementations:
-      - path: typescript-alias/app/components/main.ts
-        line: 10
-        function: global
-        destination: mixpanel
-    properties:
-      foo:
-        type: string
-  checkout_completed:
-    implementations:
-      - path: typescript/main.ts
-        line: 247
-        function: checkout3
-        destination: datadog
-    properties:
-      total:
-        type: number
-      orderId:
-        type: string
-      currency:
-        type: string
-      items:
-        type: number
-  user_registration:
-    implementations:
-      - path: typescript/main.ts
-        line: 254
-        function: checkout3
-        destination: datadog
-    properties:
-      user_id:
-        type: string
-      method:
-        type: string
-      success:
-        type: boolean
-      referrer:
-        type: string
-  error_occurred:
-    implementations:
-      - path: typescript/main.ts
-        line: 261
-        function: checkout3
-        destination: datadog
-    properties:
-      error_type:
-        type: string
-      field:
-        type: string
-      page:
-        type: string
-  UnlessEvent:
-    implementations:
-      - path: ruby/node_types.rb
-        line: 6
-        function: unless_example
-        destination: custom
-    properties:
-      userId:
-        type: string
-      a:
-        type: number
-  WhileEvent:
-    implementations:
-      - path: ruby/node_types.rb
-        line: 13
-        function: while_example
-        destination: custom
-    properties:
-      userId:
-        type: string
-      b:
-        type: number
-  ForEvent:
-    implementations:
-      - path: ruby/node_types.rb
-        line: 20
-        function: global
-        destination: custom
-    properties:
-      userId:
-        type: string
-      c:
-        type: number
-  RescueEvent:
-    implementations:
-      - path: ruby/node_types.rb
-        line: 26
-        function: global
-        destination: custom
-    properties:
-      userId:
-        type: string
-      d:
-        type: number
-  EnsureEvent:
-    implementations:
-      - path: ruby/node_types.rb
-        line: 28
-        function: global
-        destination: custom
-    properties:
-      userId:
-        type: string
-      e:
-        type: number
-  LambdaEvent:
-    implementations:
-      - path: ruby/node_types.rb
-        line: 32
-        function: block
-        destination: custom
-    properties:
-      userId:
-        type: string
-      f:
-        type: number
-  ArrayEvent:
-    implementations:
-      - path: ruby/node_types.rb
-        line: 35
-        function: global
-        destination: custom
-    properties:
-      userId:
-        type: string
-      g:
-        type: number
-  AndEvent:
-    implementations:
-      - path: ruby/node_types.rb
-        line: 37
-        function: global
-        destination: custom
-    properties:
-      userId:
-        type: string
-      h:
-        type: number
-  OrEvent:
-    implementations:
-      - path: ruby/node_types.rb
-        line: 38
-        function: global
-        destination: custom
-    properties:
-      userId:
-        type: string
-      i:
-        type: number
-  InterpolationEvent:
-    implementations:
-      - path: ruby/infinite_recursion_test.rb
-        line: 59
-        function: complex_method
-        destination: custom
-      - path: ruby/node_types.rb
-        line: 40
-        function: global
-        destination: custom
-    properties:
-      userId:
-        type: string
-      result_type:
-        type: any
-      timestamp:
-        type: any
-      j:
-        type: number
-  _FinishedSection:
-    implementations:
-      - path: ruby/constant_event.rb
-        line: 8
-        function: send_event
-        destination: custom
-    properties:
-      userId:
-        type: any
-      foo:
-        type: string
-  _ExternalSection:
-    implementations:
-      - path: ruby/external_constant_use.rb
-        line: 3
-        function: trigger
-        destination: custom
-    properties:
-      userId:
-        type: number
-  DeepNestedEvent:
-    implementations:
-      - path: ruby/infinite_recursion_test.rb
-        line: 16
-        function: block
-        destination: custom
-    properties:
-      userId:
-        type: string
-      level:
-        type: string
-      iteration:
-        type: any
-  PatternMatchEvent:
-    implementations:
-      - path: ruby/infinite_recursion_test.rb
-        line: 76
-        function: pattern_matching_method
-        destination: custom
-    properties:
-      userId:
-        type: any
-  BulkEvent:
-    implementations:
-      - path: ruby/infinite_recursion_test.rb
-        line: 79
-        function: block
-        destination: custom
-    properties:
-      userId:
-        type: any
-      item:
-        type: any
-  FallbackEvent:
-    implementations:
-      - path: ruby/infinite_recursion_test.rb
-        line: 82
-        function: pattern_matching_method
-        destination: custom
-    properties:
-      userId:
-        type: string
-      data:
-        type: any
-  AnsweredQuestion:
-    implementations:
-      - path: ruby/models/test_module.rb
-        line: 11
-        function: send_telemetry
-        destination: custom
-    properties:
-      userId:
-        type: any
-      sectionName:
-        type: any
-      questionnaireName:
-        type: string
-      registered:
-        type: any
-      eligible:
-        type: any
-      nonInteraction:
-        type: number
-  formSubmission:
-    implementations:
-      - path: javascript/main.js
-        line: 220
-        function: global
-        destination: gtm
-    properties:
-      formId:
-        type: string
-      formLocation:
-        type: string
-  userRegistration:
-    implementations:
-      - path: javascript/main.js
-        line: 227
-        function: global
-        destination: gtm
-    properties:
-      userId:
-        type: string
-      source:
-        type: string
-      plan:
-        type: string
-  buttonClick:
-    implementations:
-      - path: javascript/main.js
-        line: 256
-        function: gtmTestFunction
-        destination: gtm
-      - path: typescript/main.ts
-        line: 543
-        function: gtmTestFunction
-        destination: gtm
-    properties:
-      buttonText:
-        type: string
-      location:
-        type: string
-      timestamp:
-        type: string
-  video_play:
-    implementations:
-      - path: typescript/main.ts
-        line: 556
-        function: global
-        destination: gtm
-    properties:
-      videoTitle:
-        type: string
-      videoDuration:
-        type: number
-  myChainedEvent:
-    implementations:
-      - path: javascript/main.js
-        line: 264
-        function: dispatchEvent
-        destination: custom
-    properties:
-      foo:
-        type: string
-      baz:
-        type: string
-  tsChainedEvent:
-    implementations:
-      - path: typescript/main.ts
-        line: 569
-        function: dispatchEventTs
-        destination: custom
-    properties:
-      foo:
-        type: string
-      count:
         type: number
