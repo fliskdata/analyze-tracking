@@ -13,6 +13,7 @@
     "test:python": "node --experimental-vm-modules --test tests/analyzePython.test.js",
     "test:ruby": "node --experimental-vm-modules --test tests/analyzeRuby.test.js",
     "test:go": "node --test tests/analyzeGo.test.js",
+    "test:swift": "node --test tests/analyzeSwift.test.js",
     "test:cli": "node --test tests/cli.test.js",
     "test:schema": "node --test tests/schema.test.js",
     "test:generateDescriptions": "node --test tests/generateDescriptions.test.js",
@@ -34,6 +35,7 @@
   },
   "homepage": "https://github.com/fliskdata/analyze-tracking#readme",
   "dependencies": {
+    "@flisk/swift-ast": "^0.1.2",
     "@langchain/core": "^0.3.56",
     "@langchain/google-vertexai": "^0.2.9",
     "@langchain/openai": "^0.5.10",
@@ -52,9 +54,9 @@
     "zod": "^3.24.4"
   },
   "devDependencies": {
+    "@types/react": "^19.1.6",
     "ajv": "^8.17.1",
     "lodash": "^4.17.21",
-    "react": "^19.1.0",
-    "@types/react": "^19.1.6"
+    "react": "^19.1.0"
   }
 }

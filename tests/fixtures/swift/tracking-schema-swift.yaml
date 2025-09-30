@@ -1,0 +1,431 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/fliskdata/analyze-tracking/main/schema.json
+version: 1
+source:
+  repository: git@github.com:fliskdata/analyze-tracking.git
+  commit: c5cb9b287b787da97c8d3d41b229ed14a8650ac9
+  timestamp: '2025-06-26T04:25:24Z'
+events:
+  purchase:
+    implementations:
+      - path: main.swift
+        line: 73
+        function: trackGA_Purchase
+        destination: googleanalytics
+      - path: main.swift
+        line: 82
+        function: trackGA_NoProps
+        destination: googleanalytics
+      - path: main.swift
+        line: 124
+        function: mixpanel_NoProps
+        destination: mixpanel
+    properties:
+      order_id:
+        type: string
+      products:
+        type: any
+      total:
+        type: number
+      address:
+        type: object
+        properties:
+          city:
+            type: string
+          state:
+            type: string
+
+  formSubmission:
+    implementations:
+      - path: main.swift
+        line: 88
+        function: pushGTM_Basic
+        destination: gtm
+    properties:
+      formId:
+        type: string
+      formLocation:
+        type: string
+
+  ecommerce_purchase:
+    implementations:
+      - path: main.swift
+        line: 92
+        function: pushGTM_ViaWindowStyle
+        destination: gtm
+    properties:
+      total:
+        type: number
+      currency:
+        type: string
+      products:
+        type: any
+
+  newEvent:
+    implementations:
+      - path: main.swift
+        line: 98
+        function: segment_TrackLiteral
+        destination: segment
+    properties:
+      something:
+        type: string
+      count:
+        type: number
+
+  user_checkout:
+    implementations:
+      - path: main.swift
+        line: 106
+        function: segment_TrackConstants
+        destination: segment
+    properties:
+      stage:
+        type: string
+      method:
+        type: string
+      item_count:
+        type: number
+
+  app_opened:
+    implementations:
+      - path: main.swift
+        line: 110
+        function: segment_TrackNoProps
+        destination: segment
+      - path: main.swift
+        line: 185
+        function: posthog_NoProps
+        destination: posthog
+    properties: {}
+
+  orderCompleted:
+    implementations:
+      - path: main.swift
+        line: 116
+        function: mixpanel_OrderCompleted
+        destination: mixpanel
+    properties:
+      order_id:
+        type: string
+      products:
+        type: any
+      total:
+        type: number
+
+  checkout_initiated:
+    implementations:
+      - path: main.swift
+        line: 129
+        function: amplitude_CheckoutInitiated
+        destination: amplitude
+      - path: main.swift
+        line: 139
+        function: amplitude_Empty
+        destination: amplitude
+    properties:
+      order_id:
+        type: string
+      products:
+        type: any
+      total:
+        type: number
+      address:
+        type: object
+        properties:
+          city:
+            type: string
+          state:
+            type: string
+
+  Order Completed:
+    implementations:
+      - path: main.swift
+        line: 145
+        function: rudder_OrderCompleted
+        destination: rudderstack
+    properties:
+      order_id:
+        type: string
+      products:
+        type: any
+      revenue:
+        type: number
+
+  App Launched:
+    implementations:
+      - path: main.swift
+        line: 153
+        function: rudder_NoProps
+        destination: rudderstack
+    properties: {}
+
+  Buy Now:
+    implementations:
+      - path: main.swift
+        line: 166
+        function: mparticle_Transaction
+        destination: mparticle
+    properties:
+      order_id:
+        type: string
+      products:
+        type: any
+      total:
+        type: number
+      address:
+        type: object
+        properties:
+          city:
+            type: string
+          state:
+            type: string
+
+  Viewed Screen:
+    implementations:
+      - path: main.swift
+        line: 171
+        function: mparticle_Minimal
+        destination: mparticle
+    properties: {}
+
+  user_signed_up:
+    implementations:
+      - path: main.swift
+        line: 177
+        function: posthog_UserAction
+        destination: posthog
+      - path: main.swift
+        line: 313
+        function: customExamples
+        destination: custom
+    properties:
+      user_id:
+        type: string
+      method:
+        type: string
+      plan:
+        type: string
+
+  customer_checkout:
+    implementations:
+      - path: main.swift
+        line: 191
+        function: pendo_CustomerCheckout
+        destination: pendo
+    properties:
+      order_id:
+        type: string
+      products:
+        type: any
+      subtotal:
+        type: number
+      address:
+        type: object
+        properties:
+          city:
+            type: string
+          state:
+            type: string
+
+  onboarding_step_viewed:
+    implementations:
+      - path: main.swift
+        line: 200
+        function: pendo_NoProps
+        destination: pendo
+    properties: {}
+
+  user_login:
+    implementations:
+      - path: main.swift
+        line: 206
+        function: heap_UserLogin
+        destination: heap
+    properties:
+      user_id:
+        type: string
+      email:
+        type: string
+      name:
+        type: string
+
+  heartbeat:
+    implementations:
+      - path: main.swift
+        line: 214
+        function: heap_Minimal
+        destination: heap
+    properties: {}
+
+  order_completed:
+    implementations:
+      - path: main.swift
+        line: 229
+        function: trackFromConstants
+        destination: googleanalytics
+      - path: main.swift
+        line: 316
+        function: customExamples
+        destination: custom
+    properties:
+      order_id:
+        type: string
+      products:
+        type: any
+      total:
+        type: number
+
+  custom_event_swift:
+    implementations:
+      - path: main.swift
+        line: 299
+        function: customExamples
+        destination: custom
+    properties:
+      order_id:
+        type: string
+      value:
+        type: number
+      list:
+        type: array
+        items:
+          type: string
+
+  custom_event0_swift:
+    implementations:
+      - path: main.swift
+        line: 306
+        function: customExamples
+        destination: custom
+    properties:
+      foo:
+        type: string
+
+  custom_event1_swift:
+    implementations:
+      - path: main.swift
+        line: 307
+        function: customExamples
+        destination: custom
+    properties:
+      foo:
+        type: string
+
+  custom_event2_swift:
+    implementations:
+      - path: main.swift
+        line: 308
+        function: customExamples
+        destination: custom
+    properties:
+      userId:
+        type: string
+      foo:
+        type: string
+
+  custom_event3_swift:
+    implementations:
+      - path: main.swift
+        line: 309
+        function: customExamples
+        destination: custom
+    properties:
+      foo:
+        type: string
+      userEmail:
+        type: string
+
+  custom_event4_swift:
+    implementations:
+      - path: main.swift
+        line: 310
+        function: customExamples
+        destination: custom
+    properties:
+      userId:
+        type: string
+      userAddress:
+        type: object
+        properties:
+          city:
+            type: string
+      foo:
+        type: string
+      userEmail:
+        type: string
+
+  custom_module_event_swift:
+    implementations:
+      - path: main.swift
+        line: 322
+        function: customExamples
+        destination: custom
+    properties:
+      userId:
+        type: string
+      order_id:
+        type: string
+      foo:
+        type: string
+
+  swiftChainedEvent:
+    implementations:
+      - path: main.swift
+        line: 328
+        function: customExamples
+        destination: custom
+    properties:
+      foo:
+        type: string
+      count:
+        type: number
+
+  InitiatedPaymentSwift:
+    implementations:
+      - path: main.swift
+        line: 334
+        function: customExamples
+        destination: custom
+    properties:
+      containerSection:
+        type: string
+      tierCartIntent:
+        type: string
+
+  FailedPaymentSwift:
+    implementations:
+      - path: main.swift
+        line: 344
+        function: customExamples
+        destination: custom
+    properties:
+      containerSection:
+        type: string
+      amount:
+        type: number
+
+  JustEventSwift:
+    implementations:
+      - path: main.swift
+        line: 347
+        function: customExamples
+        destination: custom
+    properties: {}
+
+  ViewedAttorneyAgreementSwift:
+    implementations:
+      - path: main.swift
+        line: 288
+        function: handleView
+        destination: custom
+    properties: {}
+
+  NestedEventSwift:
+    implementations:
+      - path: main.swift
+        line: 354
+        function: nested
+        destination: custom
+    properties:
+      nested:
+        type: boolean

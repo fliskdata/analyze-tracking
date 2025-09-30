@@ -95,25 +95,25 @@ Use this to understand where your events live in the code and how they're being 
 Your LLM of choice is used for generating descriptions of events, properties, and implementations.
 
 See [schema.json](schema.json) for a JSON Schema of the output.
- 
+
 
 ## Supported tracking libraries & languages
 
-| Library | JavaScript/TypeScript | Python | Ruby | Go |
-|---------|:---------------------:|:------:|:----:|:--:|
-| Google Analytics   | ✅ | ❌ | ❌ | ❌ |
-| Google Tag Manager | ✅ | ❌ | ❌ | ❌ |
-| Segment            | ✅ | ✅ | ✅ | ✅ |
-| Mixpanel           | ✅ | ✅ | ✅ | ✅ |
-| Amplitude          | ✅ | ✅ | ❌ | ✅ |
-| Rudderstack        | ✅ | ✅ | ✳️ | ✳️ |
-| mParticle          | ✅ | ❌ | ❌ | ❌ |
-| PostHog            | ✅ | ✅ | ✅ | ✅ |
-| Pendo              | ✅ | ❌ | ❌ | ❌ |
-| Heap               | ✅ | ❌ | ❌ | ❌ |
-| Snowplow           | ✅ | ✅ | ✅ | ✅ |
-| Datadog RUM        | ✅ | ❌ | ❌ | ❌ |
-| Custom Function    | ✅ | ✅ | ✅ | ✅ |
+| Library | JavaScript/TypeScript | Python | Ruby | Go | Swift |
+|---------|:---------------------:|:------:|:----:|:--:|:--:|
+| Google Analytics   | ✅ | ❌ | ❌ | ❌ | ✅ |
+| Google Tag Manager | ✅ | ❌ | ❌ | ❌ | ✅ |
+| Segment            | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Mixpanel           | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Amplitude          | ✅ | ✅ | ❌ | ✅ | ✅ |
+| Rudderstack        | ✅ | ✅ | ✳️ | ✳️ | ✅ |
+| mParticle          | ✅ | ❌ | ❌ | ❌ | ✅ |
+| PostHog            | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Pendo              | ✅ | ❌ | ❌ | ❌ | ✅ |
+| Heap               | ✅ | ❌ | ❌ | ❌ | ✅ |
+| Snowplow           | ✅ | ✅ | ✅ | ✅ | ❌ |
+| Datadog RUM        | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Custom Function    | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 ✳️ Rudderstack's SDKs often use the same format as Segment, so Rudderstack events may be detected as Segment events.
 
@@ -128,6 +128,13 @@ See [schema.json](schema.json) for a JSON Schema of the output.
   gtag('event', '<event_name>', {
     '<property_name>': '<property_value>'
   });
+  ```
+
+  **Swift**
+  ```swift
+  Analytics.logEvent("<event_name>", parameters: [
+    "<property_name>": "<property_value>"
+  ])
   ```
 </details>
 
@@ -146,6 +153,11 @@ See [schema.json](schema.json) for a JSON Schema of the output.
     event: '<event_name>',
     '<property_name>': '<property_value>'
   });
+  ```
+
+  **Swift**
+  ```swift
+  dataLayer.push(["event": "<event_name>", "<property_name>": "<property_value>"])
   ```
 </details>
 
@@ -185,6 +197,11 @@ See [schema.json](schema.json) for a JSON Schema of the output.
       Set("<property_name>", "<property_value>"),
   })
   ```
+
+  **Swift**
+  ```swift
+  analytics.track(name: "<event_name>", properties: TrackProperties("<property_name>": "<property_value>"))
+  ```
 </details>
 
 <details>
@@ -221,6 +238,13 @@ See [schema.json](schema.json) for a JSON Schema of the output.
     }),
   })
   ```
+
+  **Swift**
+  ```swift
+  Mixpanel.mainInstance().track(event: "<event_name>", properties: [
+    "<property_name>": "<property_value>"
+  ])
+  ```
 </details>
 
 <details>
@@ -255,6 +279,14 @@ See [schema.json](schema.json) for a JSON Schema of the output.
       "<property_name>": "<property_value>",
     },
   })
+  ```
+
+  **Swift**
+  ```swift
+  amplitude.track(
+    eventType: "<event_name>",
+    eventProperties: ["<property_name>": "<property_value>"]
+  )
   ```
 </details>
 
@@ -295,6 +327,13 @@ See [schema.json](schema.json) for a JSON Schema of the output.
       Set("<property_name>", "<property_value>"),
   })
   ```
+
+  **Swift**
+  ```swift
+  RSClient.sharedInstance()?.track("<event_name>", properties: [
+    "<property_name>": "<property_value>"
+  ])
+  ```
 </details>
 
 <details>
@@ -305,6 +344,15 @@ See [schema.json](schema.json) for a JSON Schema of the output.
   mParticle.logEvent('<event_name>', mParticle.EventType.<event_type>, {
     '<property_name>': '<property_value>'
   });
+  ```
+
+  **Swift**
+  ```swift
+  let event = MPEvent(name: "<event_name>", type: .other)
+  event.customAttributes = [
+    "<property_name>": "<property_value>"
+  ]
+  MParticle.sharedInstance().logEvent(event)
   ```
 </details>
 
@@ -353,6 +401,13 @@ See [schema.json](schema.json) for a JSON Schema of the output.
       Set("<property_name>", "<property_value>"),
   })
   ```
+
+  **Swift**
+  ```swift
+  PostHogSDK.shared.capture("<event_name>", properties: [
+    "<property_name>": "<property_value>"
+  ])
+  ```
 </details>
 
 <details>
@@ -372,7 +427,12 @@ See [schema.json](schema.json) for a JSON Schema of the output.
   })
   ```
 
-
+  **Swift**
+  ```swift
+  PendoManager.shared().track("<event_name>", properties: [
+    "<property_name>": "<property_value>"
+  ])
+  ```
 </details>
 
 <details>
@@ -392,7 +452,12 @@ See [schema.json](schema.json) for a JSON Schema of the output.
   })
   ```
 
-
+  **Swift**
+  ```swift
+  Heap.shared.track("<event_name>", properties: [
+    "<property_name>": "<property_value>"
+  ])
+  ```
 </details>
 
 <details>
@@ -403,7 +468,7 @@ See [schema.json](schema.json) for a JSON Schema of the output.
   datadogRum.addAction('<event_name>', {
     '<property_name>': '<property_value>'
   });
-  
+
   // Or via window
   window.DD_RUM.addAction('<event_name>', {
     '<property_name>': '<property_value>'
