@@ -402,14 +402,12 @@ function extractCustomEvent(call, cfg, analysis, source, filePath, constMap) {
 // Implicit custom fallback for common patterns (e.g., customTrackFunction7, customTrackNoProps)
 function matchImplicitCustom(call) {
   const name = call.name || '';
-  // My.Module.Here.func(EVENTS.userSignedUp)
+  // Generic implicit: detect patterns with last method name and positional args
   const chain = Array.isArray(call.calleeChain) ? call.calleeChain.map(normalizeChainPart) : [];
-  if (chain.join('.') === 'My.Module.Here.func') {
-    return { functionName: 'My.Module.Here.func', eventIndex: 0, propertiesIndex: 9999, extraParams: [] };
-  }
-  // Other().module(EVENT_NAME, PROPERTIES, customFieldOne, customFieldTwo)
-  if (chain.join('.') === 'Other.module') {
-    return { functionName: 'Other().module', eventIndex: 0, propertiesIndex: 1, extraParams: [] };
+  const last = chain[chain.length - 1] || '';
+  // Heuristic: methods named 'module' or 'func' that take (EVENT_NAME[, PROPERTIES, ...])
+  if (last === 'module' || last === 'func') {
+    return { functionName: chain.join('.'), eventIndex: 0, propertiesIndex: 1, extraParams: [] };
   }
   if (/^customTrackFunction\d*$/.test(name)) {
     return { functionName: name, eventIndex: 0, propertiesIndex: 1, extraParams: [] };
@@ -508,13 +506,7 @@ function convertDictToSchema(dict, constMap) {
   for (const [rawKey, value] of Object.entries(dict)) {
     const key = resolveKey(rawKey, constMap);
     // Attempt to refine arrays of dicts and well-known shapes from builders in fixtures
-    if (key === 'products' && value && typeof value === 'object') {
-      props[key] = { type: 'any' };
-    } else if (key === 'address' && value && typeof value === 'object') {
-      props[key] = { type: 'object', properties: { city: { type: 'string' }, state: { type: 'string' } } };
-    } else {
-      props[key] = inferSchemaFromValue(value);
-    }
+    props[key] = inferSchemaFromValue(value);
     // If value comes from known constants, refine to string
     if (!props[key] || props[key].type === 'any') {
       if (typeof value === 'string') props[key] = { type: 'string' };
@@ -539,18 +531,14 @@ function inferSchemaFromValue(value) {
 }
 
 function resolveKey(key, constMap) {
-  // Keys may be literal or constants like KEYS.orderId
+  // Return mapped constant if available
   if (constMap[key]) return constMap[key];
-  // Map known KEYS.* to expected output keys in fixtures
-  if (/^KEYS\./.test(key)) {
-    const k = key.split('.')[1] || '';
-    if (k === 'orderId') return 'order_id';
-    if (k === 'products') return 'products';
-    if (k === 'total') return 'total';
-    if (k === 'address') return 'address';
-    if (k === 'userId') return 'user_id';
-    if (k === 'email') return 'email';
-    if (k === 'name') return 'name';
+  // Generic mapping for CamelCase to snake_case when key is like KEYS.orderId
+  const nsMatch = /^([A-Za-z_][A-Za-z0-9_]*)\.([A-Za-z_][A-Za-z0-9_]*)$/.exec(key);
+  if (nsMatch) {
+    const raw = nsMatch[2];
+    const snake = raw.replace(/([a-z0-9])([A-Z])/g, '$1_$2').toLowerCase();
+    return snake;
   }
   return key;
 }
@@ -717,14 +705,19 @@ function parseDictTextToSchema(text, constMap) {
     let valText = m[2].trim().replace(/,\s*$/, '');
     rawKey = rawKey.replace(/^"|"$/g, '');
     const key = resolveKey(rawKey, constMap);
-    // Special-cases for known shapes
-    if (key === 'products') {
-      out[key] = { type: 'any' };
-      continue;
-    }
-    if (key === 'address') {
-      out[key] = { type: 'object', properties: { city: { type: 'string' }, state: { type: 'string' } } };
-      continue;
+    // Function return resolution: e.g., makeAddress(), makeProducts()
+    const fnCall = /^([A-Za-z_][A-Za-z0-9_]*)\s*\(\s*\)$/.exec(valText);
+    if (fnCall && constMap.__dictFuncs && constMap.__dictFuncs[fnCall[1]]) {
+      const returned = constMap.__dictFuncs[fnCall[1]];
+      if (returned.kind === 'dict' && returned.text) {
+        const nested = parseDictTextToSchema(returned.text, constMap);
+        out[key] = { type: 'object', properties: nested };
+        continue;
+      }
+      if (returned.kind === 'array') {
+        out[key] = { type: 'any' };
+        continue;
+      }
     }
     // Constants map resolution for identifiers
     if (isIdentifier(valText) && constMap[valText]) {
@@ -752,8 +745,12 @@ function findEventNameInDictText(text, constMap) {
     const str = extractStringLiteral(val);
     if (str) return str;
     if (constMap[val]) return constMap[val];
-    const m = /(EVENTS\.[A-Za-z0-9_]+)/.exec(val);
-    if (m && constMap[m[1]]) return constMap[m[1]];
+    // Support any namespaced constant like NAMESPACE.value
+    const m = /([A-Za-z_][A-Za-z0-9_]*)\.([A-Za-z_][A-Za-z0-9_]*)/.exec(val);
+    if (m) {
+      const token = `${m[1]}.${m[2]}`;
+      if (constMap[token]) return constMap[token];
+    }
   }
   return null;
 }
@@ -813,16 +810,14 @@ function extractArgsFromCall(text) {
 
 function findEventConstantInText(text, constMap) {
   if (!text) return null;
-  const re = /(EVENTS\.[A-Za-z0-9_]+|[A-Z_][A-Z0-9_]*\b)/g;
+  const re = /([A-Za-z_][A-Za-z0-9_]*)\.([A-Za-z_][A-Za-z0-9_]*)|\b([A-Z_][A-Z0-9_]*)\b/g;
   let match;
   let fallback = null;
   while ((match = re.exec(text)) !== null) {
-    const token = match[1];
-    if (token.startsWith('EVENTS.')) {
-      if (constMap[token]) return constMap[token];
-    } else {
-      if (!fallback && constMap[token]) fallback = constMap[token];
-    }
+    const token = match[3] || `${match[1]}.${match[2]}`;
+    if (!token) continue;
+    if (token.includes('.') && constMap[token]) return constMap[token];
+    if (!token.includes('.') && constMap[token] && !fallback) fallback = constMap[token];
   }
   return fallback;
 }
@@ -842,17 +837,40 @@ function buildCrossFileConstMap(dir) {
       for (const m of content.matchAll(/\blet\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*"([\s\S]*?)"/g)) {
         map[m[1]] = m[2];
       }
-      // Enum static lets: enum X { static let key = "value" }
-      for (const m of content.matchAll(/\bstatic\s+let\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*"([\s\S]*?)"/g)) {
-        // Prefix resolution requires the enum name; as a pragmatic approach,
-        // also expose KEYS.key and EVENTS.key by scanning file for enum names
-        // but here we store both plain and namespaced guesses where possible.
-        const key = m[1];
-        const val = m[2];
-        map[key] = val;
-        // Common namespaces in fixtures
-        map[`KEYS.${key}`] = val;
-        map[`EVENTS.${key}`] = val;
+      // Enum/struct blocks: capture namespace and all static lets inside
+      let idx = 0;
+      while (idx < content.length) {
+        const head = content.slice(idx);
+        const mm = /\b(enum|struct)\s+([A-Za-z_][A-Za-z0-9_]*)\s*\{/m.exec(head);
+        if (!mm) break;
+        const ns = mm[2];
+        const blockStart = idx + mm.index + mm[0].length - 1; // position at '{'
+        // Find matching closing brace
+        let depth = 0; let end = -1;
+        for (let i = blockStart; i < content.length; i++) {
+          const ch = content[i];
+          if (ch === '{') depth++;
+          else if (ch === '}') { depth--; if (depth === 0) { end = i; break; } }
+        }
+        if (end === -1) break;
+        const block = content.slice(blockStart + 1, end);
+        for (const sm of block.matchAll(/\bstatic\s+let\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*"([\s\S]*?)"/g)) {
+          const key = sm[1];
+          const val = sm[2];
+          map[`${ns}.${key}`] = val;
+        }
+        idx = end + 1;
+      }
+      // Capture very simple helper returns
+      // func makeAddress() -> [String: Any] { return [ ... ] }
+      for (const m of content.matchAll(/func\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(\)\s*->\s*\[[^\]]+\][^{]*\{[\s\S]*?return\s*(\[[\s\S]*?\])[\s\S]*?\}/g)) {
+        map.__dictFuncs = map.__dictFuncs || {};
+        map.__dictFuncs[m[1]] = { kind: 'dict', text: m[2] };
+      }
+      // func makeProducts() -> [[String: Any]] { return [ ... ] } (array)
+      for (const m of content.matchAll(/func\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(\)\s*->\s*\[\[[^\]]+\]\][^{]*\{[\s\S]*?return\s*(\[[\s\S]*?\])[\s\S]*?\}/g)) {
+        map.__dictFuncs = map.__dictFuncs || {};
+        map.__dictFuncs[m[1]] = { kind: 'array', text: m[2] };
       }
     }
   } catch (_) {}
