@@ -129,14 +129,14 @@ test.describe('CLI End-to-End Tests', () => {
   });
 
   // Clean up temp directory after tests
-  // test.after(() => {
-  //   if (fs.existsSync(tempDir)) {
-  //     fs.readdirSync(tempDir).forEach(file => {
-  //       fs.unlinkSync(path.join(tempDir, file));
-  //     });
-  //     fs.rmdirSync(tempDir);
-  //   }
-  // });
+  test.after(() => {
+    if (fs.existsSync(tempDir)) {
+      fs.readdirSync(tempDir).forEach(file => {
+        fs.unlinkSync(path.join(tempDir, file));
+      });
+      fs.rmdirSync(tempDir);
+    }
+  });
 
   test('should analyze Go files and generate a tracking schema', async () => {
     const targetDir = path.join(fixturesDir, 'go');

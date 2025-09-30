@@ -115,7 +115,7 @@ events:
   checkout_initiated:
     implementations:
       - path: main.swift
-        line: 129
+        line: 130
         function: amplitude_CheckoutInitiated
         destination: amplitude
       - path: main.swift
@@ -290,6 +290,8 @@ events:
         type: array
         items:
           type: string
+      userId:
+        type: string
 
   custom_event0_swift:
     implementations:
