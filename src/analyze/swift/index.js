@@ -5,44 +5,26 @@
 
 const fs = require('fs');
 const path = require('path');
-const { pathToFileURL: pathToFileUrl } = require('url');
 
-// Swift AST helpers are ESM in @flisk/swift-ast. Provide a lazy loader that
-// supports both CJS require (when available) and dynamic import fallback.
-let __swiftAst = null;
-async function getSwiftAst() {
-  if (__swiftAst) return __swiftAst;
-  try {
-    // Try CJS require first (when package exposes CJS entry)
-    // eslint-disable-next-line global-require
-    __swiftAst = require('@flisk/swift-ast');
-    return __swiftAst;
-  } catch (e) {
-    // Fallback to ESM dynamic import
-    try {
-      const m = await import('@flisk/swift-ast');
-      __swiftAst = m;
-      return __swiftAst;
-    } catch (_) {
-      // Final fallback: local workspace copy of swift-ast
-      const localDist = path.resolve('/Users/sameenkarim/flisk/dev/swift-ast/dist/index.js');
-      if (fs.existsSync(localDist)) {
-        const m2 = await import(pathToFileUrl(localDist).href);
-        __swiftAst = m2;
-        return __swiftAst;
-      }
-      throw e;
-    }
-  }
-}
+// Modularized imports
+const { getSwiftAst, withSwift } = require('./runtime');
+const { buildCrossFileConstMap } = require('./constants');
+// Local provider detection to avoid coupling during refactor
+const {
+  normalizeChainPart,
+  endsWithChain,
+  extractStringLiteral,
+  isIdentifier,
+  inferValueTypeFromText,
+  splitTopLevel,
+  sliceRange,
+  escapeRegExp,
+} = require('./utils');
+const { matchCustomSignature, matchImplicitCustom } = require('./custom');
 
-// Serialize WASI-backed swift-ast operations
-let __swiftLock = Promise.resolve();
-function withSwift(callback) {
-  const p = __swiftLock.then(callback, callback);
-  __swiftLock = p.then(() => {}, () => {});
-  return p;
-}
+/**
+ * Swift analyzer entrypoint
+ */
 
 /**
  * Analyze a Swift file and extract tracking events
@@ -110,34 +92,15 @@ function detectProvider(call, source) {
   const base = call.baseIdentifier || recvBase || (chain.length ? normalizeChainPart(chain[0]).split('.')[0] : null);
   const methodCand = method || (chain.length ? normalizeChainPart(chain[chain.length - 1]) : null);
 
-  // GTM: dataLayer.append({...})
   if (base === 'dataLayer' && (methodCand === 'append' || methodCand === 'push')) return 'gtm';
-
-  // Google Analytics: Analytics.logEvent
   if (base === 'Analytics' && methodCand === 'logEvent') return 'googleanalytics';
-
-  // Segment: analytics.track
   if (base === 'analytics' && methodCand === 'track') return 'segment';
-
-  // Mixpanel: Mixpanel.mainInstance().track
   if (base === 'Mixpanel' && methodCand === 'track') return 'mixpanel';
-
-  // Amplitude: amplitude.track
   if (base === 'amplitude' && methodCand === 'track') return 'amplitude';
-
-  // Rudderstack: RSClient.sharedInstance()?.track
   if (base === 'RSClient' && methodCand === 'track') return 'rudderstack';
-
-  // mParticle: MParticle.sharedInstance().logEvent(MPEvent)
   if (base === 'MParticle' && methodCand === 'logEvent') return 'mparticle';
-
-  // PostHog: PostHogSDK.shared.capture
   if (base === 'PostHogSDK' && methodCand === 'capture') return 'posthog';
-
-  // Pendo: PendoManager.shared().track
   if (base === 'PendoManager' && methodCand === 'track') return 'pendo';
-
-  // Heap: Heap.shared.track
   if (base === 'Heap' && methodCand === 'track') return 'heap';
 
   try {
@@ -155,7 +118,6 @@ function detectProvider(call, source) {
     if (/\bHeap\.[A-Za-z0-9_]+\.track\(/.test(t)) return 'heap';
   } catch (_) {}
 
-  // Heuristic: append({...event: ...}) => GTM
   try {
     if (methodCand === 'append') {
       const text = sliceRange(source, call.range || {});
@@ -327,20 +289,6 @@ function extractProviderEvent(call, provider, analysis, source, filePath, constM
 // Event extraction (custom)
 // ---------------------------
 
-function matchCustomSignature(call, customFunctionSignatures) {
-  if (!Array.isArray(customFunctionSignatures) || customFunctionSignatures.length === 0) return null;
-  const chain = Array.isArray(call.calleeChain) ? call.calleeChain.map(normalizeChainPart) : [];
-
-  for (const cfg of customFunctionSignatures) {
-    if (!cfg || !cfg.functionName) continue;
-    const sigParts = cfg.functionName.split('.').map(normalizeChainPart).filter(Boolean);
-    if (sigParts.length === 0) continue;
-    // Loose endsWith match on chain
-    if (endsWithChain(chain, sigParts)) return cfg;
-  }
-  return null;
-}
-
 function extractCustomEvent(call, cfg, analysis, source, filePath, constMap) {
   const file = filePath;
   const line = call.range?.start?.line || 0;
@@ -399,25 +347,6 @@ function extractCustomEvent(call, cfg, analysis, source, filePath, constMap) {
   return makeEvent(eventName, 'custom', properties, file, line, functionName);
 }
 
-// Implicit custom fallback for common patterns (e.g., customTrackFunction7, customTrackNoProps)
-function matchImplicitCustom(call) {
-  const name = call.name || '';
-  // Generic implicit: detect patterns with last method name and positional args
-  const chain = Array.isArray(call.calleeChain) ? call.calleeChain.map(normalizeChainPart) : [];
-  const last = chain[chain.length - 1] || '';
-  // Heuristic: methods named 'module' or 'func' that take (EVENT_NAME[, PROPERTIES, ...])
-  if (last === 'module' || last === 'func') {
-    return { functionName: chain.join('.'), eventIndex: 0, propertiesIndex: 1, extraParams: [] };
-  }
-  if (/^customTrackFunction\d*$/.test(name)) {
-    return { functionName: name, eventIndex: 0, propertiesIndex: 1, extraParams: [] };
-  }
-  if (name === 'customTrackNoProps') {
-    return { functionName: name, eventIndex: 0, propertiesIndex: 9999, extraParams: [] };
-  }
-  return null;
-}
-
 // ---------------------------
 // Helpers
 // ---------------------------
@@ -451,12 +380,14 @@ function findArg(args, labels, fallbackIndex) {
 function resolveEventArg(arg, source, constMap) {
   if (!arg) return null;
   let t = arg.text?.trim() || '';
-  t = t.replace(/[,)\s]+$/, '');
+  t = t.replace(/[,\)\s]+$/, '');
   const str = extractStringLiteral(t);
   if (str) return str;
-  // Constant resolution (e.g., EVENTS.userSignedUp)
-  const constVal = constMap[t];
-  if (typeof constVal === 'string') return constVal;
+  // Constant resolution (namespaced or bare)
+  if (constMap[t]) return constMap[t];
+  // Try namespaced token inside arg text if formatted differently
+  const mm = /^([A-Za-z_][A-Za-z0-9_]*)\.([A-Za-z_][A-Za-z0-9_]*)$/.exec(t);
+  if (mm && constMap[`${mm[1]}.${mm[2]}`]) return constMap[`${mm[1]}.${mm[2]}`];
   return null; // unknown
 }
 
@@ -577,45 +508,6 @@ function contains(outer, inner) {
   const os = outer.start || {}; const oe = outer.end || {};
   const is = inner.start || {}; const ie = inner.end || {};
   return (is.offset >= (os.offset || 0)) && (ie.offset <= (oe.offset || Infinity));
-}
-
-function normalizeChainPart(p) {
-  if (!p) return p;
-  return String(p).replace(/\s+/g, '').replace(/\(\)$/g, '');
-}
-
-function endsWithChain(chain, sigParts) {
-  if (sigParts.length > chain.length) return false;
-  for (let i = 1; i <= sigParts.length; i++) {
-    if (normalizeChainPart(chain[chain.length - i]) !== sigParts[sigParts.length - i]) return false;
-  }
-  return true;
-}
-
-function extractStringLiteral(text) {
-  const m = /^\s*"([\s\S]*?)"\s*$/.exec(text || '');
-  return m ? m[1] : null;
-}
-
-function isIdentifier(text) {
-  return /^[_A-Za-z][_A-Za-z0-9\.]*$/.test(text || '');
-}
-
-function inferValueTypeFromText(text) {
-  const t = (text || '').trim();
-  if (/^"/.test(t)) return { type: 'string' };
-  if (/^(true|false)$/i.test(t)) return { type: 'boolean' };
-  if (/^[0-9]+(\.[0-9]+)?$/.test(t)) return { type: 'number' };
-  if (/^\[/.test(t)) {
-    const inside = t.slice(1, -1).trim();
-    if (!inside) return { type: 'array', items: { type: 'any' } };
-    if (/^(\s*"[\s\S]*?"\s*,)*\s*"[\s\S]*?"\s*$/.test(inside)) return { type: 'array', items: { type: 'string' } };
-    if (/^(\s*[0-9]+(\.[0-9]+)?\s*,)*\s*[0-9]+(\.[0-9]+)?\s*$/.test(inside)) return { type: 'array', items: { type: 'number' } };
-    return { type: 'array', items: { type: 'any' } };
-  }
-  if (/^\{/.test(t) || /\)$/.test(t)) return { type: 'object' };
-  if (isIdentifier(t)) return { type: 'string' }; // assume identifiers like USER_ID are stringy constants
-  return { type: 'any' };
 }
 
 function extractMPEventName(evArg, call, analysis, source, constMap) {
@@ -755,45 +647,6 @@ function findEventNameInDictText(text, constMap) {
   return null;
 }
 
-function splitTopLevel(s) {
-  const items = [];
-  let depthBr = 0, depthPr = 0; let cur = '';
-  for (let i = 0; i < s.length; i++) {
-    const ch = s[i];
-    if (ch === '[') depthBr++; else if (ch === ']') depthBr--;
-    else if (ch === '(') depthPr++; else if (ch === ')') depthPr--;
-    if (ch === ',' && depthBr === 0 && depthPr === 0) { items.push(cur); cur = ''; continue; }
-    cur += ch;
-  }
-  if (cur.trim()) items.push(cur);
-  return items;
-}
-
-function sliceRange(source, range) {
-  const s = range?.start?.offset || 0; const e = range?.end?.offset || s;
-  return source.slice(s, e);
-}
-
-function escapeRegExp(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
-
-function extractFirstStringLiteralFromCall(text) {
-  const m = /"([\s\S]*?)"/.exec(text || '');
-  return m ? m[1] : null;
-}
-
-function extractFirstDictFromCall(text) {
-  if (!text) return null;
-  const start = text.indexOf('[');
-  if (start === -1) return null;
-  let depth = 0; let end = -1;
-  for (let i = start; i < text.length; i++) {
-    const ch = text[i];
-    if (ch === '[') depth++; else if (ch === ']') { depth--; if (depth === 0) { end = i; break; } }
-  }
-  if (end === -1) return null;
-  return text.slice(start, end + 1);
-}
-
 function extractArgsFromCall(text) {
   if (!text) return [];
   const open = text.indexOf('(');
@@ -826,55 +679,30 @@ function findEventConstantInText(text, constMap) {
 // Constants collection
 // ---------------------------
 
-function buildCrossFileConstMap(dir) {
-  const map = {};
-  try {
-    const entries = fs.readdirSync(dir).filter(f => f.endsWith('.swift'));
-    for (const f of entries) {
-      const fp = path.join(dir, f);
-      const content = fs.readFileSync(fp, 'utf8');
-      // Top-level: let NAME = "..."
-      for (const m of content.matchAll(/\blet\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*"([\s\S]*?)"/g)) {
-        map[m[1]] = m[2];
-      }
-      // Enum/struct blocks: capture namespace and all static lets inside
-      let idx = 0;
-      while (idx < content.length) {
-        const head = content.slice(idx);
-        const mm = /\b(enum|struct)\s+([A-Za-z_][A-Za-z0-9_]*)\s*\{/m.exec(head);
-        if (!mm) break;
-        const ns = mm[2];
-        const blockStart = idx + mm.index + mm[0].length - 1; // position at '{'
-        // Find matching closing brace
-        let depth = 0; let end = -1;
-        for (let i = blockStart; i < content.length; i++) {
-          const ch = content[i];
-          if (ch === '{') depth++;
-          else if (ch === '}') { depth--; if (depth === 0) { end = i; break; } }
-        }
-        if (end === -1) break;
-        const block = content.slice(blockStart + 1, end);
-        for (const sm of block.matchAll(/\bstatic\s+let\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*"([\s\S]*?)"/g)) {
-          const key = sm[1];
-          const val = sm[2];
-          map[`${ns}.${key}`] = val;
-        }
-        idx = end + 1;
-      }
-      // Capture very simple helper returns
-      // func makeAddress() -> [String: Any] { return [ ... ] }
-      for (const m of content.matchAll(/func\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(\)\s*->\s*\[[^\]]+\][^{]*\{[\s\S]*?return\s*(\[[\s\S]*?\])[\s\S]*?\}/g)) {
-        map.__dictFuncs = map.__dictFuncs || {};
-        map.__dictFuncs[m[1]] = { kind: 'dict', text: m[2] };
-      }
-      // func makeProducts() -> [[String: Any]] { return [ ... ] } (array)
-      for (const m of content.matchAll(/func\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(\)\s*->\s*\[\[[^\]]+\]\][^{]*\{[\s\S]*?return\s*(\[[\s\S]*?\])[\s\S]*?\}/g)) {
-        map.__dictFuncs = map.__dictFuncs || {};
-        map.__dictFuncs[m[1]] = { kind: 'array', text: m[2] };
-      }
-    }
-  } catch (_) {}
-  return map;
+function pickAndRemove(obj, key) {
+  if (!obj || typeof obj !== 'object') return null;
+  const val = obj[key];
+  if (val !== undefined) delete obj[key];
+  if (typeof val === 'string') return val;
+  return null;
 }
 
-module.exports = { analyzeSwiftFile };
+function extractFirstStringLiteralFromCall(text) {
+  const m = /"([\s\S]*?)"/.exec(text || '');
+  return m ? m[1] : null;
+}
+
+function extractFirstDictFromCall(text) {
+  if (!text) return null;
+  const start = text.indexOf('[');
+  if (start === -1) return null;
+  let depth = 0; let end = -1;
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === '[') depth++; else if (ch === ']') { depth--; if (depth === 0) { end = i; break; } }
+  }
+  if (end === -1) return null;
+  return text.slice(start, end + 1);
+}
+
+module.exports = { analyzeSwiftFile, __test_detectProvider: detectProvider, __test_extractProviderEvent: extractProviderEvent };
