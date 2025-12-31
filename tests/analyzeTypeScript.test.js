@@ -919,22 +919,25 @@ test.describe('analyzeTsFile', () => {
   });
 
   test('should detect events for all custom function signature variations', () => {
+    const methodEventFile = path.join(fixturesDir, 'typescript', 'method-event.ts');
     const variants = [
-      { sig: 'customTrackFunction0', event: 'custom_event0' },
-      { sig: 'customTrackFunction1(EVENT_NAME, PROPERTIES)', event: 'custom_event1' },
-      { sig: 'customTrackFunction2(userId, EVENT_NAME, PROPERTIES)', event: 'custom_event2' },
-      { sig: 'customTrackFunction3(EVENT_NAME, PROPERTIES, userEmail)', event: 'custom_event3' },
-      { sig: 'customTrackFunction4(userId, EVENT_NAME, userAddress, PROPERTIES, userEmail)', event: 'custom_event4' },
-      { sig: 'CustomModule.track(userId, EVENT_NAME, PROPERTIES)', event: 'custom_module_event' },
-      { sig: 'customTrackFunction5', event: 'FailedPayment' },
-      { sig: 'this.props.customTrackFunction6(EVENT_NAME, PROPERTIES)', event: 'ViewedAttorneyAgreement' },
-      { sig: 'customTrackFunction7(EVENT_NAME, PROPERTIES)', event: 'InitiatedPayment' },
+      { sig: 'customTrackFunction0', event: 'custom_event0', file: testFilePath },
+      { sig: 'customTrackFunction1(EVENT_NAME, PROPERTIES)', event: 'custom_event1', file: testFilePath },
+      { sig: 'customTrackFunction2(userId, EVENT_NAME, PROPERTIES)', event: 'custom_event2', file: testFilePath },
+      { sig: 'customTrackFunction3(EVENT_NAME, PROPERTIES, userEmail)', event: 'custom_event3', file: testFilePath },
+      { sig: 'customTrackFunction4(userId, EVENT_NAME, userAddress, PROPERTIES, userEmail)', event: 'custom_event4', file: testFilePath },
+      { sig: 'CustomModule.track(userId, EVENT_NAME, PROPERTIES)', event: 'custom_module_event', file: testFilePath },
+      { sig: 'customTrackFunction5', event: 'FailedPayment', file: testFilePath },
+      { sig: 'this.props.customTrackFunction6(EVENT_NAME, PROPERTIES)', event: 'ViewedAttorneyAgreement', file: testFilePath },
+      { sig: 'customTrackFunction7(EVENT_NAME, PROPERTIES)', event: 'InitiatedPayment', file: testFilePath },
+      // Method-as-event signature
+      { sig: 'eventCalls.EVENT_NAME(PROPERTIES)', event: 'viewItemList', file: methodEventFile },
     ];
 
-    variants.forEach(({ sig, event }) => {
-      const program = createProgram(testFilePath);
+    variants.forEach(({ sig, event, file }) => {
+      const program = createProgram(file);
       const customFunctionSignatures = [parseCustomFunctionSignature(sig)];
-      const events = analyzeTsFile(testFilePath, program, customFunctionSignatures);
+      const events = analyzeTsFile(file, program, customFunctionSignatures);
       const found = events.find(e => e.eventName === event && e.source === 'custom');
       assert.ok(found, `Should detect ${event} for signature ${sig}`);
     });
@@ -980,6 +983,18 @@ test.describe('analyzeTsFile', () => {
     // Ensure built-in provider events remain unaffected
     const builtInCount = events.filter(e => e.source !== 'custom').length;
     assert.ok(builtInCount >= 10, 'Should still include built-in provider events');
+
+    // Test method-as-event signature separately (different file)
+    const methodEventFile = path.join(fixturesDir, 'typescript', 'method-event.ts');
+    const methodProgram = createProgram(methodEventFile);
+    const methodAsEventSignatures = [parseCustomFunctionSignature('eventCalls.EVENT_NAME(PROPERTIES)')];
+    const methodEvents = analyzeTsFile(methodEventFile, methodProgram, methodAsEventSignatures);
+
+    const methodEventNames = ['viewItemList', 'addToCart', 'removeFromCart', 'beginCheckout', 'purchase', 'pageView', 'complexOperation'];
+    methodEventNames.forEach(eventName => {
+      const evt = methodEvents.find(e => e.eventName === eventName && e.source === 'custom');
+      assert.ok(evt, `Expected to find method-as-event ${eventName}`);
+    });
   });
 
   test('should resolve constants imported via path alias from tsconfig', () => {
