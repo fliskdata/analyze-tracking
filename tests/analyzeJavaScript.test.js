@@ -342,25 +342,29 @@ test.describe('analyzeJsFile', () => {
   });
 
   test('should detect events for all custom function signature variations', () => {
+    const methodEventFile = path.join(fixturesDir, 'javascript', 'method-event.js');
     const variants = [
-      { sig: 'customTrackFunction0', event: 'custom_event0' },
-      { sig: 'customTrackFunction1(EVENT_NAME, PROPERTIES)', event: 'custom_event1' },
-      { sig: 'customTrackFunction2(userId, EVENT_NAME, PROPERTIES)', event: 'custom_event2' },
-      { sig: 'customTrackFunction3(EVENT_NAME, PROPERTIES, userEmail)', event: 'custom_event3' },
-      { sig: 'customTrackFunction4(userId, EVENT_NAME, userAddress, PROPERTIES, userEmail)', event: 'custom_event4' },
-      { sig: 'CustomModule.track(userId, EVENT_NAME, PROPERTIES)', event: 'custom_module_event' },
-      { sig: 'getTrackingService().track(EVENT_NAME, PROPERTIES)', event: 'myChainedEvent' },
+      { sig: 'customTrackFunction0', event: 'custom_event0', file: testFilePath },
+      { sig: 'customTrackFunction1(EVENT_NAME, PROPERTIES)', event: 'custom_event1', file: testFilePath },
+      { sig: 'customTrackFunction2(userId, EVENT_NAME, PROPERTIES)', event: 'custom_event2', file: testFilePath },
+      { sig: 'customTrackFunction3(EVENT_NAME, PROPERTIES, userEmail)', event: 'custom_event3', file: testFilePath },
+      { sig: 'customTrackFunction4(userId, EVENT_NAME, userAddress, PROPERTIES, userEmail)', event: 'custom_event4', file: testFilePath },
+      { sig: 'CustomModule.track(userId, EVENT_NAME, PROPERTIES)', event: 'custom_module_event', file: testFilePath },
+      { sig: 'getTrackingService().track(EVENT_NAME, PROPERTIES)', event: 'myChainedEvent', file: testFilePath },
+      // Method-as-event signature
+      { sig: 'eventCalls.EVENT_NAME(PROPERTIES)', event: 'viewItemList', file: methodEventFile },
     ];
 
-    variants.forEach(({ sig, event }) => {
+    variants.forEach(({ sig, event, file }) => {
       const customFunctionSignatures = [parseCustomFunctionSignature(sig)];
-      const events = analyzeJsFile(testFilePath, customFunctionSignatures);
+      const events = analyzeJsFile(file, customFunctionSignatures);
       const found = events.find(e => e.eventName === event && e.source === 'custom');
       assert.ok(found, `Should detect ${event} for signature ${sig}`);
     });
   });
 
   test('should detect events when multiple custom function signatures are provided together', () => {
+    const methodEventFile = path.join(fixturesDir, 'javascript', 'method-event.js');
     const variants = [
       'customTrackFunction(userId, EVENT_NAME, PROPERTIES)',
       'customTrackFunction0',
@@ -395,6 +399,16 @@ test.describe('analyzeJsFile', () => {
     // Sanity check – ensure we did not lose built-in provider events
     const builtInProvidersCount = events.filter(e => e.source !== 'custom').length;
     assert.ok(builtInProvidersCount >= 10, 'Should still include built-in events');
+
+    // Test method-as-event signature separately (different file)
+    const methodAsEventSignatures = [parseCustomFunctionSignature('eventCalls.EVENT_NAME(PROPERTIES)')];
+    const methodEvents = analyzeJsFile(methodEventFile, methodAsEventSignatures);
+
+    const methodEventNames = ['viewItemList', 'addToCart', 'removeFromCart', 'beginCheckout', 'purchase', 'pageView'];
+    methodEventNames.forEach(eventName => {
+      const evt = methodEvents.find(e => e.eventName === eventName && e.source === 'custom');
+      assert.ok(evt, `Expected to find method-as-event ${eventName}`);
+    });
   });
 
   test('should detect events with no properties for custom function', () => {

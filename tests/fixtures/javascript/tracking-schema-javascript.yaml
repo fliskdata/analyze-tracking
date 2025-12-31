@@ -11,6 +11,10 @@ events:
         line: 14
         function: trackGA4
         destination: googleanalytics
+      - path: method-event.js
+        line: 34
+        function: global
+        destination: custom
     properties:
       order_id:
         type: any
@@ -25,6 +29,32 @@ events:
             type: string
           state:
             type: string
+      transaction_id:
+        type: string
+      value:
+        type: number
+      currency:
+        type: string
+      items:
+        type: array
+        items:
+          type: object
+      shipping:
+        type: object
+        properties:
+          method:
+            type: string
+          cost:
+            type: number
+          address:
+            type: object
+            properties:
+              city:
+                type: string
+              state:
+                type: string
+              zip:
+                type: string
   newEvent:
     implementations:
       - path: main.js
@@ -379,3 +409,75 @@ events:
         type: string
       baz:
         type: string
+  viewItemList:
+    implementations:
+      - path: method-event.js
+        line: 4
+        function: global
+        destination: custom
+    properties:
+      items:
+        type: array
+        items:
+          type: object
+      item_list_id:
+        type: string
+      item_list_name:
+        type: string
+  addToCart:
+    implementations:
+      - path: method-event.js
+        line: 11
+        function: handleAddToCart
+        destination: custom
+    properties:
+      items:
+        type: array
+        items:
+          type: object
+      value:
+        type: number
+      user:
+        type: object
+        properties:
+          id:
+            type: string
+          email:
+            type: string
+          name:
+            type: string
+  removeFromCart:
+    implementations:
+      - path: method-event.js
+        line: 18
+        function: global
+        destination: custom
+    properties:
+      items:
+        type: array
+        items:
+          type: object
+      value:
+        type: number
+  beginCheckout:
+    implementations:
+      - path: method-event.js
+        line: 24
+        function: checkoutHandler
+        destination: custom
+    properties:
+      items:
+        type: array
+        items:
+          type: object
+      currency:
+        type: string
+      value:
+        type: number
+  pageView:
+    implementations:
+      - path: method-event.js
+        line: 64
+        function: global
+        destination: custom
+    properties: {}
