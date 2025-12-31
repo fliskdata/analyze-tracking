@@ -72,15 +72,15 @@ function extractSnowplowEvent(node, constantMap) {
 
   // tracker.track(buildStructEvent({ action: 'event_name', ... }))
   const firstArg = node.arguments[0];
-  
-  if (firstArg.type === NODE_TYPES.CALL_EXPRESSION && 
+
+  if (firstArg.type === NODE_TYPES.CALL_EXPRESSION &&
       firstArg.arguments.length > 0) {
     const structEventArg = firstArg.arguments[0];
-    
+
     if (structEventArg.type === NODE_TYPES.OBJECT_EXPRESSION) {
       const actionProperty = findPropertyByKey(structEventArg, 'action');
       const eventName = actionProperty ? getStringValue(actionProperty.value, constantMap) : null;
-      
+
       return { eventName, propertiesNode: structEventArg };
     }
   }
@@ -119,7 +119,7 @@ function extractGTMEvent(node, constantMap) {
 
   // dataLayer.push({ event: 'event_name', property1: 'value1', property2: 'value2' })
   const firstArg = node.arguments[0];
-  
+
   if (firstArg.type !== NODE_TYPES.OBJECT_EXPRESSION) {
     return { eventName: null, propertiesNode: null };
   }
@@ -131,11 +131,11 @@ function extractGTMEvent(node, constantMap) {
   }
 
   const eventName = getStringValue(eventProperty.value, constantMap);
-  
+
   // Create a modified properties node without the 'event' property
   const modifiedPropertiesNode = {
     ...firstArg,
-    properties: firstArg.properties.filter(prop => 
+    properties: firstArg.properties.filter(prop =>
       prop.key && (prop.key.name !== 'event' && prop.key.value !== 'event')
     )
   };
@@ -171,10 +171,27 @@ function extractDefaultEvent(node, constantMap) {
 function extractCustomEvent(node, constantMap, customConfig) {
   const args = node.arguments || [];
 
-  const eventArg = args[customConfig?.eventIndex ?? 0];
-  const propertiesArg = args[customConfig?.propertiesIndex ?? 1];
+  let eventName;
+  let propertiesArg;
 
-  const eventName = getStringValue(eventArg, constantMap);
+  if (customConfig?.isMethodAsEvent) {
+    // Method-as-event pattern: event name comes from the method name
+    if (node.callee.type === NODE_TYPES.MEMBER_EXPRESSION &&
+        node.callee.property.type === NODE_TYPES.IDENTIFIER) {
+      eventName = node.callee.property.name;
+    } else {
+      // Fallback: could not extract method name
+      eventName = null;
+    }
+
+    // Properties are at the configured index (default 0)
+    propertiesArg = args[customConfig?.propertiesIndex ?? 0];
+  } else {
+    // Standard custom function pattern: event name comes from argument
+    const eventArg = args[customConfig?.eventIndex ?? 0];
+    propertiesArg = args[customConfig?.propertiesIndex ?? 1];
+    eventName = getStringValue(eventArg, constantMap);
+  }
 
   const extraArgs = {};
   if (customConfig && customConfig.extraParams) {
@@ -274,8 +291,8 @@ function getStringValue(node, constantMap = {}) {
  */
 function findPropertyByKey(objectNode, key) {
   if (!objectNode.properties) return null;
-  
-  return objectNode.properties.find(prop => 
+
+  return objectNode.properties.find(prop =>
     prop.key && (prop.key.name === key || prop.key.value === key)
   );
 }

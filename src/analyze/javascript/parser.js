@@ -53,7 +53,7 @@ class ParseError extends Error {
  */
 function parseFile(filePath) {
   let code;
-  
+
   try {
     code = fs.readFileSync(filePath, 'utf8');
   } catch (error) {
@@ -72,16 +72,33 @@ function parseFile(filePath) {
 // ---------------------------------------------
 
 /**
- * Determines whether a CallExpression node matches the provided custom function name.
- * Supports both simple identifiers (e.g. myTrack) and dot-separated members (e.g. Custom.track).
+ * Determines whether a CallExpression node matches the provided custom function configuration.
+ * Supports both simple identifiers (e.g. myTrack), dot-separated members (e.g. Custom.track),
+ * and method-as-event patterns (e.g. eventCalls.EVENT_NAME).
  * The logic mirrors isCustomFunction from detectors/analytics-source.js but is kept local to avoid
  * circular dependencies.
  * @param {Object} node  – CallExpression AST node
- * @param {string} fnName – Custom function name (could include dots)
+ * @param {Object} customConfig – Custom function configuration object
  * @returns {boolean}
  */
-function nodeMatchesCustomFunction(node, fnName) {
-  if (!fnName || !node.callee) return false;
+function nodeMatchesCustomFunction(node, customConfig) {
+  if (!customConfig || !node.callee) return false;
+
+  // Handle method-as-event pattern
+  if (customConfig.isMethodAsEvent && customConfig.objectName) {
+    if (node.callee.type !== NODE_TYPES.MEMBER_EXPRESSION) {
+      return false;
+    }
+    const objectNode = node.callee.object;
+    if (objectNode.type !== NODE_TYPES.IDENTIFIER) {
+      return false;
+    }
+    return objectNode.name === customConfig.objectName;
+  }
+
+  // Handle standard custom function patterns
+  const fnName = customConfig.functionName;
+  if (!fnName) return false;
 
   // Support chained calls in function name by stripping trailing parens from each segment
   const parts = fnName.split('.').map(p => p.replace(/\(\s*\)$/, ''));
@@ -204,7 +221,7 @@ function findTrackingEvents(ast, filePath, customConfigs = []) {
         // Attempt to match any custom function first to avoid mis-classifying built-in providers
         if (Array.isArray(customConfigs) && customConfigs.length > 0) {
           for (const cfg of customConfigs) {
-            if (cfg && nodeMatchesCustomFunction(node, cfg.functionName)) {
+            if (cfg && nodeMatchesCustomFunction(node, cfg)) {
               matchedCustomConfig = cfg;
               break;
             }
@@ -237,7 +254,8 @@ function findTrackingEvents(ast, filePath, customConfigs = []) {
  * @returns {Object|null} Extracted event or null
  */
 function extractTrackingEvent(node, ancestors, filePath, constantMap, customConfig) {
-  const source = detectAnalyticsSource(node, customConfig?.functionName);
+  // Pass the full customConfig object (not just functionName) to support method-as-event patterns
+  const source = detectAnalyticsSource(node, customConfig || null);
   if (source === 'unknown') {
     return null;
   }

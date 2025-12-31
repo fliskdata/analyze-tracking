@@ -39,6 +39,8 @@ npx @flisk/analyze-tracking /path/to/project [options]
 
 If you have your own in-house tracker or a wrapper function that calls other tracking libraries, you can specify the function signature with the `-c` or `--customFunction` option.
 
+#### Standard Custom Function Format
+
 Your function signature should be in the following format:
 ```js
 yourCustomTrackFunctionName(EVENT_NAME, PROPERTIES, customFieldOne, customFieldTwo)
@@ -57,11 +59,45 @@ yourCustomTrackFunctionName(userId, EVENT_NAME, PROPERTIES)
 
 If your function follows the standard format `yourCustomTrackFunctionName(EVENT_NAME, PROPERTIES)`, you can simply pass in `yourCustomTrackFunctionName` to `--customFunction` as a shorthand.
 
+#### Method-Name-as-Event Format
+
+For tracking patterns where the method name itself is the event name (e.g., `yourClass.yourEventName({...})`), use the special `EVENT_NAME` placeholder in the method position:
+
+```js
+yourClass.EVENT_NAME(PROPERTIES)
+```
+
+This pattern tells the analyzer that:
+- `yourClass` is the object name to match
+- The method name after the dot (e.g., `viewItemList`, `addToCart`) is the event name
+- `PROPERTIES` is the properties object (defaults to the first argument if not specified)
+
+**Example:**
+```typescript
+// Code in your project:
+yourClass.viewItemList({ items: [...] });
+yourClass.addToCart({ item: {...}, value: 100 });
+yourClass.purchase({ userId: '123', value: 100 });
+
+// Command:
+npx @flisk/analyze-tracking /path/to/project --customFunction "yourClass.EVENT_NAME(PROPERTIES)"
+```
+
+This will detect:
+- Event: `viewItemList` with properties from the first argument
+- Event: `addToCart` with properties from the first argument
+- Event: `purchase` with properties from the first argument
+
+_**Note:** This pattern is currently only supported for JavaScript and TypeScript code._
+
+#### Multiple Custom Functions
+
 You can also pass in multiple custom function signatures by passing in the `--customFunction` option multiple times or by passing in a space-separated list of function signatures.
 
 ```sh
 npx @flisk/analyze-tracking /path/to/project --customFunction "yourFunc1" --customFunction "yourFunc2(userId, EVENT_NAME, PROPERTIES)"
 npx @flisk/analyze-tracking /path/to/project -c "yourFunc1" "yourFunc2(userId, EVENT_NAME, PROPERTIES)"
+npx @flisk/analyze-tracking /path/to/project -c "yourClass.EVENT_NAME(PROPERTIES)" "customTrack(EVENT_NAME, PROPERTIES)"
 ```
 
 

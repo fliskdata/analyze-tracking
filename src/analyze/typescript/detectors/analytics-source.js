@@ -9,16 +9,25 @@ const { ANALYTICS_PROVIDERS } = require('../constants');
 /**
  * Detects the analytics provider from a CallExpression node
  * @param {Object} node - TypeScript CallExpression node
- * @param {string} [customFunction] - Custom function name to detect
+ * @param {string|Object} [customFunctionOrConfig] - Custom function name string or custom config object
  * @returns {string} The detected analytics source or 'unknown'
  */
-function detectAnalyticsSource(node, customFunction) {
+function detectAnalyticsSource(node, customFunctionOrConfig) {
   if (!node.expression) {
     return 'unknown';
   }
 
   // Check for custom function first
-  if (customFunction && isCustomFunction(node, customFunction)) {
+  // Support both old string format and new config object format
+  const customConfig = typeof customFunctionOrConfig === 'object' ? customFunctionOrConfig : null;
+  const customFunction = typeof customFunctionOrConfig === 'string' ? customFunctionOrConfig : (customConfig?.functionName);
+
+  if (customConfig?.isMethodAsEvent) {
+    // Method-as-event pattern: match any method on the specified object
+    if (isMethodAsEventFunction(node, customConfig)) {
+      return 'custom';
+    }
+  } else if (customFunction && isCustomFunction(node, customFunction)) {
     return 'custom';
   }
 
@@ -35,6 +44,31 @@ function detectAnalyticsSource(node, customFunction) {
   }
 
   return 'unknown';
+}
+
+/**
+ * Checks if the node matches a method-as-event custom function pattern
+ * @param {Object} node - TypeScript CallExpression node
+ * @param {Object} customConfig - Custom function configuration with isMethodAsEvent: true
+ * @returns {boolean}
+ */
+function isMethodAsEventFunction(node, customConfig) {
+  if (!customConfig?.isMethodAsEvent || !customConfig?.objectName) {
+    return false;
+  }
+
+  // Must be a PropertyAccessExpression: objectName.methodName(...)
+  if (!ts.isPropertyAccessExpression(node.expression)) {
+    return false;
+  }
+
+  // The object part must match the configured objectName
+  const objectExpr = node.expression.expression;
+  if (!ts.isIdentifier(objectExpr)) {
+    return false;
+  }
+
+  return objectExpr.escapedText === customConfig.objectName;
 }
 
 /**

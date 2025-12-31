@@ -168,16 +168,34 @@ function findTrackingEvents(sourceFile, checker, filePath, customConfigs = []) {
   const events = [];
 
   /**
-   * Tests if a CallExpression matches a custom function name
+   * Tests if a CallExpression matches a custom function configuration
    * @param {Object} callNode - The call expression node
-   * @param {string} functionName - Function name to match
+   * @param {Object} customConfig - Custom function configuration object
    * @returns {boolean} True if matches
    */
-  function matchesCustomFunction(callNode, functionName) {
-    if (!functionName || !callNode.expression) {
+  function matchesCustomFunction(callNode, customConfig) {
+    if (!customConfig || !callNode.expression) {
       return false;
     }
-    
+
+    // Handle method-as-event pattern
+    if (customConfig.isMethodAsEvent && customConfig.objectName) {
+      if (!ts.isPropertyAccessExpression(callNode.expression)) {
+        return false;
+      }
+      const objectExpr = callNode.expression.expression;
+      if (!ts.isIdentifier(objectExpr)) {
+        return false;
+      }
+      return objectExpr.escapedText === customConfig.objectName;
+    }
+
+    // Handle standard custom function pattern
+    const functionName = customConfig.functionName;
+    if (!functionName) {
+      return false;
+    }
+
     try {
       return callNode.expression.getText() === functionName;
     } catch {
@@ -197,7 +215,7 @@ function findTrackingEvents(sourceFile, checker, filePath, customConfigs = []) {
         // Check for custom function matches
         if (Array.isArray(customConfigs) && customConfigs.length > 0) {
           for (const config of customConfigs) {
-            if (config && matchesCustomFunction(node, config.functionName)) {
+            if (config && matchesCustomFunction(node, config)) {
               matchedCustomConfig = config;
               break;
             }
@@ -211,7 +229,7 @@ function findTrackingEvents(sourceFile, checker, filePath, customConfigs = []) {
           filePath,
           matchedCustomConfig
         );
-        
+
         if (event) {
           events.push(event);
         }
@@ -238,7 +256,8 @@ function findTrackingEvents(sourceFile, checker, filePath, customConfigs = []) {
  */
 function extractTrackingEvent(node, sourceFile, checker, filePath, customConfig) {
   // Detect the analytics source
-  const source = detectAnalyticsSource(node, customConfig?.functionName);
+  // Pass the full customConfig object (not just functionName) to support method-as-event patterns
+  const source = detectAnalyticsSource(node, customConfig || null);
   if (source === 'unknown') {
     return null;
   }
