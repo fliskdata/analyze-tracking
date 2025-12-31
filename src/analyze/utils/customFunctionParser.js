@@ -6,6 +6,35 @@ function parseCustomFunctionSignature(signature) {
 
   const trimmed = signature.trim();
 
+  // Check for method-as-event pattern: objectName.EVENT_NAME(PROPERTIES)
+  // This pattern means the method name itself is the event name
+  const methodAsEventMatch = trimmed.match(/^([^.]+)\.EVENT_NAME\s*\(([^)]*)\)\s*$/);
+  if (methodAsEventMatch) {
+    const objectName = methodAsEventMatch[1].trim();
+    const paramsPart = methodAsEventMatch[2].trim();
+
+    // Parse the parameters inside EVENT_NAME(...)
+    const params = paramsPart ? paramsPart.split(',').map(p => p.trim()).filter(Boolean) : [];
+
+    // Find PROPERTIES index (default to 0 if not specified)
+    let propertiesIndex = params.findIndex(p => p.toUpperCase() === 'PROPERTIES');
+    if (propertiesIndex === -1) {
+      // If PROPERTIES is not explicitly listed, it's the first parameter (index 0)
+      propertiesIndex = 0;
+    }
+
+    const extraParams = params.map((name, idx) => ({ idx, name }))
+      .filter(p => p.idx !== propertiesIndex);
+
+    return {
+      functionName: objectName, // Use objectName for matching the object part
+      objectName, // Store separately for clarity
+      isMethodAsEvent: true, // Flag indicating method name is event name
+      propertiesIndex,
+      extraParams
+    };
+  }
+
   // Two cases:
   // 1) Full signature with params at the end (e.g., Module.track(EVENT_NAME, PROPERTIES)) → parse params
   // 2) Name-only (including chains with internal calls, e.g., getService().track) → no params

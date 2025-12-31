@@ -76,10 +76,10 @@ function extractSnowplowEvent(node, checker, sourceFile) {
 
   // tracker.track(buildStructEvent({ action: 'event_name', ... }))
   const firstArg = node.arguments[0];
-  
+
   // Check if it's a direct buildStructEvent call
-  if (ts.isCallExpression(firstArg) && 
-      ts.isIdentifier(firstArg.expression) && 
+  if (ts.isCallExpression(firstArg) &&
+      ts.isIdentifier(firstArg.expression) &&
       firstArg.expression.escapedText === 'buildStructEvent' &&
       firstArg.arguments.length > 0) {
     const structEventArg = firstArg.arguments[0];
@@ -141,7 +141,7 @@ function extractGTMEvent(node, checker, sourceFile) {
 
   // dataLayer.push({ event: 'event_name', property1: 'value1', property2: 'value2' })
   const firstArg = node.arguments[0];
-  
+
   if (!ts.isObjectLiteralExpression(firstArg)) {
     return { eventName: null, propertiesNode: null };
   }
@@ -153,7 +153,7 @@ function extractGTMEvent(node, checker, sourceFile) {
   }
 
   const eventName = getStringValue(eventProperty.initializer, checker, sourceFile);
-  
+
   // Create a modified properties node without the 'event' property
   const modifiedProperties = firstArg.properties.filter(prop => {
     if (ts.isPropertyAssignment(prop) && prop.name) {
@@ -169,7 +169,7 @@ function extractGTMEvent(node, checker, sourceFile) {
 
   // Create a synthetic object literal with the filtered properties
   const modifiedPropertiesNode = ts.factory.createObjectLiteralExpression(modifiedProperties);
-  
+
   // Copy source positions for proper analysis
   if (firstArg.pos !== undefined) {
     modifiedPropertiesNode.pos = firstArg.pos;
@@ -192,10 +192,31 @@ function extractGTMEvent(node, checker, sourceFile) {
 function extractCustomEvent(node, checker, sourceFile, customConfig) {
   const args = node.arguments || [];
 
-  const eventArg = args[customConfig?.eventIndex ?? 0];
-  const propertiesArg = args[customConfig?.propertiesIndex ?? 1];
+  let eventName;
+  let propertiesArg;
 
-  const eventName = getStringValue(eventArg, checker, sourceFile);
+  if (customConfig?.isMethodAsEvent) {
+    // Method-as-event pattern: event name comes from the method name
+    if (ts.isPropertyAccessExpression(node.expression)) {
+      const methodName = node.expression.name;
+      if (methodName && ts.isIdentifier(methodName)) {
+        eventName = methodName.escapedText || methodName.text;
+      } else {
+        // Fallback: could not extract method name
+        eventName = null;
+      }
+    } else {
+      eventName = null;
+    }
+
+    // Properties are at the configured index (default 0)
+    propertiesArg = args[customConfig?.propertiesIndex ?? 0];
+  } else {
+    // Standard custom function pattern: event name comes from argument
+    const eventArg = args[customConfig?.eventIndex ?? 0];
+    propertiesArg = args[customConfig?.propertiesIndex ?? 1];
+    eventName = getStringValue(eventArg, checker, sourceFile);
+  }
 
   const extraArgs = {};
   if (customConfig && customConfig.extraParams) {
@@ -320,22 +341,22 @@ function processEventData(eventData, source, filePath, line, functionName, check
  */
 function getStringValue(node, checker, sourceFile) {
   if (!node) return null;
-  
+
   // Handle string literals (existing behavior)
   if (ts.isStringLiteral(node)) {
     return node.text;
   }
-  
+
   // Handle property access expressions like TRACKING_EVENTS.ECOMMERCE_PURCHASE
   if (ts.isPropertyAccessExpression(node)) {
     return resolvePropertyAccessToString(node, checker, sourceFile);
   }
-  
+
   // Handle identifiers that might reference constants
   if (ts.isIdentifier(node)) {
     return resolveIdentifierToString(node, checker, sourceFile);
   }
-  
+
   return null;
 }
 
@@ -438,39 +459,39 @@ function resolveIdentifierToString(node, checker, sourceFile) {
     if (!symbol) {
       return null;
     }
-    
+
     // First try to resolve through value declaration
     if (symbol.valueDeclaration) {
       const declaration = symbol.valueDeclaration;
-      
+
       // Handle variable declarations with string literal initializers
-      if (ts.isVariableDeclaration(declaration) && 
+      if (ts.isVariableDeclaration(declaration) &&
           declaration.initializer &&
           ts.isStringLiteral(declaration.initializer)) {
         return declaration.initializer.text;
       }
-      
+
       // Handle const declarations with object literals containing string properties
-      if (ts.isVariableDeclaration(declaration) && 
+      if (ts.isVariableDeclaration(declaration) &&
           declaration.initializer &&
           ts.isObjectLiteralExpression(declaration.initializer)) {
         // This case is handled by property access resolution
         return null;
       }
     }
-    
+
     // If value declaration doesn't exist or doesn't help, try type resolution
     // This handles imported constants that are resolved through TypeScript's type system
     const type = checker.getTypeOfSymbolAtLocation(symbol, node);
     if (type && type.isStringLiteral && typeof type.isStringLiteral === 'function' && type.isStringLiteral()) {
       return type.value;
     }
-    
+
     // Alternative approach for string literal types (different TypeScript versions)
     if (type && type.flags && (type.flags & ts.TypeFlags.StringLiteral)) {
       return type.value;
     }
-    
+
     return null;
   } catch (error) {
     return null;
@@ -485,7 +506,7 @@ function resolveIdentifierToString(node, checker, sourceFile) {
  */
 function findPropertyByKey(objectNode, key) {
   if (!objectNode.properties) return null;
-  
+
   return objectNode.properties.find(prop => {
     if (prop.name) {
       if (ts.isIdentifier(prop.name)) {
@@ -506,30 +527,30 @@ function findPropertyByKey(objectNode, key) {
  */
 function cleanupProperties(properties) {
   const cleaned = {};
-  
+
   for (const [key, value] of Object.entries(properties)) {
     if (value && typeof value === 'object') {
       // Remove __unresolved marker
       if (value.__unresolved) {
         delete value.__unresolved;
       }
-      
+
       // Recursively clean nested properties
       if (value.properties) {
         value.properties = cleanupProperties(value.properties);
       }
-      
+
       // Clean array item properties
       if (value.type === 'array' && value.items && value.items.properties) {
         value.items.properties = cleanupProperties(value.items.properties);
       }
-      
+
       cleaned[key] = value;
     } else {
       cleaned[key] = value;
     }
   }
-  
+
   return cleaned;
 }
 

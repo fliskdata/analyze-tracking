@@ -7,17 +7,17 @@ const { parseCustomFunctionSignature } = require('../src/analyze/utils/customFun
 test.describe('analyzeJsFile', () => {
   const fixturesDir = path.join(__dirname, 'fixtures');
   const testFilePath = path.join(fixturesDir, 'javascript', 'main.js');
-  
+
   test('should correctly analyze JavaScript file with multiple tracking providers', () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
     const events = analyzeJsFile(testFilePath, customFunctionSignatures);
-    
+
     // Sort events by line number for consistent ordering
     events.sort((a, b) => a.line - b.line);
-    
+
     assert.strictEqual(events.length, 19);
-    
+
     // Test Google Analytics event
     const gaEvent = events.find(e => e.eventName === 'purchase' && e.source === 'googleanalytics');
     assert.ok(gaEvent);
@@ -36,7 +36,7 @@ test.describe('analyzeJsFile', () => {
         }
       }
     });
-    
+
     // Test Segment event
     const segmentEvent = events.find(e => e.eventName === 'newEvent');
     assert.ok(segmentEvent);
@@ -47,7 +47,7 @@ test.describe('analyzeJsFile', () => {
       something: { type: 'string' },
       count: { type: 'number' }
     });
-    
+
     // Test Mixpanel event
     const mixpanelEvent = events.find(e => e.eventName === 'orderCompleted');
     assert.ok(mixpanelEvent);
@@ -59,7 +59,7 @@ test.describe('analyzeJsFile', () => {
       products: { type: 'any' },
       total: { type: 'any' }
     });
-    
+
     // Test Amplitude event
     const amplitudeEvent = events.find(e => e.eventName === 'checkout' && e.source === 'amplitude');
     assert.ok(amplitudeEvent);
@@ -78,7 +78,7 @@ test.describe('analyzeJsFile', () => {
         }
       }
     });
-    
+
     // Test Rudderstack event
     const rudderstackEvent = events.find(e => e.eventName === 'Order Completed');
     assert.ok(rudderstackEvent);
@@ -97,7 +97,7 @@ test.describe('analyzeJsFile', () => {
         }
       }
     });
-    
+
     // Test mParticle event
     const mparticleEvent = events.find(e => e.eventName === 'Buy Now');
     assert.ok(mparticleEvent);
@@ -116,7 +116,7 @@ test.describe('analyzeJsFile', () => {
         }
       }
     });
-    
+
     // Test PostHog event
     const posthogEvent = events.find(e => e.eventName === 'user click');
     assert.ok(posthogEvent);
@@ -136,7 +136,7 @@ test.describe('analyzeJsFile', () => {
         }
       }
     });
-    
+
     // Test Pendo event
     const pendoEvent = events.find(e => e.eventName === 'customer checkout');
     assert.ok(pendoEvent);
@@ -158,7 +158,7 @@ test.describe('analyzeJsFile', () => {
         }
       }
     });
-    
+
     // Test Heap event
     const heapEvent = events.find(e => e.eventName === 'login');
     assert.ok(heapEvent);
@@ -170,7 +170,7 @@ test.describe('analyzeJsFile', () => {
       email: { type: 'string' },
       name: { type: 'string' }
     });
-    
+
     // Test Snowplow event
     const snowplowEvent = events.find(e => e.eventName === 'someevent');
     assert.ok(snowplowEvent);
@@ -183,7 +183,7 @@ test.describe('analyzeJsFile', () => {
       property: { type: 'string' },
       value: { type: 'any' }
     });
-    
+
     // Test custom function event
     const customEvent = events.find(e => e.eventName === 'customEvent');
     assert.ok(customEvent);
@@ -199,7 +199,7 @@ test.describe('analyzeJsFile', () => {
         items: { type: 'string' }
       }
     });
-    
+
     // Test frozen constant event name via Object.freeze constant
     const frozenEvent = events.find(e => e.eventName === 'ecommerce_purchase_frozen');
     assert.ok(frozenEvent);
@@ -214,7 +214,7 @@ test.describe('analyzeJsFile', () => {
       }
     });
   });
-  
+
   test('should handle files without tracking events', () => {
     const emptyTestFile = path.join(fixturesDir, 'javascript', 'empty.js');
     // Create empty file for testing
@@ -222,25 +222,25 @@ test.describe('analyzeJsFile', () => {
     if (!fs.existsSync(emptyTestFile)) {
       fs.writeFileSync(emptyTestFile, '// Empty file\n');
     }
-    
+
     const customFunctionSignatures = [parseCustomFunctionSignature('customTrack')];
     const events = analyzeJsFile(emptyTestFile, customFunctionSignatures);
     assert.deepStrictEqual(events, []);
   });
-  
+
   test('should handle missing custom function', () => {
     const events = analyzeJsFile(testFilePath, null);
-    
+
     // Should find all events except the custom one
     assert.strictEqual(events.length, 18);
     assert.strictEqual(events.find(e => e.source === 'custom'), undefined);
   });
-  
+
   test('should handle nested property types correctly', () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
     const events = analyzeJsFile(testFilePath, customFunctionSignatures);
-    
+
     // Test nested object properties
     const eventWithNestedObj = events.find(e => e.properties.address);
     assert.ok(eventWithNestedObj);
@@ -251,7 +251,7 @@ test.describe('analyzeJsFile', () => {
         state: { type: 'string' }
       }
     });
-    
+
     // Test array properties
     const eventWithArray = events.find(e => e.properties.list);
     assert.ok(eventWithArray);
@@ -260,12 +260,12 @@ test.describe('analyzeJsFile', () => {
       items: { type: 'string' }
     });
   });
-  
+
   test('should detect array types correctly', () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
     const events = analyzeJsFile(testFilePath, customFunctionSignatures);
-    
+
     // Test array of objects
     const pendoEvent = events.find(e => e.eventName === 'customer checkout');
     assert.ok(pendoEvent);
@@ -273,7 +273,7 @@ test.describe('analyzeJsFile', () => {
       type: 'array',
       items: { type: 'object' }
     });
-    
+
     // Test array of strings
     const customEvent = events.find(e => e.eventName === 'customEvent');
     assert.ok(customEvent);
@@ -282,45 +282,45 @@ test.describe('analyzeJsFile', () => {
       items: { type: 'string' }
     });
   });
-  
+
   test('should handle different function contexts correctly', () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
     const events = analyzeJsFile(testFilePath, customFunctionSignatures);
-    
+
     // Test function declaration
     const funcDeclEvent = events.find(e => e.functionName === 'test12345678');
     assert.ok(funcDeclEvent);
-    
+
     // Test arrow function
     const arrowFuncEvent = events.find(e => e.functionName === 'trackGA4');
     assert.ok(arrowFuncEvent);
-    
+
     // Test class method
     const classMethodEvent = events.find(e => e.functionName === 'trackSnowplow');
     assert.ok(classMethodEvent);
-    
+
     // Test global scope
     const globalEvent = events.find(e => e.functionName === 'global');
     assert.ok(globalEvent);
   });
-  
+
   test('should handle case variations in provider names', () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
     const events = analyzeJsFile(testFilePath, customFunctionSignatures);
-    
+
     // mParticle is used with lowercase 'p' in the test file
     const mparticleEvent = events.find(e => e.source === 'mparticle');
     assert.ok(mparticleEvent);
     assert.strictEqual(mparticleEvent.eventName, 'Buy Now');
   });
-  
+
   test('should exclude action field from Snowplow properties', () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
     const events = analyzeJsFile(testFilePath, customFunctionSignatures);
-    
+
     const snowplowEvent = events.find(e => e.source === 'snowplow');
     assert.ok(snowplowEvent);
     assert.strictEqual(snowplowEvent.eventName, 'someevent');
@@ -328,19 +328,19 @@ test.describe('analyzeJsFile', () => {
     assert.strictEqual(snowplowEvent.properties.action, undefined);
     assert.ok(snowplowEvent.properties.category);
   });
-  
+
   test('should handle mParticle three-parameter format', () => {
     const customFunction = 'customTrackFunction(userId, EVENT_NAME, PROPERTIES)';
     const customFunctionSignatures = [parseCustomFunctionSignature(customFunction)];
     const events = analyzeJsFile(testFilePath, customFunctionSignatures);
-    
+
     const mparticleEvent = events.find(e => e.source === 'mparticle');
     assert.ok(mparticleEvent);
     assert.strictEqual(mparticleEvent.eventName, 'Buy Now');
     // Event name is first param, properties are third param
     assert.ok(mparticleEvent.properties.order_id);
   });
-  
+
   test('should detect events for all custom function signature variations', () => {
     const variants = [
       { sig: 'customTrackFunction0', event: 'custom_event0' },
@@ -359,7 +359,7 @@ test.describe('analyzeJsFile', () => {
       assert.ok(found, `Should detect ${event} for signature ${sig}`);
     });
   });
-  
+
   test('should detect events when multiple custom function signatures are provided together', () => {
     const variants = [
       'customTrackFunction(userId, EVENT_NAME, PROPERTIES)',
@@ -446,5 +446,96 @@ test.describe('analyzeJsFile', () => {
     assert.deepStrictEqual(finished.properties, {
       SectionName: { type: 'any' }
     });
+  });
+
+  test('should detect method-as-event custom functions', () => {
+    const methodEventFile = path.join(fixturesDir, 'javascript', 'method-event.js');
+    const customFunction = 'eventCalls.EVENT_NAME(PROPERTIES)';
+    const events = analyzeJsFile(methodEventFile, [parseCustomFunctionSignature(customFunction)]);
+
+    assert.ok(events.length >= 5, 'Should detect multiple method-as-event calls');
+
+    // Test viewItemList event
+    const viewItemList = events.find(e => e.eventName === 'viewItemList');
+    assert.ok(viewItemList, 'Should detect viewItemList event');
+    assert.strictEqual(viewItemList.source, 'custom');
+    assert.strictEqual(viewItemList.functionName, 'global');
+    assert.deepStrictEqual(viewItemList.properties, {
+      items: {
+        type: 'array',
+        items: { type: 'object' }
+      },
+      item_list_id: { type: 'string' },
+      item_list_name: { type: 'string' }
+    });
+
+    // Test addToCart event
+    const addToCart = events.find(e => e.eventName === 'addToCart');
+    assert.ok(addToCart, 'Should detect addToCart event');
+    assert.strictEqual(addToCart.source, 'custom');
+    assert.strictEqual(addToCart.functionName, 'handleAddToCart');
+    assert.deepStrictEqual(addToCart.properties, {
+      items: {
+        type: 'array',
+        items: { type: 'object' }
+      },
+      value: { type: 'number' },
+      user: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          email: { type: 'string' },
+          name: { type: 'string' }
+        }
+      }
+    });
+
+    // Test removeFromCart event
+    const removeFromCart = events.find(e => e.eventName === 'removeFromCart');
+    assert.ok(removeFromCart, 'Should detect removeFromCart event');
+    assert.strictEqual(removeFromCart.source, 'custom');
+
+    // Test beginCheckout event
+    const beginCheckout = events.find(e => e.eventName === 'beginCheckout');
+    assert.ok(beginCheckout, 'Should detect beginCheckout event');
+    assert.strictEqual(beginCheckout.source, 'custom');
+    assert.strictEqual(beginCheckout.functionName, 'checkoutHandler');
+    assert.deepStrictEqual(beginCheckout.properties, {
+      items: {
+        type: 'array',
+        items: { type: 'object' }
+      },
+      currency: { type: 'string' },
+      value: { type: 'number' }
+    });
+
+    // Test purchase event with nested objects
+    const purchase = events.find(e => e.eventName === 'purchase');
+    assert.ok(purchase, 'Should detect purchase event');
+    assert.ok(purchase.properties.shipping, 'Should include nested shipping property');
+    assert.strictEqual(purchase.properties.shipping.type, 'object');
+    assert.ok(purchase.properties.shipping.properties.address, 'Should include nested address property');
+
+    // Test pageView with empty properties
+    const pageView = events.find(e => e.eventName === 'pageView');
+    assert.ok(pageView, 'Should detect pageView event');
+    assert.deepStrictEqual(pageView.properties, {}, 'Should handle empty properties object');
+  });
+
+  test('should handle method-as-event alongside standard custom functions', () => {
+    const methodEventFile = path.join(fixturesDir, 'javascript', 'method-event.js');
+    const customFunctions = [
+      'eventCalls.EVENT_NAME(PROPERTIES)',
+      'customTrackFunction(userId, EVENT_NAME, PROPERTIES)'
+    ];
+    const events = analyzeJsFile(methodEventFile, customFunctions.map(parseCustomFunctionSignature));
+
+    // Should detect method-as-event calls
+    const viewItemList = events.find(e => e.eventName === 'viewItemList' && e.source === 'custom');
+    assert.ok(viewItemList, 'Should detect method-as-event calls');
+
+    // Should not detect standard custom function calls (none in this file)
+    const customEvents = events.filter(e => e.source === 'custom');
+    assert.ok(customEvents.length >= 5, 'Should detect multiple method-as-event events');
   });
 });

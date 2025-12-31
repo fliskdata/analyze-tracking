@@ -737,7 +737,7 @@ test.describe('analyzeTsFile', () => {
   test('should handle complex React class component patterns without crashing (regression test)', () => {
     const reactFilePath = path.join(fixturesDir, 'typescript-react', 'main.tsx');
     const program = createProgram(reactFilePath);
-    
+
     // This should not throw any errors - the main test is that it doesn't crash
     assert.doesNotThrow(() => {
       const events = analyzeTsFile(reactFilePath, program);
@@ -750,13 +750,13 @@ test.describe('analyzeTsFile', () => {
   test('should handle complex class component with custom function detection without crashing', () => {
     const reactFilePath = path.join(fixturesDir, 'typescript-react', 'main.tsx');
     const program = createProgram(reactFilePath);
-    
+
     // This was the specific case that was causing "Cannot read properties of undefined (reading 'kind')"
     assert.doesNotThrow(() => {
       const customFunctionSignatures = [parseCustomFunctionSignature('track')];
       const events = analyzeTsFile(reactFilePath, program, customFunctionSignatures);
       assert.ok(Array.isArray(events));
-      
+
       // Should find the analytics.track call when looking for 'track' custom function
       const analyticsEvent = events.find(e => e.eventName === 'document_upload_clicked');
       assert.ok(analyticsEvent);
@@ -772,11 +772,11 @@ test.describe('analyzeTsFile', () => {
   test('should handle various custom function detection patterns without undefined errors', () => {
     const reactFilePath = path.join(fixturesDir, 'typescript-react', 'main.tsx');
     const program = createProgram(reactFilePath);
-    
+
     // Test various custom function patterns that could trigger the bug
     const customFunctionTests = [
       'track',
-      'analytics.track', 
+      'analytics.track',
       'tracker.track',
       'this.track',
       'mixpanel.track',
@@ -795,7 +795,7 @@ test.describe('analyzeTsFile', () => {
   test('should handle nested property access expressions in custom function detection', () => {
     const reactFilePath = path.join(fixturesDir, 'typescript-react', 'main.tsx');
     const program = createProgram(reactFilePath);
-    
+
     // Test deeply nested property access that could cause undefined node traversal
     const complexCustomFunctions = [
       'this.props.analytics.track',
@@ -816,9 +816,9 @@ test.describe('analyzeTsFile', () => {
   test('should correctly identify React class method contexts without undefined errors', () => {
     const reactFilePath = path.join(fixturesDir, 'typescript-react', 'main.tsx');
     const program = createProgram(reactFilePath);
-    
+
     const events = analyzeTsFile(reactFilePath, program);
-    
+
     // Should find the analytics.track call in the arrow function method
     const analyticsEvent = events.find(e => e.eventName === 'document_upload_clicked');
     assert.ok(analyticsEvent);
@@ -829,7 +829,7 @@ test.describe('analyzeTsFile', () => {
   test('should handle TypeScript React component with complex type intersections', () => {
     const reactFilePath = path.join(fixturesDir, 'typescript-react', 'main.tsx');
     const program = createProgram(reactFilePath);
-    
+
     // The file has complex type intersections: MappedProps & ExplicitProps & ActionProps
     // This should not cause AST traversal issues
     assert.doesNotThrow(() => {
@@ -842,7 +842,7 @@ test.describe('analyzeTsFile', () => {
   test('should handle React refs and generic type parameters without errors', () => {
     const reactFilePath = path.join(fixturesDir, 'typescript-react', 'main.tsx');
     const program = createProgram(reactFilePath);
-    
+
     // The file uses React.createRef<any>() which creates complex AST nodes
     assert.doesNotThrow(() => {
       const customFunctionSignatures = [parseCustomFunctionSignature('open')];
@@ -854,21 +854,21 @@ test.describe('analyzeTsFile', () => {
   test('should handle both React functional and class components correctly', () => {
     const reactFilePath = path.join(fixturesDir, 'typescript-react', 'main.tsx');
     const program = createProgram(reactFilePath);
-    
+
     // Should work without errors for file containing both patterns
     assert.doesNotThrow(() => {
       const customFunctionSignatures = [parseCustomFunctionSignature('track')];
       const events = analyzeTsFile(reactFilePath, program, customFunctionSignatures);
-      
+
       assert.ok(Array.isArray(events));
-      
+
       // Should have events from both functional and class components
       assert.ok(events.length > 0);
-      
+
       // Should have functional component events (from hooks)
       const functionalEvents = events.filter(e => e.functionName.includes('useCallback') || e.functionName.includes('useEffect'));
       assert.ok(functionalEvents.length > 0);
-      
+
       // Should have class component events (they now show proper method names)
       const classEvents = events.filter(e => e.functionName === 'onFileUploadClick' || e.functionName === 'handleComplexOperation');
       assert.ok(classEvents.length > 0);
@@ -878,7 +878,7 @@ test.describe('analyzeTsFile', () => {
   test('should handle edge cases in isCustomFunction without undefined property access', () => {
     const reactFilePath = path.join(fixturesDir, 'typescript-react', 'main.tsx');
     const program = createProgram(reactFilePath);
-    
+
     // These edge cases were specifically causing the "reading 'kind'" error
     const edgeCaseCustomFunctions = [
       'track', // matches .track in analytics.track
@@ -899,13 +899,13 @@ test.describe('analyzeTsFile', () => {
   test('should preserve correct event extraction while fixing undefined errors', () => {
     const reactFilePath = path.join(fixturesDir, 'typescript-react', 'main.tsx');
     const program = createProgram(reactFilePath);
-    
+
     // Verify that our fix doesn't break the actual tracking detection
     const events = analyzeTsFile(reactFilePath, program);
-    
+
     // Should correctly identify multiple tracking events including the complex class component
     assert.ok(events.length >= 8);
-    
+
     // Should still correctly identify the analytics.track call from complex component
     const complexEvent = events.find(e => e.eventName === 'document_upload_clicked');
     assert.ok(complexEvent);
@@ -1012,5 +1012,98 @@ test.describe('analyzeTsFile', () => {
     const constantEvent = events.find(e => e.eventName === 'ViewedPostShipDashboard');
     assert.ok(constantEvent);
     assert.deepStrictEqual(constantEvent.properties, {});
+  });
+
+  test('should detect method-as-event custom functions', () => {
+    const methodEventFile = path.join(fixturesDir, 'typescript', 'method-event.ts');
+    const program = createProgram(methodEventFile);
+    const customFunction = 'eventCalls.EVENT_NAME(PROPERTIES)';
+    const events = analyzeTsFile(methodEventFile, program, [parseCustomFunctionSignature(customFunction)]);
+
+    assert.ok(events.length >= 5, 'Should detect multiple method-as-event calls');
+
+    // Test viewItemList event
+    const viewItemList = events.find(e => e.eventName === 'viewItemList');
+    assert.ok(viewItemList, 'Should detect viewItemList event');
+    assert.strictEqual(viewItemList.source, 'custom');
+    assert.strictEqual(viewItemList.functionName, 'global');
+    assert.deepStrictEqual(viewItemList.properties, {
+      items: {
+        type: 'array',
+        items: { type: 'object' }
+      },
+      item_list_id: { type: 'string' },
+      item_list_name: { type: 'string' }
+    });
+
+    // Test addToCart event
+    const addToCart = events.find(e => e.eventName === 'addToCart');
+    assert.ok(addToCart, 'Should detect addToCart event');
+    assert.strictEqual(addToCart.source, 'custom');
+    assert.strictEqual(addToCart.functionName, 'handleAddToCart');
+    assert.deepStrictEqual(addToCart.properties, {
+      items: {
+        type: 'array',
+        items: { type: 'object' }
+      },
+      value: { type: 'number' },
+      user: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          email: { type: 'string' },
+          name: { type: 'string' }
+        }
+      }
+    });
+
+    // Test removeFromCart event
+    const removeFromCart = events.find(e => e.eventName === 'removeFromCart');
+    assert.ok(removeFromCart, 'Should detect removeFromCart event');
+    assert.strictEqual(removeFromCart.source, 'custom');
+
+    // Test beginCheckout event
+    const beginCheckout = events.find(e => e.eventName === 'beginCheckout');
+    assert.ok(beginCheckout, 'Should detect beginCheckout event');
+    assert.strictEqual(beginCheckout.source, 'custom');
+    assert.strictEqual(beginCheckout.functionName, 'checkoutHandler');
+    assert.deepStrictEqual(beginCheckout.properties, {
+      items: {
+        type: 'array',
+        items: { type: 'object' }
+      },
+      currency: { type: 'string' },
+      value: { type: 'number' }
+    });
+
+    // Test purchase event with nested objects
+    const purchase = events.find(e => e.eventName === 'purchase');
+    assert.ok(purchase, 'Should detect purchase event');
+    assert.ok(purchase.properties.shipping, 'Should include nested shipping property');
+    assert.strictEqual(purchase.properties.shipping.type, 'object');
+    assert.ok(purchase.properties.shipping.properties.address, 'Should include nested address property');
+
+    // Test pageView with empty properties
+    const pageView = events.find(e => e.eventName === 'pageView');
+    assert.ok(pageView, 'Should detect pageView event');
+    assert.deepStrictEqual(pageView.properties, {}, 'Should handle empty properties object');
+  });
+
+  test('should handle method-as-event alongside standard custom functions', () => {
+    const methodEventFile = path.join(fixturesDir, 'typescript', 'method-event.ts');
+    const program = createProgram(methodEventFile);
+    const customFunctions = [
+      'eventCalls.EVENT_NAME(PROPERTIES)',
+      'customTrackFunction(userId, EVENT_NAME, PROPERTIES)'
+    ];
+    const events = analyzeTsFile(methodEventFile, program, customFunctions.map(parseCustomFunctionSignature));
+
+    // Should detect method-as-event calls
+    const viewItemList = events.find(e => e.eventName === 'viewItemList' && e.source === 'custom');
+    assert.ok(viewItemList, 'Should detect method-as-event calls');
+
+    // Should not detect standard custom function calls (none in this file)
+    const customEvents = events.filter(e => e.source === 'custom');
+    assert.ok(customEvents.length >= 5, 'Should detect multiple method-as-event events');
   });
 });
