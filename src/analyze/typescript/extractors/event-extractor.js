@@ -530,7 +530,7 @@ function cleanupProperties(properties) {
 
   for (const [key, value] of Object.entries(properties)) {
     if (value && typeof value === 'object') {
-      // Remove __unresolved marker
+      // Remove __unresolved marker from the value itself
       if (value.__unresolved) {
         delete value.__unresolved;
       }
@@ -540,9 +540,16 @@ function cleanupProperties(properties) {
         value.properties = cleanupProperties(value.properties);
       }
 
-      // Clean array item properties
-      if (value.type === 'array' && value.items && value.items.properties) {
-        value.items.properties = cleanupProperties(value.items.properties);
+      // Clean array item properties and __unresolved markers
+      if (value.type === 'array' && value.items) {
+        // Remove __unresolved from items directly
+        if (value.items.__unresolved) {
+          delete value.items.__unresolved;
+        }
+        // Clean nested properties in items
+        if (value.items.properties) {
+          value.items.properties = cleanupProperties(value.items.properties);
+        }
       }
 
       cleaned[key] = value;

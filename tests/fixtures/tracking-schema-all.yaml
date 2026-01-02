@@ -19,6 +19,10 @@ events:
         line: 34
         function: global
         destination: custom
+      - path: typescript/type-resolution.ts
+        line: 54
+        function: global
+        destination: custom
       - path: swift/main.swift
         line: 73
         function: trackGA_Purchase
@@ -71,6 +75,17 @@ events:
                 type: string
               zip:
                 type: string
+      orderId:
+        type: string
+      user:
+        type: object
+        properties:
+          id:
+            type: string
+          name:
+            type: string
+          email:
+            type: string
   newEvent:
     implementations:
       - path: javascript/main.js
@@ -1787,6 +1802,132 @@ events:
             type: string
           version:
             type: string
+  viewCart:
+    implementations:
+      - path: typescript/type-resolution.ts
+        line: 47
+        function: global
+        destination: custom
+    properties:
+      items:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            price:
+              type: number
+            quantity:
+              type: number
+            sku:
+              type: string
+      total:
+        type: number
+  subscriptionCreated:
+    implementations:
+      - path: typescript/type-resolution.ts
+        line: 62
+        function: global
+        destination: custom
+    properties:
+      userId:
+        type: string
+      subscription:
+        type: enum
+        values:
+          - monthly
+          - quarterly
+          - yearly
+      paymentMethod:
+        type: enum
+        values:
+          - credit_card
+          - debit_card
+          - paypal
+  checkoutCompleted:
+    implementations:
+      - path: typescript/type-resolution.ts
+        line: 91
+        function: global
+        destination: custom
+    properties:
+      checkout:
+        type: object
+        properties:
+          items:
+            type: array
+            items:
+              type: object
+              properties:
+                id:
+                  type: string
+                name:
+                  type: string
+                price:
+                  type: number
+                quantity:
+                  type: number
+                sku:
+                  type: string
+          user:
+            type: object
+            properties:
+              id:
+                type: string
+              email:
+                type: string
+              name:
+                type: string
+              subscription:
+                type: enum
+                values:
+                  - monthly
+                  - quarterly
+                  - yearly
+              preferredPayment:
+                type: enum
+                values:
+                  - credit_card
+                  - debit_card
+                  - paypal
+          shippingAddress:
+            type: object
+            properties:
+              street:
+                type: string
+              city:
+                type: string
+              state:
+                type: string
+              zip:
+                type: string
+          billingAddress:
+            type: object
+          total:
+            type: number
+      timestamp:
+        type: number
+  userAction:
+    implementations:
+      - path: typescript/type-resolution.ts
+        line: 98
+        function: global
+        destination: custom
+    properties:
+      user:
+        type: object
+        properties:
+          id:
+            type: string
+          email:
+            type: string
+          name:
+            type: string
+      action:
+        type: string
   ViewedPage:
     implementations:
       - path: typescript-alias/app/components/main.ts

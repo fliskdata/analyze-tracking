@@ -142,6 +142,16 @@
         "items": {
           "$ref": "#/definitions/property",
           "description": "Schema for array items when type is 'array'"
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "type": "string" },
+              { "type": "number" }
+            ]
+          },
+          "description": "Possible values when type is 'enum'"
         }
       },
       "required": [
