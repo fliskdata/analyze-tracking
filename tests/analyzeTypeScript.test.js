@@ -56,7 +56,7 @@ test.describe('analyzeTsFile', () => {
             id: { type: 'string' },
             name: { type: 'string' },
             price: { type: 'number' },
-            sku: { type: 'string | undefined' }
+            sku: { type: 'string' }
           }
         }
       },
@@ -66,7 +66,7 @@ test.describe('analyzeTsFile', () => {
         properties: {
           city: { type: 'string' },
           state: { type: 'string' },
-          postalCode: { type: 'string | undefined' }
+          postalCode: { type: 'string' }
         }
       },
       currency: { type: 'string' }
@@ -100,7 +100,7 @@ test.describe('analyzeTsFile', () => {
             id: { type: 'string' },
             name: { type: 'string' },
             price: { type: 'number' },
-            sku: { type: 'string | undefined' }
+            sku: { type: 'string' }
           }
         }
       },
@@ -123,7 +123,7 @@ test.describe('analyzeTsFile', () => {
             id: { type: 'string' },
             name: { type: 'string' },
             price: { type: 'number' },
-            sku: { type: 'string | undefined' }
+            sku: { type: 'string' }
           }
         }
       },
@@ -133,7 +133,7 @@ test.describe('analyzeTsFile', () => {
         properties: {
           city: { type: 'string' },
           state: { type: 'string' },
-          postalCode: { type: 'string | undefined' }
+          postalCode: { type: 'string' }
         }
       },
       coupon_code: { type: 'null' }
@@ -155,7 +155,7 @@ test.describe('analyzeTsFile', () => {
             id: { type: 'string' },
             name: { type: 'string' },
             price: { type: 'number' },
-            sku: { type: 'string | undefined' }
+            sku: { type: 'string' }
           }
         }
       },
@@ -165,7 +165,7 @@ test.describe('analyzeTsFile', () => {
         properties: {
           city: { type: 'string' },
           state: { type: 'string' },
-          postalCode: { type: 'string | undefined' }
+          postalCode: { type: 'string' }
         }
       }
     });
@@ -186,7 +186,7 @@ test.describe('analyzeTsFile', () => {
             id: { type: 'string' },
             name: { type: 'string' },
             price: { type: 'number' },
-            sku: { type: 'string | undefined' }
+            sku: { type: 'string' }
           }
         }
       },
@@ -196,7 +196,7 @@ test.describe('analyzeTsFile', () => {
         properties: {
           city: { type: 'string' },
           state: { type: 'string' },
-          postalCode: { type: 'string | undefined' }
+          postalCode: { type: 'string' }
         }
       }
     });
@@ -218,7 +218,7 @@ test.describe('analyzeTsFile', () => {
             id: { type: 'string' },
             name: { type: 'string' },
             price: { type: 'number' },
-            sku: { type: 'string | undefined' }
+            sku: { type: 'string' }
           }
         }
       },
@@ -228,7 +228,7 @@ test.describe('analyzeTsFile', () => {
         properties: {
           city: { type: 'string' },
           state: { type: 'string' },
-          postalCode: { type: 'string | undefined' }
+          postalCode: { type: 'string' }
         }
       }
     });
@@ -249,7 +249,7 @@ test.describe('analyzeTsFile', () => {
             id: { type: 'string' },
             name: { type: 'string' },
             price: { type: 'number' },
-            sku: { type: 'string | undefined' }
+            sku: { type: 'string' }
           }
         }
       },
@@ -259,7 +259,7 @@ test.describe('analyzeTsFile', () => {
         properties: {
           city: { type: 'string' },
           state: { type: 'string' },
-          postalCode: { type: 'string | undefined' }
+          postalCode: { type: 'string' }
         }
       }
     });
@@ -433,7 +433,7 @@ test.describe('analyzeTsFile', () => {
       properties: {
         city: { type: 'string' },
         state: { type: 'string' },
-        postalCode: { type: 'string | undefined' }
+        postalCode: { type: 'string' }
       }
     });
 
@@ -448,7 +448,7 @@ test.describe('analyzeTsFile', () => {
           id: { type: 'string' },
           name: { type: 'string' },
           price: { type: 'number' },
-          sku: { type: 'string | undefined' }
+          sku: { type: 'string' }
         }
       }
     });
@@ -468,7 +468,7 @@ test.describe('analyzeTsFile', () => {
     assert.ok(addressProp.properties);
     assert.strictEqual(addressProp.properties.city.type, 'string');
     assert.strictEqual(addressProp.properties.state.type, 'string');
-    assert.strictEqual(addressProp.properties.postalCode.type, 'string | undefined');
+    assert.strictEqual(addressProp.properties.postalCode.type, 'string');
 
     // Test that Product interface is expanded in arrays
     const eventWithProducts = events.find(e => e.properties.items || e.properties.products);
@@ -480,7 +480,7 @@ test.describe('analyzeTsFile', () => {
     assert.strictEqual(productsProp.items.properties.id.type, 'string');
     assert.strictEqual(productsProp.items.properties.name.type, 'string');
     assert.strictEqual(productsProp.items.properties.price.type, 'number');
-    assert.strictEqual(productsProp.items.properties.sku.type, 'string | undefined');
+    assert.strictEqual(productsProp.items.properties.sku.type, 'string');
   });
 
   test('should handle shorthand property assignments correctly', () => {
@@ -630,7 +630,7 @@ test.describe('analyzeTsFile', () => {
           id: { type: 'string' },
           name: { type: 'string' },
           price: { type: 'number' },
-          sku: { type: 'string | undefined' }
+          sku: { type: 'string' }
         }
       },
       cart_size: { type: 'number' }
@@ -658,7 +658,7 @@ test.describe('analyzeTsFile', () => {
         type: 'array',
         items: {
           type: 'object',
-          properties: { id: { type: 'string' }, name: { type: 'string' }, price: { type: 'number' }, sku: { type: 'string | undefined' } }
+          properties: { id: { type: 'string' }, name: { type: 'string' }, price: { type: 'number' }, sku: { type: 'string' } }
         }
       },
       value: { type: 'number' },
@@ -676,7 +676,7 @@ test.describe('analyzeTsFile', () => {
         type: 'array',
         items: {
           type: 'object',
-          properties: { id: { type: 'string' }, name: { type: 'string' }, price: { type: 'number' }, sku: { type: 'string | undefined' } }
+          properties: { id: { type: 'string' }, name: { type: 'string' }, price: { type: 'number' }, sku: { type: 'string' } }
         }
       },
       total_items: { type: 'number' }
@@ -693,7 +693,7 @@ test.describe('analyzeTsFile', () => {
         type: 'array',
         items: {
           type: 'object',
-          properties: { id: { type: 'string' }, name: { type: 'string' }, price: { type: 'number' }, sku: { type: 'string | undefined' } }
+          properties: { id: { type: 'string' }, name: { type: 'string' }, price: { type: 'number' }, sku: { type: 'string' } }
         }
       },
       checkout_step: { type: 'number' }

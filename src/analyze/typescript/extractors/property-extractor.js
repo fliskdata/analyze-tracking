@@ -4,11 +4,15 @@
  */
 
 const ts = require('typescript');
-const { 
-  getTypeOfNode, 
-  resolveTypeToProperties, 
+const {
+  getTypeOfNode,
+  resolveTypeToProperties,
   getBasicTypeOfArrayElement,
-  isCustomType 
+  isCustomType,
+  isEnumType,
+  getEnumValues,
+  resolveTypeObjectToSchema,
+  extractTypeProperties
 } = require('../utils/type-resolver');
 
 /**
@@ -40,7 +44,7 @@ function extractProperties(checker, node) {
       Object.assign(properties, spreadProperties);
       continue;
     }
-    
+
     const key = getPropertyKey(prop);
     if (!key) continue;
 
@@ -66,16 +70,16 @@ function getPropertyKey(prop) {
     }
     return null;
   }
-  
+
   // Regular property with name
   if (ts.isIdentifier(prop.name)) {
     return prop.name.escapedText;
   }
-  
+
   if (ts.isStringLiteral(prop.name)) {
     return prop.name.text;
   }
-  
+
   return null;
 }
 
@@ -90,25 +94,25 @@ function extractPropertySchema(checker, prop) {
   if (ts.isShorthandPropertyAssignment(prop)) {
     return extractShorthandPropertySchema(checker, prop);
   }
-  
+
   // Handle property assignments with initializers
   if (ts.isPropertyAssignment(prop)) {
     if (prop.initializer) {
       return extractValueSchema(checker, prop.initializer);
     }
-    
+
     // Property with type annotation but no initializer
     if (prop.type) {
       const typeString = checker.typeToString(checker.getTypeFromTypeNode(prop.type));
       return resolveTypeSchema(checker, typeString);
     }
   }
-  
+
   // Handle method declarations
   if (ts.isMethodDeclaration(prop)) {
     return { type: 'function' };
   }
-  
+
   return null;
 }
 
@@ -155,30 +159,11 @@ function extractShorthandPropertySchema(checker, prop) {
       return { type: 'any' };
     }
   }
-  
+
   const propType = checker.getTypeAtLocation(prop.name);
-  const typeString = checker.typeToString(propType);
-  
-  // Handle array types
-  if (isArrayType(typeString)) {
-    return extractArrayTypeSchema(checker, propType, typeString);
-  }
-  
-  // Handle other types
-  const resolvedType = resolveTypeToProperties(checker, typeString);
-  
-  // If it's an unresolved custom type, try to extract interface properties
-  if (resolvedType.__unresolved) {
-    const interfaceProps = extractInterfaceProperties(checker, propType);
-    if (Object.keys(interfaceProps).length > 0) {
-      return {
-        type: 'object',
-        properties: interfaceProps
-      };
-    }
-  }
-  
-  return resolvedType;
+
+  // Use the type object resolver for better accuracy
+  return resolveTypeObjectToSchema(checker, propType);
 }
 
 /**
@@ -188,33 +173,29 @@ function extractShorthandPropertySchema(checker, prop) {
  * @returns {PropertySchema}
  */
 function extractValueSchema(checker, valueNode) {
-  // Object literal
+  // Object literal - extract inline properties
   if (ts.isObjectLiteralExpression(valueNode)) {
     return {
       type: 'object',
       properties: extractProperties(checker, valueNode)
     };
   }
-  
+
   // Array literal
   if (ts.isArrayLiteralExpression(valueNode)) {
     return extractArrayLiteralSchema(checker, valueNode);
   }
-  
-  // Identifier (variable reference)
-  if (ts.isIdentifier(valueNode)) {
-    return extractIdentifierSchema(checker, valueNode);
-  }
-  
+
   // Literal values
   const literalType = getLiteralType(valueNode);
   if (literalType) {
     return { type: literalType };
   }
-  
-  // For other expressions, get the type from TypeChecker
-  const typeString = getTypeOfNode(checker, valueNode);
-  return resolveTypeSchema(checker, typeString);
+
+  // For all other expressions (identifiers, property access, etc.),
+  // use the type object resolver for accurate type resolution
+  const valueType = checker.getTypeAtLocation(valueNode);
+  return resolveTypeObjectToSchema(checker, valueType);
 }
 
 /**
@@ -230,17 +211,17 @@ function extractArrayLiteralSchema(checker, node) {
       items: { type: 'any' }
     };
   }
-  
+
   // Check types of all elements
   const elementTypes = new Set();
   for (const element of node.elements) {
     const elemType = getBasicTypeOfArrayElement(checker, element);
     elementTypes.add(elemType);
   }
-  
+
   // If all elements are the same type, use that type
   const itemType = elementTypes.size === 1 ? Array.from(elementTypes)[0] : 'any';
-  
+
   return {
     type: 'array',
     items: { type: itemType }
@@ -255,28 +236,9 @@ function extractArrayLiteralSchema(checker, node) {
  */
 function extractIdentifierSchema(checker, identifier) {
   const identifierType = checker.getTypeAtLocation(identifier);
-  const typeString = checker.typeToString(identifierType);
-  
-  // Handle array types
-  if (isArrayType(typeString)) {
-    return extractArrayTypeSchema(checker, identifierType, typeString);
-  }
-  
-  // Handle other types
-  const resolvedType = resolveTypeToProperties(checker, typeString);
-  
-  // If it's an unresolved custom type, try to extract interface properties
-  if (resolvedType.__unresolved) {
-    const interfaceProps = extractInterfaceProperties(checker, identifierType);
-    if (Object.keys(interfaceProps).length > 0) {
-      return {
-        type: 'object',
-        properties: interfaceProps
-      };
-    }
-  }
-  
-  return resolvedType;
+
+  // Use the new type object resolver for better accuracy
+  return resolveTypeObjectToSchema(checker, identifierType);
 }
 
 /**
@@ -288,7 +250,7 @@ function extractIdentifierSchema(checker, identifier) {
  */
 function extractArrayTypeSchema(checker, type, typeString) {
   let elementType = null;
-  
+
   // Try to get type arguments for generic types
   if (type.target && type.typeArguments && type.typeArguments.length > 0) {
     elementType = type.typeArguments[0];
@@ -302,7 +264,7 @@ function extractArrayTypeSchema(checker, type, typeString) {
       // Indexed access failed
     }
   }
-  
+
   if (elementType) {
     const elementInterfaceProps = extractInterfaceProperties(checker, elementType);
     if (Object.keys(elementInterfaceProps).length > 0) {
@@ -327,7 +289,7 @@ function extractArrayTypeSchema(checker, type, typeString) {
       };
     }
   }
-  
+
   return {
     type: 'array',
     items: { type: 'any' }
@@ -342,12 +304,12 @@ function extractArrayTypeSchema(checker, type, typeString) {
  */
 function resolveTypeSchema(checker, typeString) {
   const resolvedType = resolveTypeToProperties(checker, typeString);
-  
+
   // Clean up any unresolved markers for simple types
   if (resolvedType.__unresolved) {
     delete resolvedType.__unresolved;
   }
-  
+
   return resolvedType;
 }
 
@@ -372,8 +334,8 @@ function getLiteralType(node) {
  * @returns {boolean}
  */
 function isArrayType(typeString) {
-  return typeString.includes('[]') || 
-         typeString.startsWith('Array<') || 
+  return typeString.includes('[]') ||
+         typeString.startsWith('Array<') ||
          typeString.startsWith('ReadonlyArray<') ||
          typeString.startsWith('readonly ');
 }
@@ -388,13 +350,13 @@ function extractSpreadProperties(checker, spreadNode) {
   if (!spreadNode.expression) {
     return {};
   }
-  
+
   // If the spread is an identifier, resolve it to its declaration
   if (ts.isIdentifier(spreadNode.expression)) {
     const symbol = checker.getSymbolAtLocation(spreadNode.expression);
     if (symbol && symbol.declarations && symbol.declarations.length > 0) {
       const declaration = symbol.declarations[0];
-      
+
       // If it's a variable declaration with an object literal initializer
       if (ts.isVariableDeclaration(declaration) && declaration.initializer) {
         if (ts.isObjectLiteralExpression(declaration.initializer)) {
@@ -403,17 +365,17 @@ function extractSpreadProperties(checker, spreadNode) {
         }
       }
     }
-    
+
     // Fallback to the original identifier schema extraction
     const identifierSchema = extractIdentifierSchema(checker, spreadNode.expression);
     return identifierSchema.properties || {};
   }
-  
+
   // If the spread is an object literal, extract its properties
   if (ts.isObjectLiteralExpression(spreadNode.expression)) {
     return extractProperties(checker, spreadNode.expression);
   }
-  
+
   // For other expressions, try to get the type and extract properties from it
   try {
     const spreadType = checker.getTypeAtLocation(spreadNode.expression);
@@ -432,20 +394,65 @@ function extractSpreadProperties(checker, spreadNode) {
 function extractInterfaceProperties(checker, type) {
   const properties = {};
   const typeSymbol = type.getSymbol();
-  
+
   if (!typeSymbol) return properties;
-  
+
+  // Check if this is an enum type - don't expand enum string methods
+  const typeString = checker.typeToString(type);
+  if (isEnumType(checker, typeString)) {
+    // Return empty - the caller should handle enum types specially
+    return properties;
+  }
+
+  // Check if this looks like a string primitive with methods - skip it
+  if (isStringPrototype(type, checker)) {
+    return properties;
+  }
+
   // Get all properties of the type
   const members = checker.getPropertiesOfType(type);
-  
-  for (const member of members) {
+
+  // Filter out built-in methods (string prototype methods, etc.)
+  const userDefinedMembers = members.filter(member => {
+    const name = member.name;
+    // Skip common built-in method names
+    if (STRING_PROTOTYPE_METHODS.has(name)) {
+      return false;
+    }
+    // Skip symbols
+    if (name.startsWith('__@')) {
+      return false;
+    }
+    return true;
+  });
+
+  for (const member of userDefinedMembers) {
     try {
       const memberType = checker.getTypeOfSymbolAtLocation(member, member.valueDeclaration);
       const memberTypeString = checker.typeToString(memberType);
-      
+
+      // Skip function types
+      if (memberTypeString.includes('=>') || memberTypeString.startsWith('(')) {
+        continue;
+      }
+
+      // Check if member type is an enum
+      if (isEnumType(checker, memberTypeString, memberType)) {
+        const enumValues = getEnumValues(checker, memberTypeString, memberType);
+        if (enumValues && enumValues.length > 0) {
+          properties[member.name] = {
+            type: 'enum',
+            values: enumValues
+          };
+        } else {
+          properties[member.name] = { type: 'string' };
+        }
+        continue;
+      }
+
       // Recursively resolve the member type
       const resolvedType = resolveTypeToProperties(checker, memberTypeString);
-      
+
       // If it's an unresolved object type, try to extract its properties
       if (resolvedType.__unresolved) {
         const nestedProperties = extractInterfaceProperties(checker, memberType);
@@ -470,8 +477,39 @@ function extractInterfaceProperties(checker, type) {
       properties[member.name] = { type: 'any' };
     }
   }
-  
+
   return properties;
+}
+
+/**
+ * Set of common string prototype method names to filter out
+ */
+const STRING_PROTOTYPE_METHODS = new Set([
+  'toString', 'charAt', 'charCodeAt', 'concat', 'indexOf', 'lastIndexOf',
+  'localeCompare', 'match', 'replace', 'search', 'slice', 'split',
+  'substring', 'toLowerCase', 'toLocaleLowerCase', 'toUpperCase',
+  'toLocaleUpperCase', 'trim', 'length', 'substr', 'valueOf',
+  'codePointAt', 'includes', 'endsWith', 'normalize', 'repeat',
+  'startsWith', 'anchor', 'big', 'blink', 'bold', 'fixed',
+  'fontcolor', 'fontsize', 'italics', 'link', 'small', 'strike',
+  'sub', 'sup', 'padStart', 'padEnd', 'trimEnd', 'trimStart',
+  'trimLeft', 'trimRight', 'matchAll', 'replaceAll', 'at',
+  'isWellFormed', 'toWellFormed'
+]);
+
+/**
+ * Checks if a type is a string primitive that would have prototype methods
+ * @param {Object} type - TypeScript Type object
+ * @param {Object} checker - TypeScript type checker
+ * @returns {boolean}
+ */
+function isStringPrototype(type, checker) {
+  if (!type) return false;
+  const members = checker.getPropertiesOfType(type);
+  // If the type has common string methods, it's likely a string
+  const stringMethodCount = members.filter(m => STRING_PROTOTYPE_METHODS.has(m.name)).length;
+  // If more than half of the members are string methods, treat as string
+  return stringMethodCount > 10 && stringMethodCount > members.length / 2;
 }
 
 module.exports = {
